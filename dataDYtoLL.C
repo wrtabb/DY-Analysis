@@ -414,7 +414,7 @@ void dataDYtoLL()
   hStacklinear->Add(hTopslinear);
   hStacklinear->Add(hMCInvMasslinear); 
 
-  TFile *rootFile = new TFile("dataVsMC.root","RECREATE");
+  TFile *rootFile = new TFile("./plots/dataVsMC.root","RECREATE");
 
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.7);
   legend->SetTextSize(0.02);
@@ -550,7 +550,7 @@ void dataDYtoLL()
   hDataMCRatio->Draw();
   legend->Draw("same");
   canvas1->Update();
-  canvas1->SaveAs("dataVsMClog.png");
+  canvas1->SaveAs("./plots/dataVsMClog.png");
 
   
   TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
@@ -561,7 +561,7 @@ void dataDYtoLL()
   hDataMCRatiolinear->Draw();
   legend->Draw("same");
   canvas2->Update();
-  canvas2->SaveAs("dataVsMClinear.png");
+  canvas2->SaveAs("./plots/dataVsMClinear.png");
 
   rootFile->cd();
   hStack->Write();
