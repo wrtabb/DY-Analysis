@@ -3,6 +3,7 @@
 //Robert Tabb
 //wrtabb@huskers.unl.edu
 ////////////////////////////////////////////////////////////////////
+
 #include "TFile.h"
 #include "TTree.h"
 #include "TCanvas.h"
@@ -561,7 +562,6 @@ void dataDYtoLL()
   legend->Draw("same");
   canvas2->Update();
   canvas2->SaveAs("dataVsMClinear.png");
- 
 
   rootFile->cd();
   hStack->Write();
