@@ -55,17 +55,18 @@ const int numChains = 26;
 const float xSec[numChains] = {61526,5352960,9928000,2890800,350000,62964,18810,1350,118.7,16.523,47.13,
 			       831.76,35.85,35.85,18810.0,5705.9044344,226.6,7.77,0.4065,0.2334,0.03614,
 			       0.03047,0.01636,0.00218,0.0005156,1};
-const float etaHigh = 2.5;
+const float binLow = 60.001;
+const float binHigh = 119.999;
+
+const float etaHigh = 2.4;
 const float etaGapHigh = 1.566; 
 const float etaGapLow = 1.4442;
-const float ptHigh = 30;
-const float ptLow = 10;
+const float ptHigh = 28;
+const float ptLow = 17;
 const float eMass = 0.000511;
 const TString treeName = "recoTree/DYTree";
 const float dRMinCut = 0.3;
-const int nSubSamples10to50 = 3;
-const int nSubSamples100to200 = 2;
-const int maxFiles = 5;
+const int maxFiles = 10;
 const TString whichChain[numChains] = 
     {"W + Jets","QCD pT 20 to 30","QCD pT 30 to 50","QCD pT 50 to 80","QCD pT 80 to 120","QCD pT 120 to 170",
      "QCD pT 170 to 300","QCD pT 300 to infinity","WW","ZZ","WZ","TT","tW","anti tW","MC 10 to 50","MC 50 to 100",
@@ -110,8 +111,38 @@ void dataDYtoLL()
   //iChain==25       Data               //
   ////////////////////////////////////////
       
-  //Loading trees
+  //Loading ntuples
   cout << "Loading ntuples" << endl;
+  enum chainNum 
+  {
+    wJets = 0,
+    QCD20to30 = 1,
+    QCD30to50 = 2,
+    QCD50to80 = 3,
+    QCD80to120 = 4,        
+    QCD120to170 = 5,       
+    QCD170to300 = 6,       
+    QCD300AndUp = 7,       
+    WW = 8,                 
+    ZZ = 9,                
+    WZ = 10,                 
+    tt = 11,                
+    tW = 12,             
+    tbarW = 13,         
+    MC10to50 = 15,
+    MC50to100 = 16,
+    MC100to200 = 17,
+    MC200to400 = 18,
+    MC400to500 = 19,
+    MC500to700 = 20,
+    MC700to800 = 21,
+    MC800to1000 = 22,
+    MC1000to1500 = 23,
+    MC1500to2000 = 24,
+    MC2000to3000 = 25,
+    Data = 26
+  };
+  
     TString subDirectory[numChains] = 
     {      
       "WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_WJetsToLNu_amcatnlo",
@@ -382,7 +413,7 @@ void dataDYtoLL()
   hMCInvMass->GetXaxis()->SetMoreLogLabels();
   hMCInvMass->GetXaxis()->SetNoExponent();
   hMCInvMass->SetTitle("MC vs. Data Invariant Mass");
-  TH1F*hMCInvMasslinear = new TH1F("hMCInvMasslinear","",30,60,120);
+  TH1F*hMCInvMasslinear = new TH1F("hMCInvMasslinear","",30,binLow,binHigh);
   hMCInvMasslinear->Sumw2();
   hMCInvMasslinear->SetFillColor(kOrange-2);
   hMCInvMasslinear->SetLineColor(kOrange+3);
@@ -399,7 +430,7 @@ void dataDYtoLL()
   hDataInvMass->GetXaxis()->SetTitle("m_{ee} [GeV]");
   hDataInvMass->GetXaxis()->SetNoExponent();
   hDataInvMass->GetXaxis()->SetMoreLogLabels();
-  TH1F*hDataInvMasslinear = new TH1F("hDataInvMasslinear","",30,60,120);
+  TH1F*hDataInvMasslinear = new TH1F("hDataInvMasslinear","",30,binLow,binHigh);
   hDataInvMasslinear->Sumw2();
   hDataInvMasslinear->SetLineColor(kBlack);
   hDataInvMasslinear->SetMarkerColor(kBlack);
@@ -414,17 +445,18 @@ void dataDYtoLL()
   hFakes->Sumw2();
   hFakes->SetFillColor(kViolet+5);
   hFakes->SetLineColor(kViolet+3);
-  TH1F*hFakeslinear = new TH1F("hFakeslinear","",30,60,120);
+  TH1F*hFakeslinear = new TH1F("hFakeslinear","",30,binLow,binHigh);
   hFakeslinear->Sumw2();
   hFakeslinear->SetFillColor(kViolet+5);
   hFakeslinear->SetLineColor(kViolet+3);
+  hFakeslinear->GetYaxis()->SetRangeUser(0.00001,100000);
   TH1F*hEW = new TH1F("hEW","",43,massbins);
   //WW, ZZ, WZ
   //iChain 8,9,10
   hEW->Sumw2();
   hEW->SetFillColor(kRed+2);
   hEW->SetLineColor(kRed+4);
-  TH1F*hEWlinear = new TH1F("hEWlinear","",30,60,120);
+  TH1F*hEWlinear = new TH1F("hEWlinear","",30,binLow,binHigh);
   hEWlinear->Sumw2();
   hEWlinear->SetFillColor(kRed+2);
   hEWlinear->SetLineColor(kRed+4);
@@ -434,11 +466,12 @@ void dataDYtoLL()
   hTops->Sumw2();
   hTops->SetFillColor(kBlue+2);
   hTops->SetLineColor(kBlue+3);
-  TH1F*hTopslinear = new TH1F("hTopslinear","",30,60,120);
+  TH1F*hTopslinear = new TH1F("hTopslinear","",30,binLow,binHigh);
   hTopslinear->Sumw2();
   hTopslinear->SetFillColor(kBlue+2);
   hTopslinear->SetLineColor(kBlue+3);
-  
+
+  //Defining stacks
   THStack*hStack = new THStack("hStack","");
   hStack->Add(hFakes);
   hStack->Add(hEW);
@@ -452,9 +485,6 @@ void dataDYtoLL()
 
   TFile *rootFile = new TFile("./plots/dataVsMC.root","RECREATE");
 
-  TLegend*legend = new TLegend(0.65,0.9,0.9,0.7);
-  legend->SetTextSize(0.02);
-
   //Event Loop
   cout << "Starting Event Loop" << endl;
   double dpT, invMass, weight, dRMin;
@@ -464,12 +494,12 @@ void dataDYtoLL()
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   int trigNameSize;
-  nentries = 100000;
+  nentries = 1000000;
   //double lumi = chains[15]->GetEntries()/xSec[15]; //luminosity of 50to100
   double lumi = nentries/xSec[15];
   for(int iChain=0;iChain<numChains;iChain++)
     {
-      nentries = 100000;
+      nentries = 1000000;
       //nentries = chains[iChain]->GetEntries();
       if(chains[iChain]->GetEntries() < nentries) nentries = chains[iChain]->GetEntries();
       weight=lumi*(xSec[iChain]/nentries);
@@ -506,7 +536,6 @@ void dataDYtoLL()
 	  //Electron loop
 	  for(int iEle = 0; iEle < Nelectrons; iEle++)
 	    {
-	      //int closestTrackLep1=-1;
 	      for(int jEle = iEle+1; jEle < Nelectrons; jEle++)
 		{	  
 		  invMass=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
@@ -516,10 +545,10 @@ void dataDYtoLL()
 		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
 					     Electron_eta[jEle])) continue; 		  		 
 		  if(!passHLT) continue;
-		  
-		  //int closestTrackLep2=-1;
+
 		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
 		  if(!Electron_passMediumID[jEle]) continue;//jLep electron cut
+
 		  if(iChain==25)
 		    {
 		      hDataInvMass->Fill(invMass);
@@ -540,7 +569,7 @@ void dataDYtoLL()
 		      hTops->Fill(invMass,weight);
 		      hTopslinear->Fill(invMass,weight);
 		    }		  
-		  else 
+		  else if(iChain>13&&iChain<25)
 		    {
 		      hMCInvMass->Fill(invMass,weight);
 		      hMCInvMasslinear->Fill(invMass,weight);
@@ -553,46 +582,49 @@ void dataDYtoLL()
   double integralData, integralMC;
   
   integralData = 
-    hDataInvMass->Integral(hDataInvMass->GetXaxis()->FindBin(60),hDataInvMass->GetXaxis()->FindBin(120));
+    hDataInvMass->Integral(hDataInvMass->GetXaxis()->FindBin(binLow),hDataInvMass->GetXaxis()->FindBin(binHigh));
   integralMC = 
-    hMCInvMass->Integral(hMCInvMass->GetXaxis()->FindBin(60),hMCInvMass->GetXaxis()->FindBin(120))+
-    hFakes->Integral(hFakes->GetXaxis()->FindBin(60),hFakes->GetXaxis()->FindBin(120))+
-    hEW->Integral(hEW->GetXaxis()->FindBin(60),hEW->GetXaxis()->FindBin(120))+
-    hTops->Integral(hTops->GetXaxis()->FindBin(60),hTops->GetXaxis()->FindBin(120));
+    hMCInvMass->Integral(hMCInvMass->GetXaxis()->FindBin(binLow),hMCInvMass->GetXaxis()->FindBin(binHigh))+
+    hFakes->Integral(hFakes->GetXaxis()->FindBin(binLow),hFakes->GetXaxis()->FindBin(binHigh))+
+    hEW->Integral(hEW->GetXaxis()->FindBin(binLow),hEW->GetXaxis()->FindBin(binHigh))+
+    hTops->Integral(hTops->GetXaxis()->FindBin(binLow),hTops->GetXaxis()->FindBin(binHigh));
 
-  hMCInvMass->Scale(integralData/integralMC);
-  hFakes->Scale(integralData/integralMC);
-  hEW->Scale(integralData/integralMC);
-  hTops->Scale(integralData/integralMC);
+  double norm = integralData/integralMC;
+  hMCInvMass->Scale(norm);
+  hFakes->Scale(norm);
+  hEW->Scale(norm);
+  hTops->Scale(norm);
 
-  hMCInvMasslinear->Scale(integralData/integralMC);
-  hFakeslinear->Scale(integralData/integralMC);
-  hEWlinear->Scale(integralData/integralMC);
-  hTopslinear->Scale(integralData/integralMC);
+  hMCInvMasslinear->Scale(norm);
+  hFakeslinear->Scale(norm);
+  hEWlinear->Scale(norm);
+  hTopslinear->Scale(norm);  
 
+  TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1000,1000);
+  canvas1->SetLogx();
+  canvas1->SetLogy();
+  
+  TLegend*legend = new TLegend(0.65,0.9,0.9,0.7);
+  legend->SetTextSize(0.02);
   legend->AddEntry(hDataInvMass,"Data");
   legend->AddEntry(hMCInvMass,"#gamma^{*}/Z #rightarrow e^{-}e^{+}");
   legend->AddEntry(hTops,"t#bar{t}+tW+#bar{t}W");
   legend->AddEntry(hEW,"EW");
   legend->AddEntry(hFakes,"Fakes (Wjets+QCD");
 
-  TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1000,1000);
-  canvas1->SetLogx();
-  canvas1->SetLogy();
-
   auto hDataMCRatio = new TRatioPlot(hStack,hDataInvMass);
   hDataMCRatio->GetXaxis()->SetTitle("m_{ee} [GeV]");  
   canvas1->cd();
   hDataMCRatio->Draw();
+  hDataMCRatio->GetUpperPad()->cd();
   legend->Draw("same");
   canvas1->Update();
   canvas1->SaveAs("./plots/dataVsMClog.png");
-
   
   TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
   canvas2->SetLogy();
   auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,hDataInvMasslinear);
-  hDataMCRatiolinear->GetXaxis()->SetTitle("m_{ee} [GeV]");  
+ 
   canvas2->cd();
   hDataMCRatiolinear->Draw();
   legend->Draw("same");
@@ -648,8 +680,8 @@ void counter(Long64_t i, Long64_t N)
 //Kinematic cuts
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)
 {
-  if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return kFALSE;//eta cut
-  if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return kFALSE; //eta cut
+  //if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return kFALSE;//eta cut
+  //if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return kFALSE; //eta cut
   if(abs(eta1)>etaHigh||abs(eta2)>etaHigh) return kFALSE; //eta cut
   if(!((pt1>ptLow && pt2>ptHigh)||(pt1>ptHigh && pt2>ptLow))) return kFALSE;
   return kTRUE;
@@ -665,3 +697,4 @@ double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,doubl
   double invMass = (vGenElectron1+vGenElectron2).M();
   return invMass;
 }//end calcInvMass
+
