@@ -183,7 +183,7 @@ void dataDYtoLL()
     {
       chains[iChain] = new TChain(treeName);
 
-      for(int k=0;k<100;k++)//Loop over individual files: ntuple_skim_k.root
+      for(int k=0;k<10;k++)//Loop over individual files: ntuple_skim_k.root
 	{
 	  if(iChain<2 || (iChain>5&&iChain<14))//0,1,6,7,8,9,10,11,12,13
 	    {//W+Jets, QCD20to30, QCD170to300, QCD300toInf, ZZ, WW, WZ, TT, tW top, tW anti
@@ -428,13 +428,13 @@ void dataDYtoLL()
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   int trigNameSize;
-  //nentries = 100000;
-  double lumi = chains[15]->GetEntries()/xSec[15]; //luminosity of 50to100
-  //double lumi = nentries/xSec[15];
+  nentries = 100000;
+  //double lumi = chains[15]->GetEntries()/xSec[15]; //luminosity of 50to100
+  double lumi = nentries/xSec[15];
   for(int iChain=0;iChain<numChains;iChain++)
     {
-      //nentries = 100000;
-      nentries = chains[iChain]->GetEntries();
+      nentries = 100000;
+      //nentries = chains[iChain]->GetEntries();
       if(chains[iChain]->GetEntries() < nentries) nentries = chains[iChain]->GetEntries();
       weight=lumi*(xSec[iChain]/nentries);
       cout << endl;
@@ -442,8 +442,8 @@ void dataDYtoLL()
       for(Long64_t i=0;i<nentries;i++)
 	{      
 	  chains[iChain]->GetEntry(i);
-	  counter(count,totalentries);
-	  //counter(count,26*nentries);
+	  //counter(count,totalentries);
+	  counter(count,26*nentries);
 	  count = count+1;      
 	    
 	  //HLT cut
@@ -487,27 +487,27 @@ void dataDYtoLL()
 		  if(iChain==25)
 		    {
 		      hDataInvMass->Fill(invMass);
-		      if(invMass>=60&&invMass<120) hDataInvMasslinear->Fill(invMass);
+		      hDataInvMasslinear->Fill(invMass);
 		    }
 		  if(iChain<8) 
 		    {
 		      hFakes->Fill(invMass,weight);
-		      if(invMass>=60&&invMass<120) hFakeslinear->Fill(invMass,weight);
+		      hFakeslinear->Fill(invMass,weight);
 		    }
 		  if(iChain>7&&iChain<11) 
 		    {
 		      hEW->Fill(invMass,weight);
-		      if(invMass>=60&&invMass<120) hEWlinear->Fill(invMass,weight);
+		      hEWlinear->Fill(invMass,weight);
 		    }
 		  if(iChain>10&&iChain<14) 
 		    {
 		      hTops->Fill(invMass,weight);
-		      if(invMass>=60&&invMass<120) hTopslinear->Fill(invMass,weight);
+		      hTopslinear->Fill(invMass,weight);
 		    }		  
 		  else 
 		    {
 		      hMCInvMass->Fill(invMass,weight);
-		      if(invMass>=60&&invMass<120) hMCInvMasslinear->Fill(invMass,weight);
+		      hMCInvMasslinear->Fill(invMass,weight);
 		    }
 		}//end inner electron loop	   
 	    }//end electron loop
