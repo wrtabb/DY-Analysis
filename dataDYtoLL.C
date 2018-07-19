@@ -65,7 +65,7 @@ const TString treeName = "recoTree/DYTree";
 const float dRMinCut = 0.3;
 const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
-const int maxFiles = 10;
+const int maxFiles = 5;
 const TString whichChain[numChains] = 
     {"W + Jets","QCD pT 20 to 30","QCD pT 30 to 50","QCD pT 50 to 80","QCD pT 80 to 120","QCD pT 120 to 170",
      "QCD pT 170 to 300","QCD pT 300 to infinity","WW","ZZ","WZ","TT","tW","anti tW","MC 10 to 50","MC 50 to 100",
@@ -180,7 +180,6 @@ void dataDYtoLL()
     };
   TString inputBaseDirName =  
     "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/";  
-  ///mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/crab_ttbar
   TChain*chains[numChains];
   TString files;  
   int nFiles;
