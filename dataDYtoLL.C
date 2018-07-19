@@ -125,7 +125,7 @@ void dataDYtoLL()
       "WW_TuneCUETP8M1_13TeV-pythia8",
       "ZZ_TuneCUETP8M1_13TeV-pythia8",
       "WZ_TuneCUETP8M1_13TeV-pythia8",
-      "TT_TuneCUETP8M2T4_13TeV-powheg-pythia8",
+      "TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/",
       "ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1",
       "ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1",
       "DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M10to50_",
@@ -173,20 +173,26 @@ void dataDYtoLL()
       "crab_QCDEMEnriched_Pt120to170",
       "crab_QCDEMEnriched_Pt120to170_ext1"
     };
+  TString subTT[2] =
+    {
+      "crab_ttbar",
+      "crab_ttbarBackup"
+    };
   TString inputBaseDirName =  
     "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/";  
-
+  ///mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/crab_ttbar
   TChain*chains[numChains];
   TString files;  
+  int nFiles;
   Long64_t totalentries = 0;
   for(int iChain=0;iChain<numChains;iChain++)
     {
       chains[iChain] = new TChain(treeName);
-
-      for(int k=0;k<10;k++)//Loop over individual files: ntuple_skim_k.root
-	{
-	  if(iChain<2 || (iChain>5&&iChain<14))//0,1,6,7,8,9,10,11,12,13
-	    {//W+Jets, QCD20to30, QCD170to300, QCD300toInf, ZZ, WW, WZ, TT, tW top, tW anti
+      nFiles = 0;
+      for(int k=0;k<10000;k++)//Loop over individual files: ntuple_skim_k.root
+	{	  
+	  if(iChain<2 || (iChain>5&&iChain<11)||(iChain>11&iChain<14))//0,1,6,7,8,9,10,11,12,13
+	    {//W+Jets, QCD20to30, QCD170to300, QCD300toInf, ZZ, WW, WZ, tW top, tW anti
 	      files = inputBaseDirName;
 	      files+=subDirectory[iChain];
 	      files+="/ntuple_skim_";
@@ -195,9 +201,30 @@ void dataDYtoLL()
 	      std::ifstream testFileStream(files);
 	      if(!(bool)testFileStream) continue;    	
 	      chains[iChain]->Add(files); 
+	      nFiles++;
+	      if(nFiles>=maxFiles) break;
 	      cout << "File: " << files << " loaded" << endl;	   
 	      cout << "Entries: " << chains[iChain]->GetEntries() << endl;
-	    }  
+	      }  
+	  if(iChain==11)//11
+	    {//tt 
+	      for(int j=0;j<2;j++)
+		{		  
+		  files = inputBaseDirName;
+		  files+=subDirectory[iChain];
+		  files+=subTT[j];
+		  files+="/ntuple_skim_";
+		  files+=k;
+		  files+=".root";
+		  std::ifstream testFileStream(files);
+		  if(!(bool)testFileStream) continue;    	
+		  chains[iChain]->Add(files); 
+		  nFiles++;
+		  if(nFiles>=maxFiles) break;
+		  cout << "File: " << files << " loaded" << endl;
+		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
+		}	  	    
+	    }
 	  if(iChain==2)//2
 	    {//QCD 30to50	    
 	      for(int j=0;j<2;j++)
@@ -211,6 +238,8 @@ void dataDYtoLL()
 		  std::ifstream testFileStream(files);
 		  if(!(bool)testFileStream) continue;    	
 		  chains[iChain]->Add(files); 
+		  nFiles++;
+		  if(nFiles>=maxFiles) break;
 		  cout << "File: " << files << " loaded" << endl;
 		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
 		}	  	    
@@ -228,6 +257,8 @@ void dataDYtoLL()
 		  std::ifstream testFileStream(files);
 		  if(!(bool)testFileStream) continue;    	
 		  chains[iChain]->Add(files); 
+		  nFiles++;
+		  if(nFiles>=maxFiles) break;
 		  cout << "File: " << files << " loaded" << endl;
 		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
 		}	  	    
@@ -245,6 +276,8 @@ void dataDYtoLL()
 		  std::ifstream testFileStream(files);
 		  if(!(bool)testFileStream) continue;    	
 		  chains[iChain]->Add(files); 
+		  nFiles++;
+		  if(nFiles>=maxFiles) break;
 		  cout << "File: " << files << " loaded" << endl;
 		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
 		}	  	    
@@ -262,6 +295,8 @@ void dataDYtoLL()
 		  std::ifstream testFileStream(files);
 		  if(!(bool)testFileStream) continue;    	
 		  chains[iChain]->Add(files); 
+		  nFiles++;
+		  if(nFiles>=maxFiles) break;
 		  cout << "File: " << files << " loaded" << endl;
 		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
 		}	  	    
@@ -275,10 +310,12 @@ void dataDYtoLL()
 	      std::ifstream testFileStream(files);
 	      if(!(bool)testFileStream) continue;    	      
 	      chains[iChain]->Add(files);
+	      nFiles++;
+	      if(nFiles>=maxFiles) break;
 	      cout << "File: " << files << " loaded" << endl;
 	      cout << "Entries: " << chains[iChain]->GetEntries() << endl;
 	    }	
-	}
+	}//end k loop over files
       	  if(iChain==14)
 	    {//MC Sample 10to50
 	      for(int j=0;j<3;j++)
@@ -403,7 +440,7 @@ void dataDYtoLL()
   hTopslinear->SetFillColor(kBlue+2);
   hTopslinear->SetLineColor(kBlue+3);
   
-  THStack*hStack = new THStack("hStacklinear","");
+  THStack*hStack = new THStack("hStack","");
   hStack->Add(hFakes);
   hStack->Add(hEW);
   hStack->Add(hTops);
@@ -470,7 +507,7 @@ void dataDYtoLL()
 	  //Electron loop
 	  for(int iEle = 0; iEle < Nelectrons; iEle++)
 	    {
-	      int closestTrackLep1=-1;
+	      //int closestTrackLep1=-1;
 	      for(int jEle = iEle+1; jEle < Nelectrons; jEle++)
 		{	  
 		  invMass=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
@@ -481,7 +518,7 @@ void dataDYtoLL()
 					     Electron_eta[jEle])) continue; 		  		 
 		  if(!passHLT) continue;
 		  
-		  int closestTrackLep2=-1;
+		  //int closestTrackLep2=-1;
 		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
 		  if(!Electron_passMediumID[jEle]) continue;//jLep electron cut
 		  if(iChain==25)
@@ -489,17 +526,17 @@ void dataDYtoLL()
 		      hDataInvMass->Fill(invMass);
 		      hDataInvMasslinear->Fill(invMass);
 		    }
-		  if(iChain<8) 
+		  else if(iChain<8) 
 		    {
 		      hFakes->Fill(invMass,weight);
 		      hFakeslinear->Fill(invMass,weight);
 		    }
-		  if(iChain>7&&iChain<11) 
+		  else if(iChain>7&&iChain<11) 
 		    {
 		      hEW->Fill(invMass,weight);
 		      hEWlinear->Fill(invMass,weight);
 		    }
-		  if(iChain>10&&iChain<14) 
+		  else if(iChain>10&&iChain<14) 
 		    {
 		      hTops->Fill(invMass,weight);
 		      hTopslinear->Fill(invMass,weight);
