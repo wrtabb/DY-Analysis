@@ -57,6 +57,9 @@ const float xSec[numChains] = {61526,5352960,9928000,2890800,350000,62964,18810,
 			       0.03047,0.01636,0.00218,0.0005156,1};
 const float binLow = 60.001;
 const float binHigh = 119.999;
+const float axisLow = 0.0001;
+const int nLinearBins = 30;
+const int nLogBins = 43;
 
 const float etaHigh = 2.4;
 const float etaGapHigh = 1.566; 
@@ -64,9 +67,10 @@ const float etaGapLow = 1.4442;
 const float ptHigh = 28;
 const float ptLow = 17;
 const float eMass = 0.000511;
+
 const TString treeName = "recoTree/DYTree";
 const float dRMinCut = 0.3;
-const int maxFiles = 10;
+const int maxFiles = 200;
 const TString whichChain[numChains] = 
     {"W + Jets","QCD pT 20 to 30","QCD pT 30 to 50","QCD pT 50 to 80","QCD pT 80 to 120","QCD pT 120 to 170",
      "QCD pT 170 to 300","QCD pT 300 to infinity","WW","ZZ","WZ","TT","tW","anti tW","MC 10 to 50","MC 50 to 100",
@@ -122,25 +126,25 @@ void dataDYtoLL()
     QCD80to120 = 4,        
     QCD120to170 = 5,       
     QCD170to300 = 6,       
-    QCD300AndUp = 7,       
+    QCD300toInf = 7,       
     WW = 8,                 
     ZZ = 9,                
     WZ = 10,                 
     tt = 11,                
     tW = 12,             
     tbarW = 13,         
-    MC10to50 = 15,
-    MC50to100 = 16,
-    MC100to200 = 17,
-    MC200to400 = 18,
-    MC400to500 = 19,
-    MC500to700 = 20,
-    MC700to800 = 21,
-    MC800to1000 = 22,
-    MC1000to1500 = 23,
-    MC1500to2000 = 24,
-    MC2000to3000 = 25,
-    Data = 26
+    MC10to50 = 14,
+    MC50to100 = 15,
+    MC100to200 = 16,
+    MC200to400 = 17,
+    MC400to500 = 18,
+    MC500to700 = 19,
+    MC700to800 = 20,
+    MC800to1000 = 21,
+    MC1000to1500 = 22,
+    MC1500to2000 = 23,
+    MC2000to3000 = 24,
+    Data = 25
   };
   
     TString subDirectory[numChains] = 
@@ -221,8 +225,10 @@ void dataDYtoLL()
       nFiles = 0;
       for(int k=0;k<10000;k++)//Loop over individual files: ntuple_skim_k.root
 	{	  
-	  if(iChain<2 || (iChain>5&&iChain<11)||(iChain>11&iChain<14))//0,1,6,7,8,9,10,11,12,13
-	    {//W+Jets, QCD20to30, QCD170to300, QCD300toInf, ZZ, WW, WZ, tW top, tW anti
+	  if(nFiles>=maxFiles) break;
+	  if(iChain==wJets||iChain==QCD20to30||iChain==QCD170to300|iChain==QCD300toInf||iChain==ZZ||
+	     iChain==WW||iChain==WZ||iChain==tW||iChain==tbarW)
+	    {//wJets, QCD20to30, QCD170to300, QCD300toInf, ZZ, WW, WZ, tW, tbarW 
 	      files = inputBaseDirName;
 	      files+=subDirectory[iChain];
 	      files+="/ntuple_skim_";
@@ -230,16 +236,16 @@ void dataDYtoLL()
 	      files+=".root";
 	      std::ifstream testFileStream(files);
 	      if(!(bool)testFileStream) continue;    	
-	      chains[iChain]->Add(files); 
-	      nFiles++;
-	      if(nFiles>=maxFiles) break;
+	      chains[iChain]->Add(files); 	      
 	      cout << "File: " << files << " loaded" << endl;	   
 	      cout << "Entries: " << chains[iChain]->GetEntries() << endl;
+	      nFiles++;	      
 	      }  
-	  if(iChain==11)//11
+	  if(iChain==tt)
 	    {//tt 
 	      for(int j=0;j<2;j++)
 		{		  
+		  if(nFiles>=maxFiles) break;
 		  files = inputBaseDirName;
 		  files+=subDirectory[iChain];
 		  files+=subTT[j];
@@ -248,14 +254,13 @@ void dataDYtoLL()
 		  files+=".root";
 		  std::ifstream testFileStream(files);
 		  if(!(bool)testFileStream) continue;    	
-		  chains[iChain]->Add(files); 
-		  nFiles++;
-		  if(nFiles>=maxFiles) break;
+		  chains[iChain]->Add(files); 		  
 		  cout << "File: " << files << " loaded" << endl;
 		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
+		  nFiles++;		  
 		}	  	    
 	    }
-	  if(iChain==2)//2
+	  if(iChain==QCD30to50)
 	    {//QCD 30to50	    
 	      for(int j=0;j<2;j++)
 		{		  
@@ -267,14 +272,13 @@ void dataDYtoLL()
 		  files+=".root";
 		  std::ifstream testFileStream(files);
 		  if(!(bool)testFileStream) continue;    	
-		  chains[iChain]->Add(files); 
-		  nFiles++;
-		  if(nFiles>=maxFiles) break;
+		  chains[iChain]->Add(files); 	       
 		  cout << "File: " << files << " loaded" << endl;
 		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
+		  nFiles++;
 		}	  	    
 	    }
-	  if(iChain==3)//3
+	  if(iChain==QCD50to80)
 	    {//QCD 50to80	    
 	      for(int j=0;j<2;j++)
 		{		  
@@ -286,14 +290,13 @@ void dataDYtoLL()
 		  files+=".root";
 		  std::ifstream testFileStream(files);
 		  if(!(bool)testFileStream) continue;    	
-		  chains[iChain]->Add(files); 
-		  nFiles++;
-		  if(nFiles>=maxFiles) break;
+		  chains[iChain]->Add(files); 		  
 		  cout << "File: " << files << " loaded" << endl;
 		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
+		  nFiles++;
 		}	  	    
 	    }
-	  if(iChain==4)//4
+	  if(iChain==QCD80to120)
 	    {//QCD 80to120	    
 	      for(int j=0;j<2;j++)
 		{		  
@@ -305,14 +308,13 @@ void dataDYtoLL()
 		  files+=".root";
 		  std::ifstream testFileStream(files);
 		  if(!(bool)testFileStream) continue;    	
-		  chains[iChain]->Add(files); 
-		  nFiles++;
-		  if(nFiles>=maxFiles) break;
+		  chains[iChain]->Add(files); 		  
 		  cout << "File: " << files << " loaded" << endl;
 		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
+		  nFiles++;
 		}	  	    
 	    }
-	  if(iChain==5)//5
+	  if(iChain==QCD120to170)
 	    {//QCD 120to170	    
 	      for(int j=0;j<2;j++)
 		{		  
@@ -324,14 +326,13 @@ void dataDYtoLL()
 		  files+=".root";
 		  std::ifstream testFileStream(files);
 		  if(!(bool)testFileStream) continue;    	
-		  chains[iChain]->Add(files); 
-		  nFiles++;
-		  if(nFiles>=maxFiles) break;
+		  chains[iChain]->Add(files); 		  
 		  cout << "File: " << files << " loaded" << endl;
 		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
+		  nFiles++;
 		}	  	    
 	    }
-	  if(iChain==25)
+	  if(iChain==Data)
 	    {//Data sample
 	      files = inputBaseDirName;
 	      files+=subDirectory[iChain];
@@ -339,14 +340,13 @@ void dataDYtoLL()
 	      files += ".root";
 	      std::ifstream testFileStream(files);
 	      if(!(bool)testFileStream) continue;    	      
-	      chains[iChain]->Add(files);
-	      nFiles++;
-	      if(nFiles>=maxFiles) break;
+	      chains[iChain]->Add(files);	      
 	      cout << "File: " << files << " loaded" << endl;
 	      cout << "Entries: " << chains[iChain]->GetEntries() << endl;
+	      nFiles++;
 	    }	
 	}//end k loop over files
-      	  if(iChain==14)
+      	  if(iChain==MC10to50)
 	    {//MC Sample 10to50
 	      for(int j=0;j<3;j++)
 		{		  
@@ -360,7 +360,7 @@ void dataDYtoLL()
 		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
 		}	  	      
 	    }
-	  if(iChain==16)
+	  if(iChain==MC100to200)
 	    {//MC sample 100to200
 	      for(int j=0;j<2;j++)
 		{		  
@@ -374,7 +374,8 @@ void dataDYtoLL()
 		  cout << "Entries: " << chains[iChain]->GetEntries() << endl;
 		}  	      
 	    }    
-	  if(iChain==15 || (iChain>16&&iChain<25))
+	  if(iChain==MC50to100||iChain==MC200to400||iChain==MC400to500||iChain==MC500to700||iChain==MC700to800||
+	     iChain==MC800to1000||iChain==MC1000to1500||iChain==MC1500to2000||iChain==MC2000to3000)
 	    {//MC samples other than 10to50 and 100to200
 	      files = inputBaseDirName;
 	      files += subDirectory[iChain];
@@ -403,9 +404,9 @@ void dataDYtoLL()
   Long64_t dataEntries = chains[14]->GetEntries();
   cout << "Total Events Loaded: " << totalentries << endl;
   cout << endl;
-  
+    
   //Defining histograms
-  TH1F*hMCInvMass = new TH1F("hMCInvMass","",43,massbins);
+  TH1F*hMCInvMass = new TH1F("hMCInvMass","",nLogBins,massbins);
   hMCInvMass->Sumw2();
   hMCInvMass->SetFillColor(kOrange-2);
   hMCInvMass->SetLineColor(kOrange+3);
@@ -413,7 +414,8 @@ void dataDYtoLL()
   hMCInvMass->GetXaxis()->SetMoreLogLabels();
   hMCInvMass->GetXaxis()->SetNoExponent();
   hMCInvMass->SetTitle("MC vs. Data Invariant Mass");
-  TH1F*hMCInvMasslinear = new TH1F("hMCInvMasslinear","",30,binLow,binHigh);
+  hMCInvMass->SetMinimum(axisLow);
+  TH1F*hMCInvMasslinear = new TH1F("hMCInvMasslinear","",nLinearBins,binLow,binHigh);
   hMCInvMasslinear->Sumw2();
   hMCInvMasslinear->SetFillColor(kOrange-2);
   hMCInvMasslinear->SetLineColor(kOrange+3);
@@ -421,7 +423,8 @@ void dataDYtoLL()
   hMCInvMasslinear->GetXaxis()->SetMoreLogLabels();
   hMCInvMasslinear->GetXaxis()->SetNoExponent();
   hMCInvMasslinear->SetTitle("MC vs. Data Invariant Mass");
-  TH1F*hDataInvMass = new TH1F("hDataInvMass","",43,massbins);
+  hMCInvMasslinear->SetMinimum(axisLow);
+  TH1F*hDataInvMass = new TH1F("hDataInvMass","",nLogBins,massbins);
   hDataInvMass->Sumw2();
   hDataInvMass->SetLineColor(kBlack);
   hDataInvMass->SetMarkerColor(kBlack);
@@ -430,7 +433,8 @@ void dataDYtoLL()
   hDataInvMass->GetXaxis()->SetTitle("m_{ee} [GeV]");
   hDataInvMass->GetXaxis()->SetNoExponent();
   hDataInvMass->GetXaxis()->SetMoreLogLabels();
-  TH1F*hDataInvMasslinear = new TH1F("hDataInvMasslinear","",30,binLow,binHigh);
+  hDataInvMass->SetMinimum(axisLow);
+  TH1F*hDataInvMasslinear = new TH1F("hDataInvMasslinear","",nLinearBins,binLow,binHigh);
   hDataInvMasslinear->Sumw2();
   hDataInvMasslinear->SetLineColor(kBlack);
   hDataInvMasslinear->SetMarkerColor(kBlack);
@@ -439,37 +443,43 @@ void dataDYtoLL()
   hDataInvMasslinear->GetXaxis()->SetTitle("m_{ee} [GeV]");
   hDataInvMasslinear->GetXaxis()->SetNoExponent();
   hDataInvMasslinear->GetXaxis()->SetMoreLogLabels();
-  TH1F*hFakes = new TH1F("hFakes","",43,massbins);
+  hDataInvMasslinear->SetMinimum(axisLow);
+  TH1F*hFakes = new TH1F("hFakes","",nLogBins,massbins);
   //W+Jets and QCD
   //iChain 0-7
   hFakes->Sumw2();
   hFakes->SetFillColor(kViolet+5);
   hFakes->SetLineColor(kViolet+3);
-  TH1F*hFakeslinear = new TH1F("hFakeslinear","",30,binLow,binHigh);
+  hFakes->SetMinimum(axisLow);
+  TH1F*hFakeslinear = new TH1F("hFakeslinear","",nLinearBins,binLow,binHigh);
   hFakeslinear->Sumw2();
   hFakeslinear->SetFillColor(kViolet+5);
   hFakeslinear->SetLineColor(kViolet+3);
-  hFakeslinear->GetYaxis()->SetRangeUser(0.00001,100000);
+  hFakeslinear->SetMinimum(axisLow);
   TH1F*hEW = new TH1F("hEW","",43,massbins);
   //WW, ZZ, WZ
   //iChain 8,9,10
   hEW->Sumw2();
   hEW->SetFillColor(kRed+2);
   hEW->SetLineColor(kRed+4);
-  TH1F*hEWlinear = new TH1F("hEWlinear","",30,binLow,binHigh);
+  hEW->SetMinimum(axisLow);
+  TH1F*hEWlinear = new TH1F("hEWlinear","",nLinearBins,binLow,binHigh);
   hEWlinear->Sumw2();
   hEWlinear->SetFillColor(kRed+2);
   hEWlinear->SetLineColor(kRed+4);
-  TH1F*hTops = new TH1F("hTops","",43,massbins);
+  hEWlinear->SetMinimum(axisLow);
+  TH1F*hTops = new TH1F("hTops","",nLogBins,massbins);
   //tt, tW
   //iChain 11,12,13
   hTops->Sumw2();
   hTops->SetFillColor(kBlue+2);
   hTops->SetLineColor(kBlue+3);
-  TH1F*hTopslinear = new TH1F("hTopslinear","",30,binLow,binHigh);
+  hTops->SetMinimum(axisLow);
+  TH1F*hTopslinear = new TH1F("hTopslinear","",nLinearBins,binLow,binHigh);
   hTopslinear->Sumw2();
   hTopslinear->SetFillColor(kBlue+2);
   hTopslinear->SetLineColor(kBlue+3);
+  hTopslinear->SetMinimum(axisLow);
 
   //Defining stacks
   THStack*hStack = new THStack("hStack","");
@@ -494,22 +504,22 @@ void dataDYtoLL()
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   int trigNameSize;
-  nentries = 1000000;
-  //double lumi = chains[15]->GetEntries()/xSec[15]; //luminosity of 50to100
-  double lumi = nentries/xSec[15];
+  //nentries = 100000;
+  double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //luminosity of 50to100
+  //double lumi = nentries/xSec[MC50to100];
   for(int iChain=0;iChain<numChains;iChain++)
     {
-      nentries = 1000000;
-      //nentries = chains[iChain]->GetEntries();
-      if(chains[iChain]->GetEntries() < nentries) nentries = chains[iChain]->GetEntries();
+      //nentries = 100000;
+      nentries = chains[iChain]->GetEntries();
+      //if(chains[iChain]->GetEntries() < nentries) nentries = chains[iChain]->GetEntries();
       weight=lumi*(xSec[iChain]/nentries);
       cout << endl;
       cout << "Now processing files from " << "'" << whichChain[iChain] << "'" << endl;
       for(Long64_t i=0;i<nentries;i++)
 	{      
 	  chains[iChain]->GetEntry(i);
-	  //counter(count,totalentries);
-	  counter(count,26*nentries);
+	  counter(count,totalentries);
+	  //counter(count,26*nentries);
 	  count = count+1;      
 	    
 	  //HLT cut
@@ -549,27 +559,27 @@ void dataDYtoLL()
 		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
 		  if(!Electron_passMediumID[jEle]) continue;//jLep electron cut
 
-		  if(iChain==25)
+		  if(iChain==Data)
 		    {
 		      hDataInvMass->Fill(invMass);
 		      hDataInvMasslinear->Fill(invMass);
 		    }
-		  else if(iChain<8) 
+		  else if(iChain<WW) 
 		    {
 		      hFakes->Fill(invMass,weight);
 		      hFakeslinear->Fill(invMass,weight);
 		    }
-		  else if(iChain>7&&iChain<11) 
+		  else if(iChain>QCD300toInf&&iChain<tt) 
 		    {
 		      hEW->Fill(invMass,weight);
 		      hEWlinear->Fill(invMass,weight);
 		    }
-		  else if(iChain>10&&iChain<14) 
+		  else if(iChain>WZ&&iChain<MC10to50) 
 		    {
 		      hTops->Fill(invMass,weight);
 		      hTopslinear->Fill(invMass,weight);
 		    }		  
-		  else if(iChain>13&&iChain<25)
+		  else if(iChain>tbarW&&iChain<Data)
 		    {
 		      hMCInvMass->Fill(invMass,weight);
 		      hMCInvMasslinear->Fill(invMass,weight);
@@ -623,14 +633,16 @@ void dataDYtoLL()
   
   TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
   canvas2->SetLogy();
-  auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,hDataInvMasslinear);
- 
+  auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,hDataInvMasslinear); 
   canvas2->cd();
   hDataMCRatiolinear->Draw();
+  //TH1F*graph = (TH1F*)hDataMCRatiolinear->Clone();
+  //graph->SetMinimum(0.001);
+  //graph->Draw();
+  hDataMCRatiolinear->GetUpperPad()->cd();
   legend->Draw("same");
-  canvas2->Update();
+ 
   canvas2->SaveAs("./plots/dataVsMClinear.png");
-
   rootFile->cd();
   hStack->Write();
   hDataInvMass->Write();
