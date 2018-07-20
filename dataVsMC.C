@@ -182,7 +182,7 @@ TString dirNames[numChains]=
  for(int iChain=0;iChain<numChains;iChain++)
    {
      if(iChain==tt700to1000||iChain==tt1000toInf) continue;//skip these files for now
-      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3Lnu) continue;//skip these files for now
+      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//skip these files for now
      subFiles[iChain] = new vector<TString>;
      if(iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170) 
        {
@@ -218,7 +218,7 @@ TString dirNames[numChains]=
       chains[iChain] = new TChain(treeName);
       subDirectorySize = subFiles[iChain]->size();    
       if(iChain==tt700to1000||iChain==tt1000toInf) continue;//skip these files for now
-      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3Lnu) continue;//skip these files for now
+      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//skip these files for now
       for(int k=0;k<subDirectorySize;k++)
 	{	  	      
 	  files = baseDirectory;
@@ -352,7 +352,7 @@ TString dirNames[numChains]=
   for(int iChain=0;iChain<numChains;iChain++)
     {
       if(iChain==tt700to1000||iChain==tt1000toInf) continue;//skip these files for now
-      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3Lnu) continue;//skip these files for now
+      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//skip these files for now
       //nentries = 10000;
       nentries = chains[iChain]->GetEntries();
       //if(chains[iChain]->GetEntries() < nentries) nentries = chains[iChain]->GetEntries();
