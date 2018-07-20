@@ -98,12 +98,12 @@ void dataVsMC()
     QCD20to30 = 0,
     QCD30to50 = 1,
     QCD50to80 = 2,
-    QCD80to120 = 3,        
-    QCD120to170 = 4,       
-    QCD170to300 = 5,       
+    QCD80to120 = 3,
+    QCD120to170 = 4,
+    QCD170to300 = 5,
     QCD300toInf = 6,  
     wJets = 7,
-    WW = 8,       
+    WW = 8,    
     WWTo2L2Nu = 9,
     ZZ = 10,       
     ZZTo4L = 11,
@@ -181,6 +181,8 @@ TString dirNames[numChains]=
  vector <TString> *subFiles[numChains];  
  for(int iChain=0;iChain<numChains;iChain++)
    {
+     if(iChain==tt700to1000||iChain==tt1000toInf) continue;//skip these files for now
+      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3Lnu) continue;//skip these files for now
      subFiles[iChain] = new vector<TString>;
      if(iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170) 
        {
@@ -215,6 +217,8 @@ TString dirNames[numChains]=
     {
       chains[iChain] = new TChain(treeName);
       subDirectorySize = subFiles[iChain]->size();    
+      if(iChain==tt700to1000||iChain==tt1000toInf) continue;//skip these files for now
+      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3Lnu) continue;//skip these files for now
       for(int k=0;k<subDirectorySize;k++)
 	{	  	      
 	  files = baseDirectory;
@@ -347,6 +351,8 @@ TString dirNames[numChains]=
   //double lumi = nentries/xSec[MC50to100];
   for(int iChain=0;iChain<numChains;iChain++)
     {
+      if(iChain==tt700to1000||iChain==tt1000toInf) continue;//skip these files for now
+      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3Lnu) continue;//skip these files for now
       //nentries = 10000;
       nentries = chains[iChain]->GetEntries();
       //if(chains[iChain]->GetEntries() < nentries) nentries = chains[iChain]->GetEntries();
@@ -407,7 +413,7 @@ TString dirNames[numChains]=
 		      hFakes->Fill(invMass,weight);
 		      hFakeslinear->Fill(invMass,weight);
 		    }
-		  else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L|||iChain==WZTo3LNu) 
+		  else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) 
 		    {
 		      hEW->Fill(invMass,weight);
 		      hEWlinear->Fill(invMass,weight);
