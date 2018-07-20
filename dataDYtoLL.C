@@ -29,9 +29,6 @@
 void counter(Long64_t i, Long64_t N);
 double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
-bool passPromptGenElectron(int ID, int fromfinalstate);
-bool passHardProcess(int ID, int hardProces);
-bool findGenToRecoMatch(int genIndex,int &recoIndex);
 
 //Defining variables and arrays
 const int MPSIZE = 2000;
