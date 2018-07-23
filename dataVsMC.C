@@ -211,8 +211,7 @@ TString dirNames[numChains]=
 	 subFiles[iChain]->push_back(dirNames[iChain]+"Backup");
        }
      else subFiles[iChain]->push_back(dirNames[iChain]);      
-   }
- 
+   } 
  
  TString files;  
  Long64_t subDirectorySize;
@@ -404,7 +403,7 @@ TString dirNames[numChains]=
 		  if(!passHLT) continue;
 
 		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
-		  if(!Electron_passMediumID[jEle]) continue;//jLep electron cut
+		  if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
 
 		  if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
 		     iChain==DataRunG||iChain==DataRunH)
@@ -472,7 +471,7 @@ TString dirNames[numChains]=
   legend->AddEntry(hMCInvMass,"#gamma^{*}/Z #rightarrow e^{-}e^{+}");
   legend->AddEntry(hTops,"t#bar{t}+tW+#bar{t}W");
   legend->AddEntry(hEW,"EW");
-  legend->AddEntry(hFakes,"Fakes (Wjets+QCD");
+  legend->AddEntry(hFakes,"Fakes (Wjets+QCD)");
 
   auto hDataMCRatio = new TRatioPlot(hStack,hDataInvMass);
   hDataMCRatio->GetXaxis()->SetTitle("m_{ee} [GeV]");  

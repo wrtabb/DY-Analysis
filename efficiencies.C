@@ -87,81 +87,79 @@ void efficiencies()
   TBranch*b_HLT_trigType;
   TBranch*b_HLT_trigFired;
 
-  //Loading trees
+  //Loading ntuples
   cout << "Loading ntuples" << endl;
-  TChain*chains[numChains];  
-  int nFiles;
-  Long64_t totalentries = 0;
-  TString files;
-  TString subDirectoryMC[numChains] = 
-    {      
-      "DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M10to50_",
-      "DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/skims/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_skim.root",
-      "DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M100to200",
-      "DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/skims/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_skim.root",
-      "DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/skims/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_skim.root",
-      "DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/skims/DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_skim.root",
-      "DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/skims/DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_skim.root",
-      "DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/skims/DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_skim.root",
-      "DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/skims/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_skim.root",
-      "DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/skims/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_skim.root",
-      "DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/skims/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_skim.root"
-    };
 
-  TString sub10to50[3] =
-    {
-      "ext1v1/skims/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_crab_DYLL_M10to50_ext1v1_skim.root",
-      "v1/skims/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_crab_DYLL_M10to50_v1_skim.root",
-      "v2/skims/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_crab_DYLL_M10to50_v2_skim.root"
-    };
-  TString sub100to200[2] =
-    {
-      "/skims/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_crab_DYLL_M100to200_skim.root",
-      "_ext/skims/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_crab_DYLL_M100to200_ext_skim.root"
-    };
-  TString inputBaseDirName =  
-    "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/";  
-    for(int iChain=0;iChain<numChains;iChain++)
-    {
-      chains[iChain] = new TChain(treeName);      
-      nFiles = 0;        	  
-      if(iChain==0)
-	{	      
-	  for(int j=0;j<3;j++)
-	    {		  
-	      files = inputBaseDirName;
-	      files+=subDirectoryMC[iChain];
-	      files+=sub10to50[j];
-	      std::ifstream testFileStream(files);
-	      if(!(bool)testFileStream) continue;    	
-	      chains[iChain]->Add(files); 
-	      cout << "File: " << files << " loaded" << endl;
-	      cout << "Number of Entries: " << chains[iChain]->GetEntries() << endl;
-	    }//end j loop	  
-	}//end if iChain==0
-      if(iChain==2)
-	{	      
-	  for(int j=0;j<2;j++)
-	    {		  
-	      files = inputBaseDirName;
-	      files+=subDirectoryMC[iChain];
-	      files+=sub100to200[j];
-	      std::ifstream testFileStream(files);
-	      if(!(bool)testFileStream) continue;    	
-	      chains[iChain]->Add(files); 
-	      cout << "File: " << files << " loaded" << endl;
-	      cout << "Number of Entries: " << chains[iChain]->GetEntries() << endl;
-	    }//end j loop	  
-	}//end if iChain==2
-      else if(iChain!=0 && iChain!=2)
-	{
-	  files = inputBaseDirName;
-	  files += subDirectoryMC[iChain];
-	  std::ifstream testFileStream(files);
-	  if(!(bool)testFileStream) continue;    	      
-	  chains[iChain]->Add(files);
-	  cout << "File: " << files << " loaded" << endl;
-	  cout << "Number of Entries: " << chains[iChain]->GetEntries() << endl;
+    enum chainNum 
+  {        
+    MC10to50,
+    MC50to100,
+    MC100to200,
+    MC200to400,
+    MC400to500,
+    MC500to700,
+    MC700to800,
+    MC800to1000,
+    MC1000to1500,
+    MC1500to2000,
+    MC2000to3000
+  }; 
+
+    TString dirNames[numChains] = 
+      {      
+	"/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M10to50_",
+	"/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
+	"/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M100to200",
+	"/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
+	"/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
+	"/DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
+	"/DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
+	"/DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
+	"/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
+	"/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
+	"/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8"
+      };
+ 
+ TString baseDirectory = 
+   "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3"; 
+ TChain*chains[numChains];
+ vector <TString> *subFiles[numChains];  
+ int nFiles;
+ for(int iChain=0;iChain<numChains;iChain++)
+   {
+     subFiles[iChain] = new vector<TString>;
+
+     if(iChain==MC10to50) 
+       {
+	 subFiles[iChain]->push_back(dirNames[iChain]+"ext1v1");
+	 subFiles[iChain]->push_back(dirNames[iChain]+"v1");
+	 subFiles[iChain]->push_back(dirNames[iChain]+"v2");
+       }
+     else if(iChain==MC100to200) 
+       {
+	 subFiles[iChain]->push_back(dirNames[iChain]);
+	 subFiles[iChain]->push_back(dirNames[iChain]+"_ext");
+       }
+     else subFiles[iChain]->push_back(dirNames[iChain]);      
+   } 
+ 
+ TString files;  
+ Long64_t subDirectorySize;
+ Long64_t totalentries = 0;
+ for(int iChain=0;iChain<numChains;iChain++)
+   {          
+     chains[iChain] = new TChain(treeName);
+     subDirectorySize = subFiles[iChain]->size();
+      for(int k=0;k<subDirectorySize;k++)
+	{	  	      
+	  TFileCollection filecoll("dum");//Object for creating a list of files in a directory
+	  files = baseDirectory;
+	  files+=subFiles[iChain]->at(k);
+	  files+="/skims/*.root";	  
+	  filecoll.Add(files);
+	  chains[iChain]->AddFileInfoList(filecoll.GetList());
+	  cout << files << endl;
+	  cout << chains[iChain]->GetEntries() << " events loaded" << endl;	  
 	}
   
       //Setting addresses for all branches
@@ -251,7 +249,7 @@ void efficiencies()
   TLegend*legend2 = new TLegend(0.65,0.9,0.9,0.7);
   legend2->SetTextSize(0.02);
 
-  TFile *rootFile = new TFile("plotsDY.root","RECREATE");
+  TFile *rootFile = new TFile("/plots/plotsDY.root","RECREATE");
   TCanvas*canvas1 = new TCanvas("cInvMassHardProcess","",10,10,1000,1000);
   canvas1->SetLogx();
   canvas1->SetLogy();
@@ -263,9 +261,9 @@ void efficiencies()
   int dRMinIndex;  
   Long64_t nentries;
   Long64_t count = 0;
-  double nEvents = 50000;
-  //double lumi = chains[1]->GetEntries()/xSec[1];//luminosity of 50to100
-  double lumi = nEvents/xSec[1];//luminosity of 50to100
+  //double nEvents = 50000;
+  double lumi = chains[1]->GetEntries()/xSec[1];//luminosity of 50to100
+  //double lumi = nEvents/xSec[1];//luminosity of 50to100
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   int trigNameSize;
@@ -273,14 +271,14 @@ void efficiencies()
   long int nTooManyDielectronsFS = 0;
   for(int iChain=0;iChain<numChains;iChain++)
     {
-      //nentries = chains[iChain]->GetEntries();
-      nentries = nEvents;
+      nentries = chains[iChain]->GetEntries();
+      //nentries = nEvents;
       weight=lumi*(xSec[iChain]/nentries);
       for(Long64_t i=0;i<nentries;i++)
 	{      
 	  chains[iChain]->GetEntry(i);
-	  //counter(count,totalentries);
-	  counter(count,11*nentries);
+	  counter(count,totalentries);
+	  //counter(count,11*nentries);
 	  count = count+1;
 
 	  // Loop over gen leptons and find the electron pair at the isHardProcess
@@ -343,7 +341,7 @@ void efficiencies()
 				GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],
 				GENLepton_eta[idxGenEleFS2],GENLepton_phi[idxGenEleFS2],eMass);		  
 
-	  if(iChain==1 && invMass>100) continue; // Remove events above 100 in the M-50 sample
+	  if(iChain==MC50to100 && invMass>100) continue; // Remove events above 100 in the M-50 sample
 
 	  hHardProcess[iChain]->Fill(invMassHardProcess,weight);//Fill if hard process electrons
 
@@ -533,11 +531,11 @@ void efficiencies()
   hpTvsMassProf->GetYaxis()->SetTitle("#LTp_{T}#GT  [GeV]");
   hpTvsMassProf->Draw();
     
-  canvas1->SaveAs("hardProcessInvMass.png");
-  canvas2->SaveAs("allEfficiencies.png");
-  canvas3->SaveAs("efficiency.png");
-  canvas4->SaveAs("acceptance.png");
-  canvas5->SaveAs("pTvsMassProf.png");
+  canvas1->SaveAs("/plots/hardProcessInvMass.png");
+  canvas2->SaveAs("/plots/allEfficiencies.png");
+  canvas3->SaveAs("/plots/efficiency.png");
+  canvas4->SaveAs("/plots/acceptance.png");
+  canvas5->SaveAs("/plots/pTvsMassProf.png");
   
   rootFile->cd();
   hIDEfficiency->Write();
