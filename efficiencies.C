@@ -62,7 +62,7 @@ const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
 const int maxFiles = 1;
 
-void DY_cross_section()
+void efficiencies()
 {
   TTimeStamp ts_start;
   cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
