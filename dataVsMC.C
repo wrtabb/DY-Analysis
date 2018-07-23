@@ -172,7 +172,7 @@ TString dirNames[numChains]=
     "/DoubleEG/crab_DoubleEG_RunE",
     "/DoubleEG/crab_DoubleEG_RunF",
     "/DoubleEG/crab_DoubleEG_RunG",
-    "/DoubleEG/crab_DoubleEG_RunHver"
+    "/DoubleEG/crab_DoubleEG_RunH"
   };
  
  TString baseDirectory = 
@@ -182,7 +182,7 @@ TString dirNames[numChains]=
  for(int iChain=0;iChain<numChains;iChain++)
    {
      if(iChain==tt700to1000||iChain==tt1000toInf) continue;//skip these files for now
-      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//skip these files for now
+     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//skip these files for now
      subFiles[iChain] = new vector<TString>;
      if(iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170) 
        {
@@ -195,39 +195,44 @@ TString dirNames[numChains]=
 	 subFiles[iChain]->push_back(dirNames[iChain]+"_v1");
 	 subFiles[iChain]->push_back(dirNames[iChain]+"_v2");
        }
-     else if(iChain==MC100to200) 
+     else if(iChain==MC100to200||iChain==wJets) 
        {
 	 subFiles[iChain]->push_back(dirNames[iChain]);
 	 subFiles[iChain]->push_back(dirNames[iChain]+"_ext");
        }
      else if(iChain==DataRunH) 
        {
-	 subFiles[iChain]->push_back(dirNames[iChain]+"2");
-	 subFiles[iChain]->push_back(dirNames[iChain]+"3");
+	 subFiles[iChain]->push_back(dirNames[iChain]+"ver2");
+	 subFiles[iChain]->push_back(dirNames[iChain]+"ver3");
+       }
+     else if(iChain==tt)
+       {
+	 subFiles[iChain]->push_back(dirNames[iChain]);
+	 subFiles[iChain]->push_back(dirNames[iChain]+"Backup");
        }
      else subFiles[iChain]->push_back(dirNames[iChain]);      
    }
  
  
  TString files;  
- TFileCollection filecoll("dum");//Object for creating a list of files in a directory
  Long64_t subDirectorySize;
  Long64_t totalentries = 0;
  for(int iChain=0;iChain<numChains;iChain++)
-    {
-      chains[iChain] = new TChain(treeName);
-      subDirectorySize = subFiles[iChain]->size();    
+    {          
       if(iChain==tt700to1000||iChain==tt1000toInf) continue;//skip these files for now
       if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//skip these files for now
+      chains[iChain] = new TChain(treeName);
+      subDirectorySize = subFiles[iChain]->size();
       for(int k=0;k<subDirectorySize;k++)
 	{	  	      
+	  TFileCollection filecoll("dum");//Object for creating a list of files in a directory
 	  files = baseDirectory;
 	  files+=subFiles[iChain]->at(k);
-	  files+="/skims_0001/*.root";
+	  files+="/skims_0001/*.root";	  
 	  filecoll.Add(files);
 	  chains[iChain]->AddFileInfoList(filecoll.GetList());
 	  cout << files << endl;
-	  cout << chains[iChain]->GetEntries() << " events loaded" << endl;
+	  cout << chains[iChain]->GetEntries() << " events loaded" << endl;	  
 	}                
 	  
       //Setting addresses for branches
