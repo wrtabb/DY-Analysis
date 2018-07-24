@@ -22,6 +22,7 @@
 #include "TGraphAsymmErrors.h"
 #include "TProfile.h"
 #include "TFileCollection.h"
+#include "THashList.h"
 
 void counter(Long64_t i, Long64_t N);
 double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
@@ -89,8 +90,8 @@ void efficiencies()
 
   //Loading ntuples
   cout << "Loading ntuples" << endl;
-
-    enum chainNum 
+  
+  enum chainNum 
   {        
     MC10to50,
     MC50to100,
@@ -108,7 +109,7 @@ void efficiencies()
     TString dirNames[numChains] = 
       {      
 	"/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M10to50_",
-	"/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
+	"/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100",
 	"/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M100to200",
 	"/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
 	"/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
@@ -124,11 +125,9 @@ void efficiencies()
    "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3"; 
  TChain*chains[numChains];
  vector <TString> *subFiles[numChains];  
- int nFiles;
  for(int iChain=0;iChain<numChains;iChain++)
    {
      subFiles[iChain] = new vector<TString>;
-
      if(iChain==MC10to50) 
        {
 	 subFiles[iChain]->push_back(dirNames[iChain]+"ext1v1");
@@ -322,7 +321,32 @@ void efficiencies()
 		}
 	      } // end inner loop over gen leptons
 	    } // end outer loop over gen leptons
-	  
+	  /*	  
+	  //Reco loop
+	  double invMassReco;
+	  int idxRecoEle1, idxRecoEle2;
+	  int nRecoDielectrons = 0;
+	  if(Nelectrons<2) continue;
+	  for(int iEle = 0; iEle < Nelectrons; iEle++)
+	    {
+	      for(int jEle = iEle+1; jEle < Nelectrons; jEle++)
+		{	  
+		  //invMassReco=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
+		  //		      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
+		  
+		  if(iChain==MC50to100 && invMass>100) continue;
+		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
+					     Electron_eta[jEle])) continue; 		  		 
+
+		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
+		  if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
+		  nRecoDielectrons++;
+		  idxRecoEle1 = iEle;
+		  idxRecoEle2 = jEle;		    
+		  
+		}//end inner reco loop	   
+	    }//end reco loop
+	  */
 	  if(nGenDielectrons==0) 
 	    continue; // must be DY->mumu or tautau event, skip it
 	  
@@ -350,8 +374,6 @@ void efficiencies()
 	  invMass = calcInvMass(GENLepton_pT[idxGenEleFS1],GENLepton_eta[idxGenEleFS1],
 				GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],
 				GENLepton_eta[idxGenEleFS2],GENLepton_phi[idxGenEleFS2],eMass);		  
-
-	  if(iChain==MC50to100 && invMass>100) continue; // Remove events above 100 in the M-50 sample
 
 	  hHardProcess[iChain]->Fill(invMassHardProcess,weight);//Fill if hard process electrons
 
@@ -671,3 +693,4 @@ double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,doubl
   double invMass = (vGenElectron1+vGenElectron2).M();
   return invMass;
 }//end calcInvMass
+

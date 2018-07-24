@@ -28,6 +28,7 @@
 #include "TTimeStamp.h"
 #include "TFileCollection.h"
 #include "TRatioPlot.h"
+#include "THashList.h"
 
 void counter(Long64_t i, Long64_t N);
 double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
@@ -361,20 +362,23 @@ TString dirNames[numChains]=
       nentries = chains[iChain]->GetEntries();
       //if(chains[iChain]->GetEntries() < nentries) nentries = chains[iChain]->GetEntries();
       weight=lumi*(xSec[iChain]/nentries);
+
+      
+
       for(Long64_t i=0;i<nentries;i++)
 	{      
 	  chains[iChain]->GetEntry(i);
+	  if(Nelectrons<2) continue;
 	  counter(count,totalentries);
 	  //counter(count,7*nentries);
-	  count = count+1;      
-	    
+	  count = count+1;   
+
 	  //HLT cut
 	  trigNameSize = pHLT_trigName->size();
 	  bool passHLT = kFALSE;	  
 	  for(int iHLT=0;iHLT<trigNameSize;iHLT++)
 	    {
-	      trigName = pHLT_trigName->at(iHLT);
-	      
+	      trigName = pHLT_trigName->at(iHLT);	  
 	      if(trigName.CompareTo(compareHLT)==0)
 		{
 		  if(HLT_trigFired[iHLT]==1) 
@@ -388,7 +392,7 @@ TString dirNames[numChains]=
 		  break; 
 		}
 	    } 
-
+	  if(!passHLT) continue;
 	  //Electron loop
 	  for(int iEle = 0; iEle < Nelectrons; iEle++)
 	    {
@@ -399,8 +403,7 @@ TString dirNames[numChains]=
 		  
 		  if(iChain==MC50to100 && invMass>100) continue;
 		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
-					     Electron_eta[jEle])) continue; 		  		 
-		  if(!passHLT) continue;
+					     Electron_eta[jEle])) continue; 		    
 
 		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
 		  if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
