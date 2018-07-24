@@ -21,6 +21,7 @@
 #include "TTimeStamp.h"
 #include "TGraphAsymmErrors.h"
 #include "TProfile.h"
+#include "TFileCollection.h"
 
 void counter(Long64_t i, Long64_t N);
 double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
@@ -60,7 +61,6 @@ const TString treeName = "recoTree/DYTree";
 const float dRMinCut = 0.3;
 const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
-const int maxFiles = 1;
 
 void efficiencies()
 {
@@ -229,6 +229,15 @@ void efficiencies()
   hpTvsMass->GetYaxis()->SetTitle("p_{T} [GeV]"); 
   hpTvsMass->GetXaxis()->SetTitle("m_{ee} [GeV]"); 
 
+  TH2F*migMatrixGENFSvsGENisHard = new TH2F("migMatrixGENFSvsGENisHard","",43,massbins,43,massbins);
+  migMatrixGENFSvsGENisHard->SetTitle("Migration Matrix: Gen-Level Hard Process vs. Gen_Level Final State");
+  migMatrixGENFSvsGENisHard->GetXaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
+  migMatrixGENFSvsGENisHard->GetYaxis()->SetTitle("Gen-Level Hard Process Dielecron Invariant mass [GeV]");
+  migMatrixGENFSvsGENisHard->GetXaxis()->SetNoExponent();
+  migMatrixGENFSvsGENisHard->GetXaxis()->SetMoreLogLabels();
+  migMatrixGENFSvsGENisHard->GetYaxis()->SetNoExponent();
+  migMatrixGENFSvsGENisHard->GetYaxis()->SetMoreLogLabels();
+
   TH1F*hHardProcess[numChains];
   TString histbasename = "hHardProcess";
   TString histname;
@@ -249,7 +258,7 @@ void efficiencies()
   TLegend*legend2 = new TLegend(0.65,0.9,0.9,0.7);
   legend2->SetTextSize(0.02);
 
-  TFile *rootFile = new TFile("/plots/plotsDY.root","RECREATE");
+  TFile *rootFile = new TFile("./plots/plotsDY.root","RECREATE");
   TCanvas*canvas1 = new TCanvas("cInvMassHardProcess","",10,10,1000,1000);
   canvas1->SetLogx();
   canvas1->SetLogy();
@@ -261,7 +270,7 @@ void efficiencies()
   int dRMinIndex;  
   Long64_t nentries;
   Long64_t count = 0;
-  //double nEvents = 50000;
+  //double nEvents = 200000;
   double lumi = chains[1]->GetEntries()/xSec[1];//luminosity of 50to100
   //double lumi = nEvents/xSec[1];//luminosity of 50to100
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
@@ -269,6 +278,7 @@ void efficiencies()
   int trigNameSize;
   long int nTooManyDielectrons = 0;
   long int nTooManyDielectronsFS = 0;
+
   for(int iChain=0;iChain<numChains;iChain++)
     {
       nentries = chains[iChain]->GetEntries();
@@ -399,6 +409,7 @@ void efficiencies()
 	  if(!passHLT) continue;
 	  // Event passed HLT cut
 	  hHLTGenDielectronInvMass->Fill(invMass,weight);
+	  migMatrixGENFSvsGENisHard->Fill(invMass,invMassHardProcess,weight);
 	}//end event loop   
 
       if(iChain==0)hHardProcess[iChain]->Draw("Bar");      
@@ -530,12 +541,19 @@ void efficiencies()
   hpTvsMassProf->SetTitle("#LTp_{T}#GT vs.Invariant Mass");
   hpTvsMassProf->GetYaxis()->SetTitle("#LTp_{T}#GT  [GeV]");
   hpTvsMassProf->Draw();
+
+  TCanvas*canvas6 = new TCanvas("cMigMatrixGENFSvsGENisHard","",10,10,900,700);
+  canvas6->SetLogy();
+  canvas6->SetLogx();
+  gStyle->SetPalette(1);
+  migMatrixGENFSvsGENisHard->Draw("colz");
     
-  canvas1->SaveAs("/plots/hardProcessInvMass.png");
-  canvas2->SaveAs("/plots/allEfficiencies.png");
-  canvas3->SaveAs("/plots/efficiency.png");
-  canvas4->SaveAs("/plots/acceptance.png");
-  canvas5->SaveAs("/plots/pTvsMassProf.png");
+  canvas1->SaveAs("./plots/hardProcessInvMass.png");
+  canvas2->SaveAs("./plots/allEfficiencies.png");
+  canvas3->SaveAs("./plots/efficiency.png");
+  canvas4->SaveAs("./plots/acceptance.png");
+  canvas5->SaveAs("./plots/pTvsMassProf.png");
+  canvas6->SaveAs("./plots/migMatrixGENFSvsGENisHard.png");
   
   rootFile->cd();
   hIDEfficiency->Write();
@@ -549,11 +567,13 @@ void efficiencies()
   hHLTEfficiency->Write();
   hpTvsMassProf->Write();
   hpTvsMass->Write();
+  migMatrixGENFSvsGENisHard->Write();
   canvas1->Write();
   canvas2->Write();
   canvas3->Write();
   canvas4->Write();
   canvas5->Write();
+  canvas6->Write();
   rootFile->Write();
   rootFile->Close();   
   
