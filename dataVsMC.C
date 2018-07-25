@@ -291,8 +291,6 @@ TString dirNames[numChains]=
   hDataInvMasslinear->GetXaxis()->SetMoreLogLabels();
   hDataInvMasslinear->SetMinimum(axisLow);
   TH1F*hFakes = new TH1F("hFakes","",nLogBins,massbins);
-  //W+Jets and QCD
-  //iChain 0-7
   hFakes->Sumw2();
   hFakes->SetFillColor(kViolet+5);
   hFakes->SetLineColor(kViolet+3);
@@ -303,8 +301,6 @@ TString dirNames[numChains]=
   hFakeslinear->SetLineColor(kViolet+3);
   hFakeslinear->SetMinimum(axisLow);
   TH1F*hEW = new TH1F("hEW","",43,massbins);
-  //WW, ZZ, WZ
-  //iChain 8,9,10
   hEW->Sumw2();
   hEW->SetFillColor(kRed+2);
   hEW->SetLineColor(kRed+4);
@@ -315,8 +311,6 @@ TString dirNames[numChains]=
   hEWlinear->SetLineColor(kRed+4);
   hEWlinear->SetMinimum(axisLow);
   TH1F*hTops = new TH1F("hTops","",nLogBins,massbins);
-  //tt, tW
-  //iChain 11,12,13
   hTops->Sumw2();
   hTops->SetFillColor(kBlue+2);
   hTops->SetLineColor(kBlue+3);
@@ -402,8 +396,8 @@ TString dirNames[numChains]=
 		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
 					     Electron_eta[jEle])) continue; 		    
 
-		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
-		  if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
+		  if(!Electron_passMediumID[iEle]) continue;
+		  if(!Electron_passMediumID[jEle]) continue;
 
 		  if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
 		     iChain==DataRunG||iChain==DataRunH)
@@ -530,7 +524,7 @@ void counter(Long64_t i, Long64_t N)
   TTimeStamp eventTimeStamp;
   if(i%(N/100)==0)
     {
-      cout << "dataVsMC.C " << P << "% " <<  "[Time: " << eventTimeStamp.AsString("s") << "]" << endl;
+      cout << "dataVsMC.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P << "%" << endl;
     }
   return;
 }
