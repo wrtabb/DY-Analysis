@@ -52,7 +52,7 @@ const int numChains = 37;
 //Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
 const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,//QCD
 			       61526.7,118.7,12.178,16.523,1.256,47.13,4.4297,//Bosons
-			       831.76,76.605,20.578,35.85,35.85,//tops
+			       734.577,76.605,20.578,35.85,35.85,//tops
 			       18810.0,5705.9044344,226.6,7.77,0.4065,0.2334,0.03614,//DY
 			       0.03047,0.01636,0.00218,0.0005156,//DY
 			       1,1,1,1,1,1,1};//data (unweighted)
@@ -71,7 +71,6 @@ const float eMass = 0.000511;
 
 const TString treeName = "recoTree/DYTree";
 const float dRMinCut = 0.3;
-const int maxFiles = 200;
 
 void dataVsMC()
 {
@@ -96,43 +95,43 @@ void dataVsMC()
   
   enum chainNum 
   {
-    QCD20to30 = 0,
-    QCD30to50 = 1,
-    QCD50to80 = 2,
-    QCD80to120 = 3,
-    QCD120to170 = 4,
-    QCD170to300 = 5,
-    QCD300toInf = 6,  
-    wJets = 7,
-    WW = 8,    
-    WWTo2L2Nu = 9,
-    ZZ = 10,       
-    ZZTo4L = 11,
-    WZ = 12,
-    WZTo3LNu = 13,
-    tt = 14,
-    tt700to1000 = 15,
-    tt1000toInf = 16,
-    tW = 17,             
-    tbarW = 18,         
-    MC10to50 = 19,
-    MC50to100 = 20,
-    MC100to200 = 21,
-    MC200to400 = 22,
-    MC400to500 = 23,
-    MC500to700 = 24,
-    MC700to800 = 25,
-    MC800to1000 = 26,
-    MC1000to1500 = 27,
-    MC1500to2000 = 28,
-    MC2000to3000 = 29,
-    DataRunB = 30,
-    DataRunC = 31,
-    DataRunD = 32,
-    DataRunE = 33,
-    DataRunF = 34,
-    DataRunG = 35,
-    DataRunH = 36
+    QCD20to30,
+    QCD30to50,
+    QCD50to80,
+    QCD80to120,
+    QCD120to170,
+    QCD170to300,
+    QCD300toInf,  
+    wJets,
+    WW,    
+    WWTo2L2Nu,
+    ZZ,       
+    ZZTo4L,
+    WZ,
+    WZTo3LNu,
+    tt0to700,
+    tt700to1000,
+    tt1000toInf,
+    tW,             
+    tbarW,         
+    MC10to50,
+    MC50to100,
+    MC100to200,
+    MC200to400,
+    MC400to500,
+    MC500to700,
+    MC700to800,
+    MC800to1000,
+    MC1000to1500,
+    MC1500to2000,
+    MC2000to3000,
+    DataRunB,
+    DataRunC,
+    DataRunD,
+    DataRunE,
+    DataRunF,
+    DataRunG,
+    DataRunH
   }; 
 
 TString dirNames[numChains]=
@@ -151,13 +150,13 @@ TString dirNames[numChains]=
     "/ZZTo4L_13TeV_powheg_pythia8",
     "/WZ_TuneCUETP8M1_13TeV-pythia8",
     "/WZTo3LNu_TuneCUETP8M1_13TeV-powheg-pythia8",
-    "/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/crab_ttbar",
+    "/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_truncated_M0To700/crab_ttbar",
     "/TT_Mtt-700to1000_TuneCUETP8M2T4_13TeV-powheg-pythia8",
     "/TT_Mtt-1000toInf_TuneCUETP8M2T4_13TeV-powheg-pythia8",
     "/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1",
     "/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1",
     "/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M10to50",
-    "/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
+    "/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100",
     "/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M100to200",
     "/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
     "/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
@@ -178,19 +177,17 @@ TString dirNames[numChains]=
  
  TString baseDirectory = 
    "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3"; 
+    
  TChain*chains[numChains];
  vector <TString> *subFiles[numChains];  
  for(int iChain=0;iChain<numChains;iChain++)
    {
-     if(iChain==tt700to1000||iChain==tt1000toInf) continue;//skip these files for now
-     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//skip these files for now
+     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//Not using these in this analysis
+     if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
+	iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
+
      subFiles[iChain] = new vector<TString>;
-     if(iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170) 
-       {
-	 subFiles[iChain]->push_back(dirNames[iChain]);
-	 subFiles[iChain]->push_back(dirNames[iChain]+"_ext1");
-       }
-     else if(iChain==MC10to50) 
+     if(iChain==MC10to50) 
        {
 	 subFiles[iChain]->push_back(dirNames[iChain]+"_ext1v1");
 	 subFiles[iChain]->push_back(dirNames[iChain]+"_v1");
@@ -206,7 +203,7 @@ TString dirNames[numChains]=
 	 subFiles[iChain]->push_back(dirNames[iChain]+"ver2");
 	 subFiles[iChain]->push_back(dirNames[iChain]+"ver3");
        }
-     else if(iChain==tt)
+     else if(iChain==tt0to700)
        {
 	 subFiles[iChain]->push_back(dirNames[iChain]);
 	 subFiles[iChain]->push_back(dirNames[iChain]+"Backup");
@@ -219,8 +216,9 @@ TString dirNames[numChains]=
  Long64_t totalentries = 0;
  for(int iChain=0;iChain<numChains;iChain++)
     {          
-      if(iChain==tt700to1000||iChain==tt1000toInf) continue;//skip these files for now
-      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//skip these files for now
+      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
+      if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
+	 iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
       chains[iChain] = new TChain(treeName);
       subDirectorySize = subFiles[iChain]->size();
       for(int k=0;k<subDirectorySize;k++)
@@ -341,7 +339,7 @@ TString dirNames[numChains]=
   hStacklinear->Add(hTopslinear);
   hStacklinear->Add(hMCInvMasslinear); 
 
-  TFile *rootFile = new TFile("./plots/dataVsMC.root","RECREATE");
+  TFile *rootFile = new TFile("./plots/dataVsMC35900Scaling.root","RECREATE");
 
   //Event Loop
   cout << "Starting Event Loop" << endl;
@@ -352,18 +350,18 @@ TString dirNames[numChains]=
   TString trigName;
   int trigNameSize;
   //nentries = 10000;
-  double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //luminosity of 50to100
+  //double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //luminosity of 50to100
   //double lumi = nentries/xSec[MC50to100];
+  double lumi = 35900;
   for(int iChain=0;iChain<numChains;iChain++)
     {
-      if(iChain==tt700to1000||iChain==tt1000toInf) continue;//skip these files for now
-      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//skip these files for now
+      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
+      if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
+	 iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
       //nentries = 10000;
       nentries = chains[iChain]->GetEntries();
       //if(chains[iChain]->GetEntries() < nentries) nentries = chains[iChain]->GetEntries();
-      weight=lumi*(xSec[iChain]/nentries);
-
-      
+      weight=lumi*(xSec[iChain]/nentries);      
 
       for(Long64_t i=0;i<nentries;i++)
 	{      
@@ -400,8 +398,7 @@ TString dirNames[numChains]=
 		{	  
 		  invMass=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
 				      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
-		  
-		  if(iChain==MC50to100 && invMass>100) continue;
+
 		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
 					     Electron_eta[jEle])) continue; 		    
 
@@ -425,7 +422,7 @@ TString dirNames[numChains]=
 		      hEW->Fill(invMass,weight);
 		      hEWlinear->Fill(invMass,weight);
 		    }
-		  else if(iChain==tt||iChain==tW||iChain==tbarW) 
+		  else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW) 
 		    {
 		      hTops->Fill(invMass,weight);
 		      hTopslinear->Fill(invMass,weight);
@@ -444,7 +441,7 @@ TString dirNames[numChains]=
     }//end chain loop 
   
   double integralData, integralMC;
-  
+  /*  
   integralData = 
     hDataInvMass->Integral(hDataInvMass->GetXaxis()->FindBin(binLow),hDataInvMass->GetXaxis()->FindBin(binHigh));
   integralMC = 
@@ -463,7 +460,7 @@ TString dirNames[numChains]=
   hFakeslinear->Scale(norm);
   hEWlinear->Scale(norm);
   hTopslinear->Scale(norm);  
-
+  */
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1000,1000);
   canvas1->SetLogx();
   canvas1->SetLogy();
@@ -474,7 +471,7 @@ TString dirNames[numChains]=
   legend->AddEntry(hMCInvMass,"#gamma^{*}/Z #rightarrow e^{-}e^{+}");
   legend->AddEntry(hTops,"t#bar{t}+tW+#bar{t}W");
   legend->AddEntry(hEW,"EW");
-  legend->AddEntry(hFakes,"Fakes (Wjets+QCD)");
+  legend->AddEntry(hFakes,"Fakes");
 
   auto hDataMCRatio = new TRatioPlot(hStack,hDataInvMass);
   hDataMCRatio->GetXaxis()->SetTitle("m_{ee} [GeV]");  
@@ -483,20 +480,17 @@ TString dirNames[numChains]=
   hDataMCRatio->GetUpperPad()->cd();
   legend->Draw("same");
   canvas1->Update();
-  canvas1->SaveAs("./plots/dataVsMClog.png");
   
   TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
   canvas2->SetLogy();
   auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,hDataInvMasslinear); 
   canvas2->cd();
   hDataMCRatiolinear->Draw();
-  //TH1F*graph = (TH1F*)hDataMCRatiolinear->Clone();
-  //graph->SetMinimum(0.001);
-  //graph->Draw();
   hDataMCRatiolinear->GetUpperPad()->cd();
   legend->Draw("same");
  
-  canvas2->SaveAs("./plots/dataVsMClinear.png");
+  canvas1->SaveAs("./plots/dataVsMClog35900Scaling.png");
+  
   rootFile->cd();
   hStack->Write();
   hDataInvMass->Write();
@@ -511,7 +505,6 @@ TString dirNames[numChains]=
   hEWlinear->Write();
   hTopslinear->Write();
   canvas1->Write();
-  canvas2->Write();
   rootFile->Write();
   rootFile->Close();
   
@@ -537,8 +530,7 @@ void counter(Long64_t i, Long64_t N)
   TTimeStamp eventTimeStamp;
   if(i%(N/100)==0)
     {
-      cout << P << "%" <<  endl;
-      cout << "[Time: " << eventTimeStamp.AsString("s") << "]" << endl;
+      cout << "dataVsMC.C " << P << "%" <<  "[Time: " << eventTimeStamp.AsString("s") << "]" << endl;
     }
   return;
 }

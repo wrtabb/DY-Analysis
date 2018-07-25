@@ -119,8 +119,7 @@ void efficiencies()
 	"/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
 	"/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
 	"/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8"
-      };
- 
+      }; 
  TString baseDirectory = 
    "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3"; 
  TChain*chains[numChains];
@@ -361,8 +360,7 @@ void efficiencies()
 	  if(idxRecoEle1>0&&idxRecoEle2>0)
 	    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],Electron_phi[idxRecoEle1],
 				    eMass,Electron_pT[idxRecoEle2],Electron_eta[idxRecoEle2],
-				    Electron_phi[idxRecoEle2],eMass);
-	  
+				    Electron_phi[idxRecoEle2],eMass);	  
 	  if(nGenDielectrons==0) 
 	    continue; // must be DY->mumu or tautau event, skip it
 	  
@@ -391,10 +389,10 @@ void efficiencies()
 				GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],
 				GENLepton_eta[idxGenEleFS2],GENLepton_phi[idxGenEleFS2],eMass);		  
 
-	  hHardProcess[iChain]->Fill(invMassHardProcess,weight);//Fill if hard process electrons
-
-	  trigNameSize = pHLT_trigName->size();
+	  hHardProcess[iChain]->Fill(invMassHardProcess,weight);//Fill if hard process gen-electrons
+	  
 	  //HLT cut
+	  trigNameSize = pHLT_trigName->size();
 	  bool passHLT = kFALSE;	  
 	  for(int iHLT=0;iHLT<trigNameSize;iHLT++)
             {
@@ -431,8 +429,8 @@ void efficiencies()
 	  closestTrackLep1 = closestTrackLep2 = -1;
 	  bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);	      
 	  bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestTrackLep2);	      
-	  if( ! (genToRecoMatchedLep1 && genToRecoMatchedLep2) )
-	    continue;
+	  if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) continue;
+
 	  // Both electrons are reconstructed
 	  hGenMatchedDielectronInvMass->Fill(invMass,weight);
 	  
@@ -606,6 +604,8 @@ void efficiencies()
   canvas4->SaveAs("./plots/acceptance.png");
   canvas5->SaveAs("./plots/pTvsMassProf.png");
   canvas6->SaveAs("./plots/migMatrixGENFSvsGENisHard.png");
+  canvas7->SaveAs("./plots/migMatrixGENFSvsGReco.png");
+  canvas6->SaveAs("./plots/migMatrixGENisHardvsReco.png");
   
   rootFile->cd();
   hIDEfficiency->Write();
@@ -620,12 +620,16 @@ void efficiencies()
   hpTvsMassProf->Write();
   hpTvsMass->Write();
   migMatrixGENFSvsGENisHard->Write();
+  migMatrixGENFSvsReco->Write();
+  migMatrixGENisHardvsReco->Write();
   canvas1->Write();
   canvas2->Write();
   canvas3->Write();
   canvas4->Write();
   canvas5->Write();
   canvas6->Write();
+  canvas7->Write();
+  canvas8->Write();
   rootFile->Write();
   rootFile->Close();   
   
@@ -651,8 +655,7 @@ void counter(Long64_t i, Long64_t N)
   TTimeStamp eventTimeStamp;
   if(i%(N/100)==0)
     {
-      cout << P << "%" <<  endl;
-      cout << "[Time: " << eventTimeStamp.AsString("s") << "]" << endl;
+      cout << "efficiencies.C " << P << "%" <<  "[Time: " << eventTimeStamp.AsString("s") << "]" << endl;
     }
   return;
 }
