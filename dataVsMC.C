@@ -530,7 +530,7 @@ void counter(Long64_t i, Long64_t N)
   TTimeStamp eventTimeStamp;
   if(i%(N/100)==0)
     {
-      cout << "dataVsMC.C " << P << "%" <<  "[Time: " << eventTimeStamp.AsString("s") << "]" << endl;
+      cout << "dataVsMC.C " << P << "% " <<  "[Time: " << eventTimeStamp.AsString("s") << "]" << endl;
     }
   return;
 }
