@@ -229,13 +229,29 @@ void efficiencies()
   hpTvsMass->GetXaxis()->SetTitle("m_{ee} [GeV]"); 
 
   TH2F*migMatrixGENFSvsGENisHard = new TH2F("migMatrixGENFSvsGENisHard","",43,massbins,43,massbins);
-  migMatrixGENFSvsGENisHard->SetTitle("Migration Matrix: Gen-Level Hard Process vs. Gen_Level Final State");
-  migMatrixGENFSvsGENisHard->GetXaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
-  migMatrixGENFSvsGENisHard->GetYaxis()->SetTitle("Gen-Level Hard Process Dielecron Invariant mass [GeV]");
+  migMatrixGENFSvsGENisHard->SetTitle("Migration Matrix: Gen-Level Hard Process vs. Gen-Level Final State");
+  migMatrixGENFSvsGENisHard->GetYaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
+  migMatrixGENFSvsGENisHard->GetXaxis()->SetTitle("Gen-Level Hard Process Dielecron Invariant mass [GeV]");
   migMatrixGENFSvsGENisHard->GetXaxis()->SetNoExponent();
   migMatrixGENFSvsGENisHard->GetXaxis()->SetMoreLogLabels();
   migMatrixGENFSvsGENisHard->GetYaxis()->SetNoExponent();
   migMatrixGENFSvsGENisHard->GetYaxis()->SetMoreLogLabels();
+  TH2F*migMatrixGENFSvsReco = new TH2F("migMatrixGENFSvsReco","",43,massbins,43,massbins);
+  migMatrixGENFSvsReco->SetTitle("Migration Matrix: Gen-Level Final State vs. Reconstructed");
+  migMatrixGENFSvsReco->GetYaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
+  migMatrixGENFSvsReco->GetXaxis()->SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
+  migMatrixGENFSvsReco->GetXaxis()->SetNoExponent();
+  migMatrixGENFSvsReco->GetXaxis()->SetMoreLogLabels();
+  migMatrixGENFSvsReco->GetYaxis()->SetNoExponent();
+  migMatrixGENFSvsReco->GetYaxis()->SetMoreLogLabels();
+  TH2F*migMatrixGENisHardvsReco = new TH2F("migMatrixGENisHardvsReco","",43,massbins,43,massbins);
+  migMatrixGENisHardvsReco->SetTitle("Migration Matrix: Gen-Level Hard Process vs. Reconstructed");
+  migMatrixGENisHardvsReco->GetYaxis()->SetTitle("Gen-Level Hard Process Dielectron Invariant Mass [GeV]");
+  migMatrixGENisHardvsReco->GetXaxis()->SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
+  migMatrixGENisHardvsReco->GetXaxis()->SetNoExponent();
+  migMatrixGENisHardvsReco->GetXaxis()->SetMoreLogLabels();
+  migMatrixGENisHardvsReco->GetYaxis()->SetNoExponent();
+  migMatrixGENisHardvsReco->GetYaxis()->SetMoreLogLabels();
 
   TH1F*hHardProcess[numChains];
   TString histbasename = "hHardProcess";
@@ -270,9 +286,9 @@ void efficiencies()
   Long64_t nentries;
   Long64_t count = 0;
   //double nEvents = 200000;
-  double lumi = chains[1]->GetEntries()/xSec[1];//luminosity of 50to100
-  //double lumi = nEvents/xSec[1];//luminosity of 50to100
-  TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
+  double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100];//luminosity of 50to100
+  //double lumi = nEvents/xSec[MC50to100];//luminosity of 50to100
+  TString HLTname = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   int trigNameSize;
   long int nTooManyDielectrons = 0;
@@ -321,32 +337,32 @@ void efficiencies()
 		}
 	      } // end inner loop over gen leptons
 	    } // end outer loop over gen leptons
-	  /*	  
+	  	  
 	  //Reco loop
 	  double invMassReco;
-	  int idxRecoEle1, idxRecoEle2;
-	  int nRecoDielectrons = 0;
+	  invMassReco=0;
+	  int idxRecoEle1,idxRecoEle2;
+	  idxRecoEle1=idxRecoEle2=0;
 	  if(Nelectrons<2) continue;
 	  for(int iEle = 0; iEle < Nelectrons; iEle++)
 	    {
 	      for(int jEle = iEle+1; jEle < Nelectrons; jEle++)
 		{	  
-		  //invMassReco=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
-		  //		      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
-		  
-		  if(iChain==MC50to100 && invMass>100) continue;
 		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
-					     Electron_eta[jEle])) continue; 		  		 
-
+					     Electron_eta[jEle])) continue; 	
 		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
 		  if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
-		  nRecoDielectrons++;
+		  //Reco electrons which passed cuts
 		  idxRecoEle1 = iEle;
 		  idxRecoEle2 = jEle;		    
 		  
 		}//end inner reco loop	   
 	    }//end reco loop
-	  */
+	  if(idxRecoEle1>0&&idxRecoEle2>0)
+	    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],Electron_phi[idxRecoEle1],
+				    eMass,Electron_pT[idxRecoEle2],Electron_eta[idxRecoEle2],
+				    Electron_phi[idxRecoEle2],eMass);
+	  
 	  if(nGenDielectrons==0) 
 	    continue; // must be DY->mumu or tautau event, skip it
 	  
@@ -383,7 +399,7 @@ void efficiencies()
 	  for(int iHLT=0;iHLT<trigNameSize;iHLT++)
             {
               trigName = pHLT_trigName->at(iHLT);
-              if(trigName.CompareTo(compareHLT)==0)
+              if(trigName.CompareTo(HLTname)==0)
 		{
                    if(HLT_trigFired[iHLT]==1) 
 		     {
@@ -432,6 +448,8 @@ void efficiencies()
 	  // Event passed HLT cut
 	  hHLTGenDielectronInvMass->Fill(invMass,weight);
 	  migMatrixGENFSvsGENisHard->Fill(invMass,invMassHardProcess,weight);
+	  migMatrixGENFSvsReco->Fill(invMass,invMassReco,weight);
+	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,weight);
 	}//end event loop   
 
       if(iChain==0)hHardProcess[iChain]->Draw("Bar");      
@@ -569,6 +587,18 @@ void efficiencies()
   canvas6->SetLogx();
   gStyle->SetPalette(1);
   migMatrixGENFSvsGENisHard->Draw("colz");
+
+  TCanvas*canvas7 = new TCanvas("cmigMatrixGENFSvsReco","",10,10,900,700);
+  canvas7->SetLogy();
+  canvas7->SetLogx();
+  gStyle->SetPalette(1);
+  migMatrixGENFSvsReco->Draw("colz");
+
+  TCanvas*canvas8 = new TCanvas("cmigMatrixGENisHardvsReco","",10,10,900,700);
+  canvas8->SetLogy();
+  canvas8->SetLogx();
+  gStyle->SetPalette(1);
+  migMatrixGENisHardvsReco->Draw("colz");
     
   canvas1->SaveAs("./plots/hardProcessInvMass.png");
   canvas2->SaveAs("./plots/allEfficiencies.png");
@@ -693,4 +723,3 @@ double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,doubl
   double invMass = (vGenElectron1+vGenElectron2).M();
   return invMass;
 }//end calcInvMass
-
