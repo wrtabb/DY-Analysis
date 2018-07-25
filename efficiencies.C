@@ -49,6 +49,7 @@ const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72,
 			     380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
 const double pi=TMath::Pi();
 const int numChains = 11;
+const int nLogBins = 43;
 //Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
 const float xSec[numChains] = {18810.0,5705.9044344,226.6,7.77,0.4065,0.2334,
 			       0.03614,0.03047,0.01636,0.00218,0.0005156};
@@ -186,35 +187,35 @@ void efficiencies()
   cout << "Total Events Loaded: " << totalentries << endl;
   
   //Defining histograms
-  TH1F*hGenDielectronInvMass = new TH1F("hDielectronInvMass","",43,massbins);
+  TH1F*hGenDielectronInvMass = new TH1F("hDielectronInvMass","",nLogBins,massbins);
   hGenDielectronInvMass->Sumw2();
   hGenDielectronInvMass->SetLineColor(kRed);
   hGenDielectronInvMass->SetTitle("Only Kinematic Cut Dielectrons");
   hGenDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");
   hGenDielectronInvMass->GetXaxis()->SetMoreLogLabels();
   hGenDielectronInvMass->GetXaxis()->SetNoExponent();
-  TH1F*hGenMatchedDielectronInvMass = new TH1F("hGenMatchedDielectronInvMass","",43,massbins);
+  TH1F*hGenMatchedDielectronInvMass = new TH1F("hGenMatchedDielectronInvMass","",nLogBins,massbins);
   hGenMatchedDielectronInvMass->Sumw2();
   hGenMatchedDielectronInvMass->SetLineColor(kBlue);
   hGenMatchedDielectronInvMass->SetTitle("Reco Gen Matched Dielectrons");
   hGenMatchedDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");  
   hGenMatchedDielectronInvMass->GetXaxis()->SetMoreLogLabels();
   hGenMatchedDielectronInvMass->GetXaxis()->SetNoExponent();
-  TH1F*hGenPassIDdielectronInvMass = new TH1F("hGenPasIDDielectronInvMass","",43,massbins);
+  TH1F*hGenPassIDdielectronInvMass = new TH1F("hGenPasIDDielectronInvMass","",nLogBins,massbins);
   hGenPassIDdielectronInvMass->Sumw2();
   hGenPassIDdielectronInvMass->SetLineColor(kRed);
   hGenPassIDdielectronInvMass->SetTitle("Medium ID Cut Dielectrons");
   hGenPassIDdielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");  
   hGenPassIDdielectronInvMass->GetXaxis()->SetMoreLogLabels();
   hGenPassIDdielectronInvMass->GetXaxis()->SetNoExponent();
-  TH1F*hGenAllDielectronInvMass = new TH1F("hGenAllDielectronInvMass","",43,massbins);
+  TH1F*hGenAllDielectronInvMass = new TH1F("hGenAllDielectronInvMass","",nLogBins,massbins);
   hGenAllDielectronInvMass->Sumw2();
   hGenAllDielectronInvMass->SetTitle("Final State Dielectrons: No Other cuts");
   hGenAllDielectronInvMass->SetLineColor(kBlack);
   hGenAllDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");  
   hGenAllDielectronInvMass->GetXaxis()->SetMoreLogLabels();
   hGenAllDielectronInvMass->GetXaxis()->SetNoExponent();
-  TH1F*hHLTGenDielectronInvMass = new TH1F("hHLTGenDielectronInvMass","",43,massbins);
+  TH1F*hHLTGenDielectronInvMass = new TH1F("hHLTGenDielectronInvMass","",nLogBins,massbins);
   hHLTGenDielectronInvMass->Sumw2();
   hHLTGenDielectronInvMass->SetTitle("HLT Cut");
   hHLTGenDielectronInvMass->SetLineColor(kBlack);
@@ -227,7 +228,7 @@ void efficiencies()
   hpTvsMass->GetYaxis()->SetTitle("p_{T} [GeV]"); 
   hpTvsMass->GetXaxis()->SetTitle("m_{ee} [GeV]"); 
 
-  TH2F*migMatrixGENFSvsGENisHard = new TH2F("migMatrixGENFSvsGENisHard","",43,massbins,43,massbins);
+  TH2F*migMatrixGENFSvsGENisHard = new TH2F("migMatrixGENFSvsGENisHard","",nLogBins,massbins,nLogBins,massbins);
   migMatrixGENFSvsGENisHard->SetTitle("Migration Matrix: Gen-Level Hard Process vs. Gen-Level Final State");
   migMatrixGENFSvsGENisHard->GetYaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
   migMatrixGENFSvsGENisHard->GetXaxis()->SetTitle("Gen-Level Hard Process Dielecron Invariant mass [GeV]");
@@ -235,7 +236,7 @@ void efficiencies()
   migMatrixGENFSvsGENisHard->GetXaxis()->SetMoreLogLabels();
   migMatrixGENFSvsGENisHard->GetYaxis()->SetNoExponent();
   migMatrixGENFSvsGENisHard->GetYaxis()->SetMoreLogLabels();
-  TH2F*migMatrixGENFSvsReco = new TH2F("migMatrixGENFSvsReco","",43,massbins,43,massbins);
+  TH2F*migMatrixGENFSvsReco = new TH2F("migMatrixGENFSvsReco","",nLogBins,massbins,nLogBins,massbins);
   migMatrixGENFSvsReco->SetTitle("Migration Matrix: Gen-Level Final State vs. Reconstructed");
   migMatrixGENFSvsReco->GetYaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
   migMatrixGENFSvsReco->GetXaxis()->SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
@@ -243,7 +244,7 @@ void efficiencies()
   migMatrixGENFSvsReco->GetXaxis()->SetMoreLogLabels();
   migMatrixGENFSvsReco->GetYaxis()->SetNoExponent();
   migMatrixGENFSvsReco->GetYaxis()->SetMoreLogLabels();
-  TH2F*migMatrixGENisHardvsReco = new TH2F("migMatrixGENisHardvsReco","",43,massbins,43,massbins);
+  TH2F*migMatrixGENisHardvsReco = new TH2F("migMatrixGENisHardvsReco","",nLogBins,massbins,nLogBins,massbins);
   migMatrixGENisHardvsReco->SetTitle("Migration Matrix: Gen-Level Hard Process vs. Reconstructed");
   migMatrixGENisHardvsReco->GetYaxis()->SetTitle("Gen-Level Hard Process Dielectron Invariant Mass [GeV]");
   migMatrixGENisHardvsReco->GetXaxis()->SetTitle("Reconstructed Dielecron Invariant mass [GeV]");

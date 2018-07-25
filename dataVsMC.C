@@ -62,7 +62,7 @@ const float axisLow = 0.0001;
 const int nLinearBins = 30;
 const int nLogBins = 43;
 
-const float etaHigh = 2.4;
+const float etaHigh = 2.5;
 const float etaGapHigh = 1.566; 
 const float etaGapLow = 1.4442;
 const float ptHigh = 28;
@@ -344,9 +344,9 @@ TString dirNames[numChains]=
   TString trigName;
   int trigNameSize;
   //nentries = 10000;
-  //double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //luminosity of 50to100
-  //double lumi = nentries/xSec[MC50to100];
-  double lumi = 35900;
+  //double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //50to100 lumi
+  //double lumi = nentries/xSec[MC50to100]; //MC50to100 lumi
+  double lumi = 35900;//data lumi
   for(int iChain=0;iChain<numChains;iChain++)
     {
       if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
