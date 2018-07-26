@@ -289,8 +289,8 @@ void efficiencies()
   Long64_t nentries;
   Long64_t count = 0;
   double nEvents = 250000;
-  //double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100];//luminosity of 50to100
-  double lumi = nEvents/xSec[MC50to100];//luminosity of 50to100
+  double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100];//luminosity of 50to100
+  //double lumi = nEvents/xSec[MC50to100];//luminosity of 50to100
   TString HLTname = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   int trigNameSize;
@@ -299,14 +299,14 @@ void efficiencies()
 
   for(int iChain=0;iChain<numChains;iChain++)
     {
-      //nentries = chains[iChain]->GetEntries();
-      nentries = nEvents;
+      nentries = chains[iChain]->GetEntries();
+      //nentries = nEvents;
       weight=lumi*(xSec[iChain]/nentries);
       for(Long64_t i=0;i<nentries;i++)
 	{      
 	  chains[iChain]->GetEntry(i);
-	  //counter(count,totalentries);
-	  counter(count,11*nentries);
+	  counter(count,totalentries);
+	  //counter(count,11*nentries);
 	  count = count+1;
 
 	  // Loop over gen leptons and find the electron pair at the isHardProcess
