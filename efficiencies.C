@@ -620,7 +620,7 @@ void efficiencies()
   canvas7->SaveAs("./plots/migMatrixGENFSvsGReco.png");
   canvas8->SaveAs("./plots/migMatrixGENisHardvsReco.png");
   canvas9->SaveAs("./plots/dielectrons.png");
-
+  
   rootFile->cd();
   hIDEfficiency->Write();
   hGenMatchedDielectronInvMass->Write();
@@ -644,6 +644,7 @@ void efficiencies()
   canvas6->Write();
   canvas7->Write();
   canvas8->Write();
+  canvas9->Write();
   rootFile->Write();
   rootFile->Close();   
   
