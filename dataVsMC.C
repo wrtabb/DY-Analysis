@@ -333,7 +333,7 @@ TString dirNames[numChains]=
   hStacklinear->Add(hTopslinear);
   hStacklinear->Add(hMCInvMasslinear); 
 
-  TFile *rootFile = new TFile("./plots/dataVsMC35900Scaling.root","RECREATE");
+  TFile *rootFile = new TFile("./plots/dataVsMC.root","RECREATE");
 
   //Event Loop
   cout << "Starting Event Loop" << endl;
@@ -344,9 +344,9 @@ TString dirNames[numChains]=
   TString trigName;
   int trigNameSize;
   //nentries = 10000;
-  //double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //50to100 lumi
+  double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //50to100 lumi
   //double lumi = nentries/xSec[MC50to100]; //MC50to100 lumi
-  double lumi = 35900;//data lumi
+  //double lumi = 35900;//data lumi
   for(int iChain=0;iChain<numChains;iChain++)
     {
       if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
@@ -435,7 +435,7 @@ TString dirNames[numChains]=
     }//end chain loop 
   
   double integralData, integralMC;
-  /*  
+    
   integralData = 
     hDataInvMass->Integral(hDataInvMass->GetXaxis()->FindBin(binLow),hDataInvMass->GetXaxis()->FindBin(binHigh));
   integralMC = 
@@ -449,12 +449,11 @@ TString dirNames[numChains]=
   hFakes->Scale(norm);
   hEW->Scale(norm);
   hTops->Scale(norm);
-
   hMCInvMasslinear->Scale(norm);
   hFakeslinear->Scale(norm);
   hEWlinear->Scale(norm);
   hTopslinear->Scale(norm);  
-  */
+  
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1000,1000);
   canvas1->SetLogx();
   canvas1->SetLogy();
@@ -483,7 +482,7 @@ TString dirNames[numChains]=
   hDataMCRatiolinear->GetUpperPad()->cd();
   legend->Draw("same");
  
-  canvas1->SaveAs("./plots/dataVsMClog35900Scaling.png");
+  canvas1->SaveAs("./plots/dataVsMClog.png");
   
   rootFile->cd();
   hStack->Write();
