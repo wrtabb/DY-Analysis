@@ -20,16 +20,18 @@ void unfolding()
 {
   gStyle->SetOptStat(0);
   gStyle->SetPalette(1);
+  
+  //Getting histograms of migration matrices from files
   TFile*fMigrationMatrix = new TFile(dataFileName);
-
   TH2F*migMatrixGENisHardvsGENFS = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsGENFS");
   TH2F*migMatrixGENFSvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENFSvsReco");
   TH2F*migMatrixGENisHardvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsReco");
   
+  //Defininig migration matrix objects
   TMatrixD migrationGENvsGEN(nMassBins,nMassBins);
   TMatrixD migrationFSvsReco(nMassBins,nMassBins);
-  TMatrixD migrationHardvsReco(nMassBins,nMassBins);
-  
+  TMatrixD migrationHardvsReco(nMassBins,nMassBins); 
+ 
   for(int i=1; i<=nMassBins; i++)
     {
       for(int j=1;j<=nMassBins;j++)
@@ -40,9 +42,11 @@ void unfolding()
 	}
     }
 
+  //Defining response matrix objects (normalized columns from migration matrix)
   TMatrixD responseGENvsGEN(nMassBins,nMassBins);
   TMatrixD responseFSvsReco(nMassBins,nMassBins);
   TMatrixD responseHardvsReco(nMassBins,nMassBins);
+
   for(int i=0; i<nMassBins; i++)
     {
       float sumGENvsGEN=0;
@@ -53,9 +57,7 @@ void unfolding()
 	  sumGENvsGEN += migrationGENvsGEN(i,j);
 	  sumFSvsReco += migrationFSvsReco(i,j);
 	  sumHardvsReco += migrationHardvsReco(i,j);
-	}
-      
-      // Fill the response matrices
+	}      
       for(int j=0; j<nMassBins; j++)
 	{
 	  if(sumGENvsGEN!=0) responseGENvsGEN(i,j) = migrationGENvsGEN(i,j)/sumGENvsGEN;
@@ -79,17 +81,16 @@ void unfolding()
 	}
     }  
 
-
-  // "Unfolding" matrix: inverted response matrix
+  //Defining unfolding matrices (the inverse of response matrices)
   TMatrixD unfoldingGENvsGEN = responseGENvsGEN;
   TMatrixD unfoldingFSvsReco = responseFSvsReco;
   TMatrixD unfoldingHardvsReco = responseHardvsReco;
-
   Double_t det;
   unfoldingGENvsGEN.Invert(&det);
   unfoldingFSvsReco.Invert(&det);
   unfoldingHardvsReco.Invert(&det);
-  // Repack the response and unfolding matrices into 2D histograms for plotting
+
+  //Placing all matrices in histograms for plotting
   TH2F*hresponseGENvsGEN = (TH2F*)migMatrixGENisHardvsGENFS->Clone("hresponseGENvsGEN");
   hresponseGENvsGEN->SetTitle("Gen vs Gen response matrix");
   TH2F*hresponseFSvsReco = (TH2F*)migMatrixGENFSvsReco->Clone("hresponseFSvsReco");
@@ -117,9 +118,10 @@ void unfolding()
 	  hunfoldingHardvsReco->SetBinContent(i+1,j+1,unfoldingHardvsReco(i,j));
 	}
     }
+
+  //Plotting and saving histograms
   TCanvas*canvas[nCanvas];
   TString canvasName = "canvas";
-
   for(int i=0;i<nCanvas;i++)
     {
       canvasName+=i;
