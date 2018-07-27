@@ -48,6 +48,12 @@ const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72,
 			     106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 200, 220, 243, 273, 320, 
 			     380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
 const double pi=TMath::Pi();
+const float binLow = 60.001;
+const float binHigh = 119.999;
+const float axisLow = 0.0001;
+const int nLinearBins = 30;
+const int nLogBins = 43;
+const int nHistos = 10;
 const int numChains = 37;
 //Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
 const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,//QCD
@@ -56,11 +62,6 @@ const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,/
 			       18810.0,5705.9044344,226.6,7.77,0.4065,0.2334,0.03614,//DY
 			       0.03047,0.01636,0.00218,0.0005156,//DY
 			       1,1,1,1,1,1,1};//data (unweighted)
-const float binLow = 60.001;
-const float binHigh = 119.999;
-const float axisLow = 0.0001;
-const int nLinearBins = 30;
-const int nLogBins = 43;
 
 const float etaHigh = 2.5;
 const float etaGapHigh = 1.566; 
@@ -72,7 +73,7 @@ const float eMass = 0.000511;
 const TString treeName = "recoTree/DYTree";
 const float dRMinCut = 0.3;
 
-void dataVsMC()
+void dataVsMC_backup()
 {
   TTimeStamp ts_start;
   cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
@@ -250,90 +251,79 @@ TString dirNames[numChains]=
   
   cout << "Total Events Loaded: " << totalentries << endl;
   cout << endl;
-    
-  //Defining histograms
-  TH1F*hMCInvMass = new TH1F("hMCInvMass","",nLogBins,massbins);
-  hMCInvMass->Sumw2();
-  hMCInvMass->SetFillColor(kOrange-2);
-  hMCInvMass->SetLineColor(kOrange+3);
-  hMCInvMass->GetXaxis()->SetTitle("m_{ee} [GeV]");
-  hMCInvMass->GetXaxis()->SetMoreLogLabels();
-  hMCInvMass->GetXaxis()->SetNoExponent();
-  hMCInvMass->SetTitle("MC vs. Data Invariant Mass");
-  hMCInvMass->SetMinimum(axisLow);
-  TH1F*hMCInvMasslinear = new TH1F("hMCInvMasslinear","",nLinearBins,binLow,binHigh);
-  hMCInvMasslinear->Sumw2();
-  hMCInvMasslinear->SetFillColor(kOrange-2);
-  hMCInvMasslinear->SetLineColor(kOrange+3);
-  hMCInvMasslinear->GetXaxis()->SetTitle("m_{ee} [GeV]");
-  hMCInvMasslinear->GetXaxis()->SetMoreLogLabels();
-  hMCInvMasslinear->GetXaxis()->SetNoExponent();
-  hMCInvMasslinear->SetTitle("MC vs. Data Invariant Mass");
-  hMCInvMasslinear->SetMinimum(axisLow);
-  TH1F*hDataInvMass = new TH1F("hDataInvMass","",nLogBins,massbins);
-  hDataInvMass->Sumw2();
-  hDataInvMass->SetLineColor(kBlack);
-  hDataInvMass->SetMarkerColor(kBlack);
-  hDataInvMass->SetMarkerSize(1);
-  hDataInvMass->SetMarkerStyle(20);
-  hDataInvMass->GetXaxis()->SetTitle("m_{ee} [GeV]");
-  hDataInvMass->GetXaxis()->SetNoExponent();
-  hDataInvMass->GetXaxis()->SetMoreLogLabels();
-  hDataInvMass->SetMinimum(axisLow);
-  TH1F*hDataInvMasslinear = new TH1F("hDataInvMasslinear","",nLinearBins,binLow,binHigh);
-  hDataInvMasslinear->Sumw2();
-  hDataInvMasslinear->SetLineColor(kBlack);
-  hDataInvMasslinear->SetMarkerColor(kBlack);
-  hDataInvMasslinear->SetMarkerSize(1);
-  hDataInvMasslinear->SetMarkerStyle(20);
-  hDataInvMasslinear->GetXaxis()->SetTitle("m_{ee} [GeV]");
-  hDataInvMasslinear->GetXaxis()->SetNoExponent();
-  hDataInvMasslinear->GetXaxis()->SetMoreLogLabels();
-  hDataInvMasslinear->SetMinimum(axisLow);
-  TH1F*hFakes = new TH1F("hFakes","",nLogBins,massbins);
-  hFakes->Sumw2();
-  hFakes->SetFillColor(kViolet+5);
-  hFakes->SetLineColor(kViolet+3);
-  hFakes->SetMinimum(axisLow);
-  TH1F*hFakeslinear = new TH1F("hFakeslinear","",nLinearBins,binLow,binHigh);
-  hFakeslinear->Sumw2();
-  hFakeslinear->SetFillColor(kViolet+5);
-  hFakeslinear->SetLineColor(kViolet+3);
-  hFakeslinear->SetMinimum(axisLow);
-  TH1F*hEW = new TH1F("hEW","",43,massbins);
-  hEW->Sumw2();
-  hEW->SetFillColor(kRed+2);
-  hEW->SetLineColor(kRed+4);
-  hEW->SetMinimum(axisLow);
-  TH1F*hEWlinear = new TH1F("hEWlinear","",nLinearBins,binLow,binHigh);
-  hEWlinear->Sumw2();
-  hEWlinear->SetFillColor(kRed+2);
-  hEWlinear->SetLineColor(kRed+4);
-  hEWlinear->SetMinimum(axisLow);
-  TH1F*hTops = new TH1F("hTops","",nLogBins,massbins);
-  hTops->Sumw2();
-  hTops->SetFillColor(kBlue+2);
-  hTops->SetLineColor(kBlue+3);
-  hTops->SetMinimum(axisLow);
-  TH1F*hTopslinear = new TH1F("hTopslinear","",nLinearBins,binLow,binHigh);
-  hTopslinear->Sumw2();
-  hTopslinear->SetFillColor(kBlue+2);
-  hTopslinear->SetLineColor(kBlue+3);
-  hTopslinear->SetMinimum(axisLow);
-
-  //Defining stacks
-  THStack*hStack = new THStack("hStack","");
-  hStack->Add(hFakes);
-  hStack->Add(hEW);
-  hStack->Add(hTops);
-  hStack->Add(hMCInvMass);  
-  THStack*hStacklinear = new THStack("hStacklinear","");
-  hStacklinear->Add(hFakeslinear);
-  hStacklinear->Add(hEWlinear);
-  hStacklinear->Add(hTopslinear);
-  hStacklinear->Add(hMCInvMasslinear); 
-
-  TFile *rootFile = new TFile("./plots/dataVsMC.root","RECREATE");
+  
+  //defining histograms
+  TH1F*histos[nHistos];
+  enum histBins
+    {
+      hFakes,
+      hFakeslinear,
+      hEW,
+      hEWlinear,
+      hTops,
+      hTopslinear,   
+      hMCInvMass,
+      hMCInvMasslinear,
+      hDataInvMass,
+      hDataInvMasslinear 
+    };
+  TString histName[nHistos] =
+    {
+      "hFakes",
+      "hFakeslinear",
+      "hEW",
+      "hEWlinear",
+      "hTops",
+      "hTopslinear",   
+      "hMCInvMass",
+      "hMCInvMasslinear",
+      "hDataInvMass",
+      "hDataInvMasslinear"        
+    };
+  for(int i=0;i<nHistos;i++)
+    {
+      if(i%2!=0) //linear on x-axis
+	{
+	  histos[i]=new TH1F(histName[i],"",nLinearBins,binLow,binHigh);
+	}
+      if(i%2==0) //log on x-axis
+	{
+	  histos[i]=new TH1F(histName[i],"",nLogBins,massbins);
+	}
+      histos[i]->Sumw2();
+      histos[i]->GetXaxis()->SetTitle("m_{ee} [GeV]");
+      histos[i]->GetXaxis()->SetMoreLogLabels();
+      histos[i]->GetXaxis()->SetNoExponent();
+      histos[i]->SetMinimum(axisLow);
+      histos[i]->SetTitle("MC vs. Data");
+      if(i==hMCInvMass||i==hMCInvMasslinear)
+	{
+	  histos[i]->SetFillColor(kOrange-2);
+	  histos[i]->SetLineColor(kOrange+3);
+	}
+      if(i==hDataInvMass||i==hDataInvMasslinear)
+	{
+	  histos[i]->SetLineColor(kBlack);
+	  histos[i]->SetMarkerColor(kBlack);
+	  histos[i]->SetMarkerSize(1);
+	  histos[i]->SetMarkerStyle(20);
+	}
+      if(i==hFakes||i==hFakeslinear)
+	{
+	  histos[i]->SetFillColor(kViolet+5);
+	  histos[i]->SetLineColor(kViolet+3);
+	}
+      if(i==hEW||i==hEWlinear)
+	{
+	  histos[i]->SetFillColor(kRed+2);
+	  histos[i]->SetLineColor(kRed+4);
+	}
+      if(i==hTops||i==hTopslinear)
+	{
+	  histos[i]->SetFillColor(kBlue+2);
+	  histos[i]->SetLineColor(kBlue+3);
+	}
+    }
 
   //Event Loop
   cout << "Starting Event Loop" << endl;
@@ -343,27 +333,27 @@ TString dirNames[numChains]=
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   int trigNameSize;
-  //nentries = 10000;
-  double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //50to100 lumi
+  //nentries = 100000;
+  //double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //50to100 lumi
   //double lumi = nentries/xSec[MC50to100]; //MC50to100 lumi
-  //double lumi = 35900;//data lumi
+  double lumi = 35900;//data lumi
   for(int iChain=0;iChain<numChains;iChain++)
     {
       if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
       if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
 	 iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
-      //nentries = 10000;
+      //nentries = 100000;
       nentries = chains[iChain]->GetEntries();
       //if(chains[iChain]->GetEntries() < nentries) nentries = chains[iChain]->GetEntries();
       weight=lumi*(xSec[iChain]/nentries);      
-
+     
       for(Long64_t i=0;i<nentries;i++)
 	{      
-	  chains[iChain]->GetEntry(i);
-	  if(Nelectrons<2) continue;
 	  counter(count,totalentries);
-	  //counter(count,7*nentries);
-	  count = count+1;   
+	  count = count+1; 
+	  chains[iChain]->GetEntry(i);
+	  if(Nelectrons<2) continue;	  
+	  //counter(count,7*nentries);	    
 
 	  //HLT cut
 	  trigNameSize = pHLT_trigName->size();
@@ -388,45 +378,42 @@ TString dirNames[numChains]=
 	  //Electron loop
 	  for(int iEle = 0; iEle < Nelectrons; iEle++)
 	    {
+	      if(!Electron_passMediumID[iEle]) continue;
 	      for(int jEle = iEle+1; jEle < Nelectrons; jEle++)
 		{	  
+		  if(!Electron_passMediumID[jEle]) continue;
+		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
+					     Electron_eta[jEle])) continue; 
 		  invMass=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
 				      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
-
-		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
-					     Electron_eta[jEle])) continue; 		    
-
-		  if(!Electron_passMediumID[iEle]) continue;
-		  if(!Electron_passMediumID[jEle]) continue;
-
 		  if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
 		     iChain==DataRunG||iChain==DataRunH)
 		    {
-		      hDataInvMass->Fill(invMass);
-		      hDataInvMasslinear->Fill(invMass);
+		      histos[hDataInvMass]->Fill(invMass);
+		      histos[hDataInvMasslinear]->Fill(invMass);
 		    }		  
 		  else if(iChain==wJets||iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80
 			  ||iChain==QCD80to120||iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) 
 		    {
-		      hFakes->Fill(invMass,weight);
-		      hFakeslinear->Fill(invMass,weight);
+		      histos[hFakes]->Fill(invMass,weight);
+		      histos[hFakeslinear]->Fill(invMass,weight);
 		    }
 		  else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) 
 		    {
-		      hEW->Fill(invMass,weight);
-		      hEWlinear->Fill(invMass,weight);
+		      histos[hEW]->Fill(invMass,weight);
+		      histos[hEWlinear]->Fill(invMass,weight);
 		    }
 		  else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW) 
 		    {
-		      hTops->Fill(invMass,weight);
-		      hTopslinear->Fill(invMass,weight);
+		      histos[hTops]->Fill(invMass,weight);
+		      histos[hTopslinear]->Fill(invMass,weight);
 		    }		  
 		  else if(iChain==MC10to50||iChain==MC50to100||iChain==MC100to200||iChain==MC200to400||
 			  iChain==MC400to500||iChain==MC500to700||iChain==MC700to800||iChain==MC800to1000||
 			  iChain==MC1000to1500||iChain==MC1500to2000||iChain==MC2000to3000)
 		    {
-		      hMCInvMass->Fill(invMass,weight);
-		      hMCInvMasslinear->Fill(invMass,weight);
+		      histos[hMCInvMass]->Fill(invMass,weight);
+		      histos[hMCInvMasslinear]->Fill(invMass,weight);
 		    }
 		  
 		}//end inner electron loop	   
@@ -435,24 +422,42 @@ TString dirNames[numChains]=
     }//end chain loop 
   
   double integralData, integralMC;
-    
+  /*  
   integralData = 
-    hDataInvMass->Integral(hDataInvMass->GetXaxis()->FindBin(binLow),hDataInvMass->GetXaxis()->FindBin(binHigh));
+    histos[hDataInvMass]->Integral(histos[hDataInvMass]->GetXaxis()->FindBin(binLow),
+				   histos[hDataInvMass]->GetXaxis()->FindBin(binHigh));
   integralMC = 
-    hMCInvMass->Integral(hMCInvMass->GetXaxis()->FindBin(binLow),hMCInvMass->GetXaxis()->FindBin(binHigh))+
-    hFakes->Integral(hFakes->GetXaxis()->FindBin(binLow),hFakes->GetXaxis()->FindBin(binHigh))+
-    hEW->Integral(hEW->GetXaxis()->FindBin(binLow),hEW->GetXaxis()->FindBin(binHigh))+
-    hTops->Integral(hTops->GetXaxis()->FindBin(binLow),hTops->GetXaxis()->FindBin(binHigh));
+    histos[hMCInvMass]->Integral(histos[hMCInvMass]->GetXaxis()->FindBin(binLow),
+				 histos[hMCInvMass]->GetXaxis()->FindBin(binHigh))+
+    histos[hFakes]->Integral(histos[hFakes]->GetXaxis()->FindBin(binLow),
+			     histos[hFakes]->GetXaxis()->FindBin(binHigh))+
+    histos[hEW]->Integral(histos[hEW]->GetXaxis()->FindBin(binLow),
+			  histos[hEW]->GetXaxis()->FindBin(binHigh))+
+    histos[hTops]->Integral(histos[hTops]->GetXaxis()->FindBin(binLow),
+			    histos[hTops]->GetXaxis()->FindBin(binHigh));
   
   double norm = integralData/integralMC;
-  hMCInvMass->Scale(norm);
-  hFakes->Scale(norm);
-  hEW->Scale(norm);
-  hTops->Scale(norm);
-  hMCInvMasslinear->Scale(norm);
-  hFakeslinear->Scale(norm);
-  hEWlinear->Scale(norm);
-  hTopslinear->Scale(norm);  
+  for(int i=0;i<nHistos;i++)
+    {
+      if(i==hDataInvMass||i==hDataInvMasslinear) continue;
+      histos[i]->Scale(norm);
+    }
+  */  
+  //Place all histograms into stacks
+  THStack*hStack = new THStack("hStack","");
+  THStack*hStacklinear = new THStack("hStacklinear","");
+  for(int i=0;i<nHistos;i++)
+    {
+      if(i==hDataInvMass||i==hDataInvMasslinear) continue;
+      if(i%2!=0) //linear on x-axis
+	{
+	  hStacklinear->Add(histos[i]);
+	}
+      if(i%2==0) //log on x-axis
+	{
+	  hStack->Add(histos[i]);
+	}
+    }
   
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1000,1000);
   canvas1->SetLogx();
@@ -460,13 +465,13 @@ TString dirNames[numChains]=
   
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.7);
   legend->SetTextSize(0.02);
-  legend->AddEntry(hDataInvMass,"Data");
-  legend->AddEntry(hMCInvMass,"#gamma^{*}/Z #rightarrow e^{-}e^{+}");
-  legend->AddEntry(hTops,"t#bar{t}+tW+#bar{t}W");
-  legend->AddEntry(hEW,"EW");
-  legend->AddEntry(hFakes,"Fakes");
+  legend->AddEntry(histos[hDataInvMass],"Data");
+  legend->AddEntry(histos[hMCInvMass],"#gamma^{*}/Z #rightarrow e^{-}e^{+}");
+  legend->AddEntry(histos[hTops],"t#bar{t}+tW+#bar{t}W");
+  legend->AddEntry(histos[hEW],"EW");
+  legend->AddEntry(histos[hFakes],"Fakes");
 
-  auto hDataMCRatio = new TRatioPlot(hStack,hDataInvMass);
+  auto hDataMCRatio = new TRatioPlot(hStack,histos[hDataInvMass]);
   hDataMCRatio->GetXaxis()->SetTitle("m_{ee} [GeV]");  
   canvas1->cd();
   hDataMCRatio->Draw();
@@ -476,28 +481,25 @@ TString dirNames[numChains]=
   
   TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
   canvas2->SetLogy();
-  auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,hDataInvMasslinear); 
+  auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,histos[hDataInvMasslinear]); 
   canvas2->cd();
   hDataMCRatiolinear->Draw();
   hDataMCRatiolinear->GetUpperPad()->cd();
   legend->Draw("same");
  
-  canvas1->SaveAs("./plots/dataVsMClog.png");
-  
+  canvas1->SaveAs("./plots/dataVsMClogScaleData.png");
+  canvas2->SaveAs("./plots/dataVsMClinearScaleData.png");
+
+  TFile *rootFile = new TFile("./plots/dataVsMCscaleData.root","RECREATE");
   rootFile->cd();
   hStack->Write();
-  hDataInvMass->Write();
-  hMCInvMass->Write();
-  hFakes->Write();
-  hEW->Write();
-  hTops->Write();
   hStacklinear->Write();
-  hDataInvMasslinear->Write();
-  hMCInvMasslinear->Write();
-  hFakeslinear->Write();
-  hEWlinear->Write();
-  hTopslinear->Write();
+  for(int i=0;i<nHistos;i++)
+    {
+      histos[i]->Write();
+    }
   canvas1->Write();
+  canvas2->Write();
   rootFile->Write();
   rootFile->Close();
   
