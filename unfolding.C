@@ -140,4 +140,29 @@ void unfolding()
   canvas[5]->cd();
   hunfoldingHardvsReco->Draw("colz");
 
+TString canvasSaveName[nCanvas] = 
+  {
+    "./plots/responseGENvsGEN.png",
+    "./plots/responseFSvsReco.png",
+    "./plots/responseHardvsReco.png",
+    "./plots/unfoldingGENvsGEN.png",
+    "./plots/unfoldingFSvsReco.png",
+    "./plots/unfoldingHardvsReco.png"
+  };
+
+  TFile *rootFile = new TFile("./plots/unfoldingMatrices.root","RECREATE");
+  rootFile->cd();
+  hresponseGENvsGEN->Write();
+  hresponseFSvsReco->Write();
+  hresponseHardvsReco->Write();  
+  hunfoldingGENvsGEN->Write();
+  hunfoldingFSvsReco->Write();
+  hunfoldingHardvsReco->Write();
+  for(int i=0;i<nCanvas;i++)
+    {
+      canvas[i]->Write();
+      canvas[i]->SaveAs(canvasSaveName[i]);
+    }
+  rootFile->Write();
+  rootFile->Close();
 }//end main
