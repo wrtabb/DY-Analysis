@@ -15,7 +15,7 @@ const TString simFileName = "sampleSimulation.root";
 const TString mockDataTreeName = "mockData";
 const TString simTreeName = "sim";
 
-const int nMassBins = 90;
+const int nMassBins = 15;
 const int massMin = 20;
 const int massMax = 200;
 
