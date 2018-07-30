@@ -158,7 +158,12 @@ void efficiencies()
 	  filecoll.Add(files);
 	  chains[iChain]->AddFileInfoList(filecoll.GetList());
 	  cout << files << endl;
-	  cout << chains[iChain]->GetEntries() << " events loaded" << endl;	  
+	  cout << chains[iChain]->GetEntries() << " events loaded" << endl;	
+	  if(chains[iChain]->GetEntries()==0){
+	    cout << "ERROR: Broken files or files not found in: " << endl;
+	    cout << files << endl;
+	    return;
+	  }
 	}
   
       //Setting addresses for all branches

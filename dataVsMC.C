@@ -1,4 +1,4 @@
-cd////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 //Data versus MC signal and backgrounds
 //Robert Tabb
 //wrtabb@huskers.unl.edu
@@ -44,6 +44,57 @@ bool Electron_passMediumID[MPSIZE];
 int HLT_trigType[MPSIZE],HLT_trigFired[MPSIZE];
 std::vector<std::string> HLT_trigName;
 std::vector<std::string> *pHLT_trigName = &HLT_trigName;
+enum HistBins {
+  BINS_FAKES,
+  BINS_FAKES_LINEAR,
+  BINS_EW,
+  BINS_EW_LINEAR,
+  BINS_TOPS,
+  BINS_TOPS_LINEAR,
+  BINS_MC,
+  BINS_MC_LINEAR,
+  BINS_DATA,
+  BINS_DATA_LINEAR
+};
+enum ChainNum {
+  QCD20to30,
+  QCD30to50,
+  QCD50to80,
+  QCD80to120,
+  QCD120to170,
+  QCD170to300,
+  QCD300toInf,  
+  wJets,
+  WW,    
+  WWTo2L2Nu,
+  ZZ,       
+  ZZTo4L,
+  WZ,
+  WZTo3LNu,
+  tt0to700,
+  tt700to1000,
+  tt1000toInf,
+  tW,             
+  tbarW,         
+  MC10to50,
+  MC50to100,
+  MC100to200,
+  MC200to400,
+  MC400to500,
+  MC500to700,
+  MC700to800,
+  MC800to1000,
+  MC1000to1500,
+  MC1500to2000,
+  MC2000to3000,
+  DataRunB,
+  DataRunC,
+  DataRunD,
+  DataRunE,
+  DataRunF,
+  DataRunG,
+  DataRunH
+}; 
 const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 91, 96, 101, 
 			     106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 200, 220, 243, 273, 320, 
 			     380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
@@ -73,13 +124,13 @@ const float eMass = 0.000511;
 const TString treeName = "recoTree/DYTree";
 const float dRMinCut = 0.3;
 
-void dataVsMC_backup()
+void dataVsMC()
 {
   TTimeStamp ts_start;
   cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
   TStopwatch totaltime;
   totaltime.Start();
-
+  
   gStyle->SetOptStat(0);
   //Defining branches
   TBranch*b_Nelectrons;
@@ -90,53 +141,11 @@ void dataVsMC_backup()
   TBranch*b_HLT_ntrig;
   TBranch*b_HLT_trigType;
   TBranch*b_HLT_trigFired;
-
+  
   //Loading ntuples
   cout << "Loading ntuples" << endl;
-  
-  enum chainNum 
-  {
-    QCD20to30,
-    QCD30to50,
-    QCD50to80,
-    QCD80to120,
-    QCD120to170,
-    QCD170to300,
-    QCD300toInf,  
-    wJets,
-    WW,    
-    WWTo2L2Nu,
-    ZZ,       
-    ZZTo4L,
-    WZ,
-    WZTo3LNu,
-    tt0to700,
-    tt700to1000,
-    tt1000toInf,
-    tW,             
-    tbarW,         
-    MC10to50,
-    MC50to100,
-    MC100to200,
-    MC200to400,
-    MC400to500,
-    MC500to700,
-    MC700to800,
-    MC800to1000,
-    MC1000to1500,
-    MC1500to2000,
-    MC2000to3000,
-    DataRunB,
-    DataRunC,
-    DataRunD,
-    DataRunE,
-    DataRunF,
-    DataRunG,
-    DataRunH
-  }; 
-
-TString dirNames[numChains]=
-  {//The names of every directory being loaded
+  //The names of every directory being loaded
+  TString dirNames[numChains] = {
     "/QCD_Pt-20to30_EMEnriched_TuneCUETP8M1_13TeV_pythia8",
     "/QCD_Pt-30to50_EMEnriched_TuneCUETP8M1_13TeV_pythia8/crab_QCDEMEnriched_Pt30to50",
     "/QCD_Pt-50to80_EMEnriched_TuneCUETP8M1_13TeV_pythia8/crab_QCDEMEnriched_Pt50to80",
@@ -175,156 +184,140 @@ TString dirNames[numChains]=
     "/DoubleEG/crab_DoubleEG_RunG",
     "/DoubleEG/crab_DoubleEG_RunH"
   };
- 
- TString baseDirectory = 
-   "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3"; 
+  TString baseDirectory = 
+    "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3"; 
+  
+  TChain*chains[numChains];
+  vector <TString> *subFiles[numChains];  
+  for(int iChain=0;iChain<numChains;iChain++) {
+    if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//Not using these in this analysis
+    if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
+       iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
     
- TChain*chains[numChains];
- vector <TString> *subFiles[numChains];  
- for(int iChain=0;iChain<numChains;iChain++)
-   {
-     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//Not using these in this analysis
-     if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
-	iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
-
-     subFiles[iChain] = new vector<TString>;
-     if(iChain==MC10to50) 
-       {
-	 subFiles[iChain]->push_back(dirNames[iChain]+"_ext1v1");
-	 subFiles[iChain]->push_back(dirNames[iChain]+"_v1");
-	 subFiles[iChain]->push_back(dirNames[iChain]+"_v2");
-       }
-     else if(iChain==MC100to200||iChain==wJets) 
-       {
-	 subFiles[iChain]->push_back(dirNames[iChain]);
-	 subFiles[iChain]->push_back(dirNames[iChain]+"_ext");
-       }
-     else if(iChain==DataRunH) 
-       {
-	 subFiles[iChain]->push_back(dirNames[iChain]+"ver2");
-	 subFiles[iChain]->push_back(dirNames[iChain]+"ver3");
-       }
-     else if(iChain==tt0to700)
-       {
-	 subFiles[iChain]->push_back(dirNames[iChain]);
-	 subFiles[iChain]->push_back(dirNames[iChain]+"Backup");
-       }
-     else subFiles[iChain]->push_back(dirNames[iChain]);      
-   } 
- 
- TString files;  
- Long64_t subDirectorySize;
- Long64_t totalentries = 0;
- for(int iChain=0;iChain<numChains;iChain++)
-    {          
-      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
-      if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
-	 iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
-      chains[iChain] = new TChain(treeName);
-      subDirectorySize = subFiles[iChain]->size();
-      for(int k=0;k<subDirectorySize;k++)
-	{	  	      
-	  TFileCollection filecoll("dum");//Object for creating a list of files in a directory
-	  files = baseDirectory;
-	  files+=subFiles[iChain]->at(k);
-	  files+="/skims_0001/*.root";	  
-	  filecoll.Add(files);
-	  chains[iChain]->AddFileInfoList(filecoll.GetList());
-	  cout << files << endl;
-	  cout << chains[iChain]->GetEntries() << " events loaded" << endl;	  
-	}                
-	  
-      //Setting addresses for branches
-      chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
-      chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
-      chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
-      chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
-      chains[iChain]->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,&b_Electron_passMediumID);
-      chains[iChain]->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
-      chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
-      chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
-      chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);
-      
-      totalentries=totalentries+chains[iChain]->GetEntries(); 
-      
-    }//end iChain loop
+    subFiles[iChain] = new vector<TString>;
+    if(iChain==MC10to50) {
+      subFiles[iChain]->push_back(dirNames[iChain]+"_ext1v1");
+      subFiles[iChain]->push_back(dirNames[iChain]+"_v1");
+      subFiles[iChain]->push_back(dirNames[iChain]+"_v2");
+    }
+    else if(iChain==MC100to200||iChain==wJets) {
+      subFiles[iChain]->push_back(dirNames[iChain]);
+      subFiles[iChain]->push_back(dirNames[iChain]+"_ext");
+    }
+    else if(iChain==DataRunH) {
+      subFiles[iChain]->push_back(dirNames[iChain]+"ver2");
+      subFiles[iChain]->push_back(dirNames[iChain]+"ver3");
+    }
+    else if(iChain==tt0to700) {
+      subFiles[iChain]->push_back(dirNames[iChain]);
+      subFiles[iChain]->push_back(dirNames[iChain]+"Backup");
+    }
+    else subFiles[iChain]->push_back(dirNames[iChain]);      
+  } 
+  
+  TString files;  
+  Long64_t subDirectorySize;
+  Long64_t totalentries = 0;
+  for(int iChain=0;iChain<numChains;iChain++) {          
+    if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
+    if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
+       iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
+    chains[iChain] = new TChain(treeName);
+    subDirectorySize = subFiles[iChain]->size();
+    for(int k=0;k<subDirectorySize;k++) {	  	      
+      TFileCollection filecoll("dum");//Object for creating a list of files in a directory
+      files = baseDirectory;
+      files+=subFiles[iChain]->at(k);
+      files+="/skims_0001/*.root";	  
+      filecoll.Add(files);
+      chains[iChain]->AddFileInfoList(filecoll.GetList());
+      cout << files << endl;
+      cout << chains[iChain]->GetEntries() << " events loaded" << endl;	 
+      if(chains[iChain]->GetEntries()==0){
+	cout << "ERROR: Broken files or files not found in: " << endl;
+	cout << files << endl;
+	return;
+      }
+    }                
+    
+    //Setting addresses for branches
+    chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
+    chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
+    chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
+    chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
+    chains[iChain]->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,&b_Electron_passMediumID);
+    chains[iChain]->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
+    chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
+    chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
+    chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);
+    
+    totalentries=totalentries+chains[iChain]->GetEntries(); 
+    
+  }//end iChain loop
   
   cout << "Total Events Loaded: " << totalentries << endl;
   cout << endl;
   
   //defining histograms
   TH1F*histos[nHistos];
-  enum histBins
-    {
-      hFakes,
-      hFakeslinear,
-      hEW,
-      hEWlinear,
-      hTops,
-      hTopslinear,   
-      hMCInvMass,
-      hMCInvMasslinear,
-      hDataInvMass,
-      hDataInvMasslinear 
-    };
-  TString histName[nHistos] =
-    {
-      "hFakes",
-      "hFakeslinear",
-      "hEW",
-      "hEWlinear",
-      "hTops",
-      "hTopslinear",   
-      "hMCInvMass",
-      "hMCInvMasslinear",
-      "hDataInvMass",
-      "hDataInvMasslinear"        
-    };
-  for(int i=0;i<nHistos;i++)
-    {
-      if(i%2!=0) //linear on x-axis
-	{
-	  histos[i]=new TH1F(histName[i],"",nLinearBins,binLow,binHigh);
-	}
-      if(i%2==0) //log on x-axis
-	{
-	  histos[i]=new TH1F(histName[i],"",nLogBins,massbins);
-	}
-      histos[i]->Sumw2();
-      histos[i]->GetXaxis()->SetTitle("m_{ee} [GeV]");
-      histos[i]->GetXaxis()->SetMoreLogLabels();
-      histos[i]->GetXaxis()->SetNoExponent();
-      histos[i]->SetMinimum(axisLow);
-      histos[i]->SetTitle("MC vs. Data");
-      if(i==hMCInvMass||i==hMCInvMasslinear)
-	{
-	  histos[i]->SetFillColor(kOrange-2);
-	  histos[i]->SetLineColor(kOrange+3);
-	}
-      if(i==hDataInvMass||i==hDataInvMasslinear)
-	{
-	  histos[i]->SetLineColor(kBlack);
-	  histos[i]->SetMarkerColor(kBlack);
-	  histos[i]->SetMarkerSize(1);
-	  histos[i]->SetMarkerStyle(20);
-	}
-      if(i==hFakes||i==hFakeslinear)
-	{
-	  histos[i]->SetFillColor(kViolet+5);
-	  histos[i]->SetLineColor(kViolet+3);
-	}
-      if(i==hEW||i==hEWlinear)
-	{
-	  histos[i]->SetFillColor(kRed+2);
-	  histos[i]->SetLineColor(kRed+4);
-	}
-      if(i==hTops||i==hTopslinear)
-	{
-	  histos[i]->SetFillColor(kBlue+2);
-	  histos[i]->SetLineColor(kBlue+3);
-	}
+  const TString histName[nHistos] = {
+    "hFakes",
+    "hFakeslinear",
+    "hEW",
+    "hEWlinear",
+    "hTops",
+    "hTopslinear",   
+    "hMCInvMass",
+    "hMCInvMasslinear",
+    "hDataInvMass",
+    "hDataInvMasslinear"        
+  };
+  const Color_t histFillColors[8] = {
+    kViolet+5,
+    kViolet+5,
+    kRed+2,
+    kRed+2,
+    kBlue+2,
+    kBlue+2,
+    kOrange-2,
+    kOrange-2
+  };
+  const Color_t histLineColors[8] = {
+    kViolet+3,
+    kViolet+3,
+    kRed+4,
+    kRed+4,
+    kBlue+3,
+    kBlue+3,
+    kOrange+3,
+    kOrange+3
+  };
+  for(int i=0;i<nHistos;i++) {
+    if(i%2!=0) {
+      histos[i]=new TH1F(histName[i],"",nLinearBins,binLow,binHigh);
     }
-
+    else if(i%2==0) {
+      histos[i]=new TH1F(histName[i],"",nLogBins,massbins);
+    }
+    histos[i]->Sumw2();
+    histos[i]->GetXaxis()->SetTitle("m_{ee} [GeV]");
+    histos[i]->GetXaxis()->SetMoreLogLabels();
+    histos[i]->GetXaxis()->SetNoExponent();
+    histos[i]->SetMinimum(axisLow);
+    histos[i]->SetTitle("MC vs. Data");
+    
+    if(i==BINS_DATA||i==BINS_DATA_LINEAR) {
+      histos[i]->SetLineColor(kBlack);
+      histos[i]->SetMarkerColor(kBlack);
+      histos[i]->SetMarkerSize(1);
+      histos[i]->SetMarkerStyle(20);
+    }
+    else {
+      histos[i]->SetFillColor(histFillColors[i]);
+      histos[i]->SetLineColor(histLineColors[i]);
+    }
+  }
+  
   //Event Loop
   cout << "Starting Event Loop" << endl;
   double invMass, weight;
@@ -334,130 +327,117 @@ TString dirNames[numChains]=
   TString trigName;
   int trigNameSize;
   //nentries = 100000;
-  //double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //50to100 lumi
+  double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //50to100 lumi
   //double lumi = nentries/xSec[MC50to100]; //MC50to100 lumi
-  double lumi = 35900;//data lumi
-  for(int iChain=0;iChain<numChains;iChain++)
-    {
-      if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
-      if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
-	 iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
-      //nentries = 100000;
-      nentries = chains[iChain]->GetEntries();
-      //if(chains[iChain]->GetEntries() < nentries) nentries = chains[iChain]->GetEntries();
-      weight=lumi*(xSec[iChain]/nentries);      
-     
-      for(Long64_t i=0;i<nentries;i++)
-	{      
-	  counter(count,totalentries);
-	  count = count+1; 
-	  chains[iChain]->GetEntry(i);
-	  if(Nelectrons<2) continue;	  
-	  //counter(count,7*nentries);	    
+  //double lumi = 35900;//data lumi
+  for(int iChain=0;iChain<numChains;iChain++) {
+    if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
+    if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
+       iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
+    cout << endl;
+    cout << "Processing chain: " << dirNames[iChain] << endl;
+    cout << endl;
+    //nentries = 100000;
+    nentries = chains[iChain]->GetEntries();
+    //if(chains[iChain]->GetEntries() < nentries) nentries = chains[iChain]->GetEntries();
+    weight=lumi*(xSec[iChain]/nentries);      
+    
+    for(Long64_t i=0;i<nentries;i++) {      
+      counter(count,totalentries);
+      //counter(count,7*nentries);
+      count = count+1; 
+      chains[iChain]->GetEntry(i);
+      if(Nelectrons<2) continue;      	    
+      
+      //HLT cut
+      trigNameSize = pHLT_trigName->size();
+      bool passHLT = kFALSE;	  
+      for(int iHLT=0;iHLT<trigNameSize;iHLT++) {
+	trigName = pHLT_trigName->at(iHLT);	  
+	if(trigName.CompareTo(compareHLT)==0) {
+	  if(HLT_trigFired[iHLT]==1) {
+	    passHLT = kTRUE;	
+	  }
+	  else {
+	    passHLT = kFALSE;
+	  }		     
+	  break; 
+	}
+      } 
+      if(!passHLT) continue;
 
-	  //HLT cut
-	  trigNameSize = pHLT_trigName->size();
-	  bool passHLT = kFALSE;	  
-	  for(int iHLT=0;iHLT<trigNameSize;iHLT++)
-	    {
-	      trigName = pHLT_trigName->at(iHLT);	  
-	      if(trigName.CompareTo(compareHLT)==0)
-		{
-		  if(HLT_trigFired[iHLT]==1) 
-		    {
-		      passHLT = kTRUE;	
-		    }
-		  else
-		    {
-		      passHLT = kFALSE;
-		    }		     
-		  break; 
-		}
-	    } 
-	  if(!passHLT) continue;
-	  //Electron loop
-	  for(int iEle = 0; iEle < Nelectrons; iEle++)
-	    {
-	      if(!Electron_passMediumID[iEle]) continue;
-	      for(int jEle = iEle+1; jEle < Nelectrons; jEle++)
-		{	  
-		  if(!Electron_passMediumID[jEle]) continue;
-		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
-					     Electron_eta[jEle])) continue; 
-		  invMass=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
-				      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
-		  if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
-		     iChain==DataRunG||iChain==DataRunH)
-		    {
-		      histos[hDataInvMass]->Fill(invMass);
-		      histos[hDataInvMasslinear]->Fill(invMass);
-		    }		  
-		  else if(iChain==wJets||iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80
-			  ||iChain==QCD80to120||iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) 
-		    {
-		      histos[hFakes]->Fill(invMass,weight);
-		      histos[hFakeslinear]->Fill(invMass,weight);
-		    }
-		  else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) 
-		    {
-		      histos[hEW]->Fill(invMass,weight);
-		      histos[hEWlinear]->Fill(invMass,weight);
-		    }
-		  else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW) 
-		    {
-		      histos[hTops]->Fill(invMass,weight);
-		      histos[hTopslinear]->Fill(invMass,weight);
-		    }		  
-		  else if(iChain==MC10to50||iChain==MC50to100||iChain==MC100to200||iChain==MC200to400||
-			  iChain==MC400to500||iChain==MC500to700||iChain==MC700to800||iChain==MC800to1000||
-			  iChain==MC1000to1500||iChain==MC1500to2000||iChain==MC2000to3000)
-		    {
-		      histos[hMCInvMass]->Fill(invMass,weight);
-		      histos[hMCInvMasslinear]->Fill(invMass,weight);
-		    }
-		  
-		}//end inner electron loop	   
-	    }//end electron loop
-	}//end event loop   
-    }//end chain loop 
+      //Electron loop
+      for(int iEle = 0; iEle < Nelectrons; iEle++) {
+	if(!Electron_passMediumID[iEle]) continue;
+	for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {	  
+	  if(!Electron_passMediumID[jEle]) continue;
+	  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
+				     Electron_eta[jEle])) continue; 
+	  invMass=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
+			      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
+	  if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
+	     iChain==DataRunG||iChain==DataRunH) {
+	    histos[BINS_DATA]->Fill(invMass);
+	    histos[BINS_DATA_LINEAR]->Fill(invMass);
+	  }		  
+	  else if(iChain==wJets||iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80
+		  ||iChain==QCD80to120||iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) {
+	    histos[BINS_FAKES]->Fill(invMass,weight);
+	    histos[BINS_FAKES_LINEAR]->Fill(invMass,weight);
+	  }
+	  else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) {
+	    histos[BINS_EW]->Fill(invMass,weight);
+	    histos[BINS_EW_LINEAR]->Fill(invMass,weight);
+	  }
+	  else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW) {
+	    histos[BINS_TOPS]->Fill(invMass,weight);
+	    histos[BINS_TOPS_LINEAR]->Fill(invMass,weight);
+	  }		  
+	  else if(iChain==MC10to50||iChain==MC50to100||iChain==MC100to200||iChain==MC200to400||
+		  iChain==MC400to500||iChain==MC500to700||iChain==MC700to800||iChain==MC800to1000||
+		  iChain==MC1000to1500||iChain==MC1500to2000||iChain==MC2000to3000) {
+	    histos[BINS_MC]->Fill(invMass,weight);
+	    histos[BINS_MC_LINEAR]->Fill(invMass,weight);
+	  }
+	  
+	}//end inner electron loop	   
+      }//end electron loop
+    }//end event loop   
+  }//end chain loop 
   
   double integralData, integralMC;
-  /*  
+  
   integralData = 
-    histos[hDataInvMass]->Integral(histos[hDataInvMass]->GetXaxis()->FindBin(binLow),
-				   histos[hDataInvMass]->GetXaxis()->FindBin(binHigh));
+    histos[BINS_DATA]->Integral(histos[BINS_DATA]->GetXaxis()->FindBin(binLow),
+				histos[BINS_DATA]->GetXaxis()->FindBin(binHigh));
   integralMC = 
-    histos[hMCInvMass]->Integral(histos[hMCInvMass]->GetXaxis()->FindBin(binLow),
-				 histos[hMCInvMass]->GetXaxis()->FindBin(binHigh))+
-    histos[hFakes]->Integral(histos[hFakes]->GetXaxis()->FindBin(binLow),
-			     histos[hFakes]->GetXaxis()->FindBin(binHigh))+
-    histos[hEW]->Integral(histos[hEW]->GetXaxis()->FindBin(binLow),
-			  histos[hEW]->GetXaxis()->FindBin(binHigh))+
-    histos[hTops]->Integral(histos[hTops]->GetXaxis()->FindBin(binLow),
-			    histos[hTops]->GetXaxis()->FindBin(binHigh));
+    histos[BINS_MC]->Integral(histos[BINS_MC]->GetXaxis()->FindBin(binLow),
+			      histos[BINS_MC]->GetXaxis()->FindBin(binHigh))+
+    histos[BINS_FAKES]->Integral(histos[BINS_FAKES]->GetXaxis()->FindBin(binLow),
+				 histos[BINS_FAKES]->GetXaxis()->FindBin(binHigh))+
+    histos[BINS_EW]->Integral(histos[BINS_EW]->GetXaxis()->FindBin(binLow),
+			      histos[BINS_EW]->GetXaxis()->FindBin(binHigh))+
+    histos[BINS_TOPS]->Integral(histos[BINS_TOPS]->GetXaxis()->FindBin(binLow),
+				histos[BINS_TOPS]->GetXaxis()->FindBin(binHigh));
   
   double norm = integralData/integralMC;
-  for(int i=0;i<nHistos;i++)
-    {
-      if(i==hDataInvMass||i==hDataInvMasslinear) continue;
-      histos[i]->Scale(norm);
-    }
-  */  
+  for(int i=0;i<nHistos;i++) {
+    if(i==BINS_DATA||i==BINS_DATA_LINEAR) continue;
+    histos[i]->Scale(norm);
+  }
+  
   //Place all histograms into stacks
   THStack*hStack = new THStack("hStack","");
   THStack*hStacklinear = new THStack("hStacklinear","");
-  for(int i=0;i<nHistos;i++)
-    {
-      if(i==hDataInvMass||i==hDataInvMasslinear) continue;
-      if(i%2!=0) //linear on x-axis
-	{
-	  hStacklinear->Add(histos[i]);
-	}
-      if(i%2==0) //log on x-axis
-	{
-	  hStack->Add(histos[i]);
-	}
+  for(int i=0;i<nHistos;i++) {
+    if(i==BINS_DATA||i==BINS_DATA_LINEAR) continue;
+    if(i%2!=0) {
+      hStacklinear->Add(histos[i]);
     }
+    if(i%2==0) {
+      hStack->Add(histos[i]);
+    }
+  }
   
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1000,1000);
   canvas1->SetLogx();
@@ -465,13 +445,13 @@ TString dirNames[numChains]=
   
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.7);
   legend->SetTextSize(0.02);
-  legend->AddEntry(histos[hDataInvMass],"Data");
-  legend->AddEntry(histos[hMCInvMass],"#gamma^{*}/Z #rightarrow e^{-}e^{+}");
-  legend->AddEntry(histos[hTops],"t#bar{t}+tW+#bar{t}W");
-  legend->AddEntry(histos[hEW],"EW");
-  legend->AddEntry(histos[hFakes],"Fakes");
+  legend->AddEntry(histos[BINS_DATA],"Data");
+  legend->AddEntry(histos[BINS_MC],"#gamma^{*}/Z #rightarrow e^{-}e^{+}");
+  legend->AddEntry(histos[BINS_TOPS],"t#bar{t}+tW+#bar{t}W");
+  legend->AddEntry(histos[BINS_EW],"EW");
+  legend->AddEntry(histos[BINS_FAKES],"Fakes");
 
-  auto hDataMCRatio = new TRatioPlot(hStack,histos[hDataInvMass]);
+  auto hDataMCRatio = new TRatioPlot(hStack,histos[BINS_DATA]);
   hDataMCRatio->GetXaxis()->SetTitle("m_{ee} [GeV]");  
   canvas1->cd();
   hDataMCRatio->Draw();
@@ -481,28 +461,27 @@ TString dirNames[numChains]=
   
   TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
   canvas2->SetLogy();
-  auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,histos[hDataInvMasslinear]); 
+  auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,histos[BINS_DATA_LINEAR]); 
   canvas2->cd();
   hDataMCRatiolinear->Draw();
   hDataMCRatiolinear->GetUpperPad()->cd();
   legend->Draw("same");
- 
-  canvas1->SaveAs("./plots/dataVsMClogScaleData.png");
-  canvas2->SaveAs("./plots/dataVsMClinearScaleData.png");
-
-  TFile *rootFile = new TFile("./plots/dataVsMCscaleData.root","RECREATE");
-  rootFile->cd();
-  hStack->Write();
-  hStacklinear->Write();
-  for(int i=0;i<nHistos;i++)
-    {
-      histos[i]->Write();
+  /*
+    canvas1->SaveAs("./plots/dataVsMClogScaleData.png");
+    canvas2->SaveAs("./plots/dataVsMClinearScaleData.png");
+    
+    TFile *rootFile = new TFile("./plots/dataVsMCscaleData.root","RECREATE");
+    rootFile->cd();
+    hStack->Write();
+    hStacklinear->Write();
+    for(int i=0;i<nHistos;i++) {
+    histos[i]->Write();
     }
-  canvas1->Write();
-  canvas2->Write();
-  rootFile->Write();
-  rootFile->Close();
-  
+    canvas1->Write();
+    canvas2->Write();
+    rootFile->Write();
+    rootFile->Close();
+  */
   totaltime.Stop();
   Double_t TotalCPURunTime = totaltime.CpuTime();
   Double_t TotalRunTime = totaltime.RealTime();
@@ -515,7 +494,7 @@ TString dirNames[numChains]=
   cout << "Number of Events Processed: " << count << endl;
   cout << "*****************************************************************************" << endl;
   cout << endl;
- 
+  
 }//end main function
 
 //Counter for tracking program progress
@@ -523,10 +502,9 @@ void counter(Long64_t i, Long64_t N)
 {
   int P = 100*(i)/(N);  
   TTimeStamp eventTimeStamp;
-  if(i%(N/100)==0)
-    {
-      cout << "dataVsMC.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P << "%" << endl;
-    }
+  if(i%(N/100)==0) {
+    cout << "dataVsMC.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P << "%" << endl;
+  }
   return;
 }
 

@@ -12,7 +12,6 @@ const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72,
 			     106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 200, 220, 243, 273, 320, 
 			     380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
 const int nMassBins = 43;
-const int nHistos = 3;
 const int nCanvas = 6;
 const TString dataFileName = "./plots/plotsDY.root";
 
