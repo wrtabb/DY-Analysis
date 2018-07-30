@@ -239,7 +239,8 @@ void dataVsMC()
 	return;
       }
     }                
-    
+    totalentries=totalentries+chains[iChain]->GetEntries(); 
+
     //Setting addresses for branches
     chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
     chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
@@ -249,10 +250,7 @@ void dataVsMC()
     chains[iChain]->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
     chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
     chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
-    chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);
-    
-    totalentries=totalentries+chains[iChain]->GetEntries(); 
-    
+    chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);   
   }//end iChain loop
   
   cout << "Total Events Loaded: " << totalentries << endl;

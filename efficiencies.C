@@ -42,6 +42,20 @@ double Electron_Energy[MPSIZE], Electron_Px[MPSIZE];
 double Electron_Py[MPSIZE], Electron_Pz[MPSIZE], Electron_charge[MPSIZE];
 bool Electron_passMediumID[MPSIZE];
 int HLT_trigType[MPSIZE],HLT_trigFired[MPSIZE];
+enum chainNum 
+  {        
+    MC10to50,
+    MC50to100,
+    MC100to200,
+    MC200to400,
+    MC400to500,
+    MC500to700,
+    MC700to800,
+    MC800to1000,
+    MC1000to1500,
+    MC1500to2000,
+    MC2000to3000
+  }; 
 std::vector<std::string> HLT_trigName;
 std::vector<std::string> *pHLT_trigName = &HLT_trigName;
 const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 91, 96, 101, 
@@ -91,26 +105,11 @@ void efficiencies()
 
   //Loading ntuples
   cout << "Loading ntuples" << endl;
-  
-  enum chainNum 
-  {        
-    MC10to50,
-    MC50to100,
-    MC100to200,
-    MC200to400,
-    MC400to500,
-    MC500to700,
-    MC700to800,
-    MC800to1000,
-    MC1000to1500,
-    MC1500to2000,
-    MC2000to3000
-  }; 
 
     TString dirNames[numChains] = 
       {      
 	"/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M10to50_",
-	"/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100",
+	"/deprecated_DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100",
 	"/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M100to200",
 	"/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
 	"/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
@@ -234,25 +233,25 @@ void efficiencies()
   hpTvsMass->GetXaxis()->SetTitle("m_{ee} [GeV]"); 
 
   TH2F*migMatrixGENisHardvsGENFS = new TH2F("migMatrixGENisHardvsGENFS","",nLogBins,massbins,nLogBins,massbins);
-  migMatrixGENisHardvsGENFS->SetTitle("Migration Matrix: Gen-Level Hard Process vs. Gen-Level Final State");
-  migMatrixGENisHardvsGENFS->GetXaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
-  migMatrixGENisHardvsGENFS->GetYaxis()->SetTitle("Gen-Level Hard Process Dielecron Invariant mass [GeV]");
+  migMatrixGENisHardvsGENFS->SetTitle("Migration Matrix: Gen-Level Final State vs. Gen-Level Hard Process");
+  migMatrixGENisHardvsGENFS->GetYaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
+  migMatrixGENisHardvsGENFS->GetXaxis()->SetTitle("Gen-Level Hard Process Dielecron Invariant mass [GeV]");
   migMatrixGENisHardvsGENFS->GetXaxis()->SetNoExponent();
   migMatrixGENisHardvsGENFS->GetXaxis()->SetMoreLogLabels();
   migMatrixGENisHardvsGENFS->GetYaxis()->SetNoExponent();
   migMatrixGENisHardvsGENFS->GetYaxis()->SetMoreLogLabels();
   TH2F*migMatrixGENFSvsReco = new TH2F("migMatrixGENFSvsReco","",nLogBins,massbins,nLogBins,massbins);
-  migMatrixGENFSvsReco->SetTitle("Migration Matrix: Gen-Level Final State vs. Reconstructed");
-  migMatrixGENFSvsReco->GetYaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
-  migMatrixGENFSvsReco->GetXaxis()->SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
+  migMatrixGENFSvsReco->SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Final State");
+  migMatrixGENFSvsReco->GetXaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
+  migMatrixGENFSvsReco->GetYaxis()->SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
   migMatrixGENFSvsReco->GetXaxis()->SetNoExponent();
   migMatrixGENFSvsReco->GetXaxis()->SetMoreLogLabels();
   migMatrixGENFSvsReco->GetYaxis()->SetNoExponent();
   migMatrixGENFSvsReco->GetYaxis()->SetMoreLogLabels();
   TH2F*migMatrixGENisHardvsReco = new TH2F("migMatrixGENisHardvsReco","",nLogBins,massbins,nLogBins,massbins);
-  migMatrixGENisHardvsReco->SetTitle("Migration Matrix: Gen-Level Hard Process vs. Reconstructed");
-  migMatrixGENisHardvsReco->GetYaxis()->SetTitle("Gen-Level Hard Process Dielectron Invariant Mass [GeV]");
-  migMatrixGENisHardvsReco->GetXaxis()->SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
+  migMatrixGENisHardvsReco->SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Hard Process");
+  migMatrixGENisHardvsReco->GetXaxis()->SetTitle("Gen-Level Hard Process Dielectron Invariant Mass [GeV]");
+  migMatrixGENisHardvsReco->GetYaxis()->SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
   migMatrixGENisHardvsReco->GetXaxis()->SetNoExponent();
   migMatrixGENisHardvsReco->GetXaxis()->SetMoreLogLabels();
   migMatrixGENisHardvsReco->GetYaxis()->SetNoExponent();
@@ -612,9 +611,6 @@ void efficiencies()
   canvas8->SetLogx();
   gStyle->SetPalette(1);
   migMatrixGENisHardvsReco->Draw("colz");
-
-  TCanvas*canvas9 = new TCanvas("cnEle","",10,10,900,700);
-  hnEle->Draw();
     
   canvas1->SaveAs("./plots/hardProcessInvMass.png");
   canvas2->SaveAs("./plots/allEfficiencies.png");
@@ -624,7 +620,6 @@ void efficiencies()
   canvas6->SaveAs("./plots/migMatrixGENFSvsGENisHard.png");
   canvas7->SaveAs("./plots/migMatrixGENFSvsGReco.png");
   canvas8->SaveAs("./plots/migMatrixGENisHardvsReco.png");
-  canvas9->SaveAs("./plots/dielectrons.png");
   
   rootFile->cd();
   hIDEfficiency->Write();
@@ -649,7 +644,6 @@ void efficiencies()
   canvas6->Write();
   canvas7->Write();
   canvas8->Write();
-  canvas9->Write();
   rootFile->Write();
   rootFile->Close();   
   
