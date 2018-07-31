@@ -65,8 +65,8 @@ const double pi=TMath::Pi();
 const int numChains = 11;
 const int nLogBins = 43;
 //Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
-const float xSec[numChains] = {18810.0,5705.9044344,226.6,7.77,0.4065,0.2334,
-			       0.03614,0.03047,0.01636,0.00218,0.0005156};
+const float xSec[numChains] = {18810.0/3.0,5705.9044344/3.0,226.6/3.0,7.77/3.0,0.4065/3.0,
+			       0.2334/3.0,0.03614/3.0,0.03047/3.0,0.01636/3.0,0.00218/3.0,0.0005156/3.0};
 const float etaHigh = 2.5;
 const float etaGapHigh = 1.566; 
 const float etaGapLow = 1.4442;
@@ -108,20 +108,20 @@ void efficiencies()
 
     TString dirNames[numChains] = 
       {      
-	"/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M10to50_",
-	"/deprecated_DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100",
-	"/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M100to200",
-	"/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
-	"/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
-	"/DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
-	"/DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
-	"/DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
-	"/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
-	"/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
-	"/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8"
+	"/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE/crab_DYLL_M10to50_",
+	"/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100/EE",
+	"/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE/crab_DYLL_M100to200",
+	"/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+	"/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+	"/DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+	"/DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+	"/DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+	"/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+	"/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+	"/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE"
       }; 
  TString baseDirectory = 
-   "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3"; 
+   "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/deprecated_DYJetsToLL_allMasses_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8"; 
  TChain*chains[numChains];
  vector <TString> *subFiles[numChains];  
  for(int iChain=0;iChain<numChains;iChain++)
@@ -153,16 +153,20 @@ void efficiencies()
 	  TFileCollection filecoll("dum");//Object for creating a list of files in a directory
 	  files = baseDirectory;
 	  files+=subFiles[iChain]->at(k);
-	  files+="/skims/*.root";	  
+	  files+="/*.root";	  
 	  filecoll.Add(files);
 	  chains[iChain]->AddFileInfoList(filecoll.GetList());
 	  cout << files << endl;
 	  cout << chains[iChain]->GetEntries() << " events loaded" << endl;	
 	  if(chains[iChain]->GetEntries()==0){
-	    cout << "ERROR: Broken files or files not found in: " << endl;
-	    cout << files << endl;
-	    return;
-	  }
+	cout << endl;
+	cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+	cout << "ERROR: Broken files or files not found in: " << endl;
+	cout << files << endl;
+	cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+	cout << endl;
+	return;
+      }
 	}
   
       //Setting addresses for all branches
@@ -226,6 +230,15 @@ void efficiencies()
   hHLTGenDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)"); 
   hHLTGenDielectronInvMass->GetXaxis()->SetMoreLogLabels();
   hHLTGenDielectronInvMass->GetXaxis()->SetNoExponent();
+
+  TH1F*hRecoInvMass = new TH1F("hRecoInvMass","",nLogBins,massbins);
+  hRecoInvMass->Sumw2();
+  hRecoInvMass->SetTitle("Reconstructed Invariant Mass");
+  hRecoInvMass->SetLineColor(kRed);
+  hRecoInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)"); 
+  hRecoInvMass->GetXaxis()->SetMoreLogLabels();
+  hRecoInvMass->GetXaxis()->SetNoExponent();
+
   TH2F*hpTvsMass = new TH2F("hpTvsMass","",43,massbins,598,10,3000);
   hpTvsMass->GetXaxis()->SetMoreLogLabels();
   hpTvsMass->GetXaxis()->SetNoExponent();
@@ -257,9 +270,6 @@ void efficiencies()
   migMatrixGENisHardvsReco->GetYaxis()->SetNoExponent();
   migMatrixGENisHardvsReco->GetYaxis()->SetMoreLogLabels();
 
-  TH1I*hnEle = new TH1I("hnEle","",10,0,10);
-  hnEle->SetTitle("Number of Dielectrons Passing Cuts");
-
   TH1F*hHardProcess[numChains];
   TString histbasename = "hHardProcess";
   TString histname;
@@ -275,8 +285,8 @@ void efficiencies()
       hHardProcess[jChain]->GetXaxis()->SetMoreLogLabels();
     }
 
-  TLegend*legend = new TLegend(0.70,0.9,0.95,0.80);
-  legend->SetTextSize(0.03);
+  TLegend*legend = new TLegend(0.65,0.9,0.9,0.7);
+  legend->SetTextSize(0.02);
   TLegend*legend2 = new TLegend(0.65,0.9,0.9,0.7);
   legend2->SetTextSize(0.02);
 
@@ -369,7 +379,6 @@ void efficiencies()
 		    }
 		}//end inner reco loop	   
 	    }//end reco loop
-	  hnEle->Fill(nEle);
 
 	  if(idxRecoEle1>=0&&idxRecoEle2>=0)
 	    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],Electron_phi[idxRecoEle1],
@@ -459,6 +468,7 @@ void efficiencies()
 	  if(!passHLT) continue;
 	  // Event passed HLT cut
 	  hHLTGenDielectronInvMass->Fill(invMass,weight);
+	  hRecoInvMass->Fill(invMassReco,weight);
 	  migMatrixGENisHardvsGENFS->Fill(invMassHardProcess,invMass,weight);
 	  migMatrixGENFSvsReco->Fill(invMass,invMassReco,weight);
 	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,weight);
@@ -480,7 +490,7 @@ void efficiencies()
   legend2->AddEntry(hHardProcess[9],"DYEE M1500-2000");
   legend2->AddEntry(hHardProcess[10],"DYEE M2000-3000");
   legend2->Draw("same");
-
+  
   TEfficiency* hMatchedEfficiency = new TEfficiency((*hGenMatchedDielectronInvMass),(*hGenDielectronInvMass));
   hMatchedEfficiency->SetTitle("Reconstruction Efficiency");
   hMatchedEfficiency->SetMarkerStyle(20);
@@ -612,6 +622,14 @@ void efficiencies()
   gStyle->SetPalette(1);
   migMatrixGENisHardvsReco->Draw("colz");
     
+  TCanvas*canvas9 = new TCanvas("cRecovsFS","",10,10,900,700);
+  canvas9->SetLogy();
+  canvas9->SetLogx();
+  legend->AddEntry(hHLTGenDielectronInvMass,"Gen-Level post-FSR");
+  legend->AddEntry(hRecoInvMass,"Reco-Level");
+  hHLTGenDielectronInvMass->Draw();
+  hRecoInvMass->Draw("same");
+
   canvas1->SaveAs("./plots/hardProcessInvMass.png");
   canvas2->SaveAs("./plots/allEfficiencies.png");
   canvas3->SaveAs("./plots/efficiency.png");
@@ -633,6 +651,8 @@ void efficiencies()
   hHLTEfficiency->Write();
   hpTvsMassProf->Write();
   hpTvsMass->Write();
+  hHLTGenDielectronInvMass->Write();
+  hRecoInvMass->Write();
   migMatrixGENisHardvsGENFS->Write();
   migMatrixGENFSvsReco->Write();
   migMatrixGENisHardvsReco->Write();
@@ -644,6 +664,7 @@ void efficiencies()
   canvas6->Write();
   canvas7->Write();
   canvas8->Write();
+  canvas9->Write();
   rootFile->Write();
   rootFile->Close();   
   

@@ -12,7 +12,7 @@ const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72,
 			     106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 200, 220, 243, 273, 320, 
 			     380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
 const int nMassBins = 43;
-const int nCanvas = 6;
+const int nCanvas = 8;
 const TString dataFileName = "./plots/plotsDY.root";
 
 void unfolding()
@@ -25,6 +25,15 @@ void unfolding()
   TH2F*migMatrixGENisHardvsGENFS = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsGENFS");
   TH2F*migMatrixGENFSvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENFSvsReco");
   TH2F*migMatrixGENisHardvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsReco");
+  TH1F*hGenFS = (TH1F*)fMigrationMatrix->Get("hHLTGenDielectronInvMass");  
+  hGenFS->SetTitle("Gen-Level Final State vs. Reconstructed");
+  hGenFS->SetMarkerStyle(20);
+  hGenFS->SetLineColor(kBlack);
+  TH1F*hReco = (TH1F*)fMigrationMatrix->Get("hRecoInvMass");
+  hReco->SetMarkerStyle(20);
+  hReco->SetMarkerColor(kRed);
+  hReco->SetLineColor(kRed);
+  //hReco->SetMarkerSize(1);
   
   //Defininig migration matrix objects
   TMatrixD migrationGENvsGEN(nMassBins,nMassBins);
@@ -46,6 +55,14 @@ void unfolding()
   TMatrixD responseFSvsReco(nMassBins,nMassBins);
   TMatrixD responseHardvsReco(nMassBins,nMassBins);
 
+  TVectorD yieldsMeasured(nMassBins);
+  TVectorD yieldsTrue(nMassBins);
+  for(int i=1; i<=nMassBins; i++)
+    {
+      yieldsMeasured(i-1) = hReco->GetBinContent(i);
+      yieldsTrue(i-1) = hGenFS->GetBinContent(i);
+    }
+  
   for(int i=0; i<nMassBins; i++)
     {
       float sumGENvsGEN=0;
@@ -118,6 +135,29 @@ void unfolding()
 	}
     }
 
+  TVectorD yieldsUnfolded = (unfoldingFSvsReco.T())*yieldsMeasured;
+  TH1F *hMassUnfolded = new TH1F("hMassUnfolded","",nMassBins,massbins);
+  hMassUnfolded->SetTitle("Unfolded vs. Gen-Level");
+  hMassUnfolded->GetXaxis()->SetTitle("m_{ee} [GeV]");
+  hMassUnfolded->SetLineColor(kRed);
+  hMassUnfolded->SetMarkerColor(kRed);
+  hMassUnfolded->SetMarkerStyle(20);
+
+  for(int i=0; i<nMassBins; i++)
+    {
+      hMassUnfolded->SetBinContent(i+1, yieldsUnfolded(i));
+    }
+
+  TLegend*legend = new TLegend(0.65,0.9,0.9,0.7);
+  legend->SetTextSize(0.02);
+  legend->AddEntry(hMassUnfolded,"Unfolded");
+  legend->AddEntry(hGenFS,"Gen-Level");
+
+  TLegend*legend2 = new TLegend(0.65,0.9,0.9,0.7);
+  legend2->SetTextSize(0.02);
+  legend2->AddEntry(hReco,"Reco-Level");
+  legend2->AddEntry(hGenFS,"Gen-Level");
+
   //Plotting and saving histograms
   TCanvas*canvas[nCanvas];
   TString canvasName = "canvas";
@@ -128,6 +168,7 @@ void unfolding()
       canvas[i]->SetLogx();
       canvas[i]->SetLogy();
     }
+  
   canvas[0]->cd();
   hresponseGENvsGEN->Draw("colz");
   canvas[1]->cd();
@@ -140,17 +181,28 @@ void unfolding()
   hunfoldingFSvsReco->Draw("colz");
   canvas[5]->cd();
   hunfoldingHardvsReco->Draw("colz");
+  
+  canvas[6]->cd();
+  hGenFS->Draw("hist");
+  hReco->Draw("same,PE");
+  legend2->Draw("same");
+  canvas[7]->cd();
+  hMassUnfolded->Draw("PE");
+  hGenFS->Draw("same,hist");
+  legend->Draw("same");
 
-TString canvasSaveName[nCanvas] = 
-  {
-    "./plots/responseGENvsGEN.png",
-    "./plots/responseFSvsReco.png",
-    "./plots/responseHardvsReco.png",
-    "./plots/unfoldingGENvsGEN.png",
-    "./plots/unfoldingFSvsReco.png",
-    "./plots/unfoldingHardvsReco.png"
-  };
-
+  TString canvasSaveName[nCanvas] = 
+    {
+      "./plots/responseGENvsGEN.png",
+      "./plots/responseFSvsReco.png",
+      "./plots/responseHardvsReco.png",
+      "./plots/unfoldingGENvsGEN.png",
+      "./plots/unfoldingFSvsReco.png",
+      "./plots/unfoldingHardvsReco.png",
+      "./plots/FSvsReco.png",
+      "./plots/UnfoldedvsFS.png"
+    };
+  /*  
   TFile *rootFile = new TFile("./plots/unfoldingMatrices.root","RECREATE");
   rootFile->cd();
   hresponseGENvsGEN->Write();
@@ -159,6 +211,9 @@ TString canvasSaveName[nCanvas] =
   hunfoldingGENvsGEN->Write();
   hunfoldingFSvsReco->Write();
   hunfoldingHardvsReco->Write();
+  hMassUnfolded->Write();
+  hGenFS->Write();
+  hReco->Write();
   for(int i=0;i<nCanvas;i++)
     {
       canvas[i]->Write();
@@ -166,4 +221,5 @@ TString canvasSaveName[nCanvas] =
     }
   rootFile->Write();
   rootFile->Close();
+  */
 }//end main
