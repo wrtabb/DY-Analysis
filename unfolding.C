@@ -26,9 +26,9 @@ void unfolding()
   TH2F*migMatrixGENFSvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENFSvsReco");
   TH2F*migMatrixGENisHardvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsReco");
   TH1F*hGenFS = (TH1F*)fMigrationMatrix->Get("hHLTGenDielectronInvMass");  
-  hGenFS->SetTitle("Gen-Level Final State vs. Reconstructed");
   hGenFS->SetLineColor(kBlack);
   TH1F*hReco = (TH1F*)fMigrationMatrix->Get("hRecoInvMass");
+  hReco->SetTitle("Gen-Level Final State vs. Reconstructed");
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kRed);
   hReco->SetLineColor(kRed);
@@ -135,12 +135,13 @@ void unfolding()
 
   TVectorD yieldsUnfolded = (unfoldingFSvsReco.T())*yieldsMeasured;
   TH1F *hMassUnfolded = new TH1F("hMassUnfolded","",nMassBins,massbins);
-  hMassUnfolded->SetTitle("Unfolded vs. Gen-Level");
+  hMassUnfolded->SetTitle("Gen-Level Final State vs. Unfolded");
   hMassUnfolded->GetXaxis()->SetTitle("m_{ee} [GeV]");
   hMassUnfolded->SetLineColor(kRed);
   hMassUnfolded->SetMarkerColor(kRed);
   hMassUnfolded->SetMarkerStyle(20);
-
+  hMassUnfolded->GetXaxis()->SetNoExponent();
+  hMassUnfolded->GetXaxis()->SetMoreLogLabels();
   for(int i=0; i<nMassBins; i++)
     {
       hMassUnfolded->SetBinContent(i+1, yieldsUnfolded(i));
@@ -181,8 +182,8 @@ void unfolding()
   hunfoldingHardvsReco->Draw("colz");
   
   canvas[6]->cd();
-  hGenFS->Draw("hist");
-  hReco->Draw("same,PE");
+  hReco->Draw("PE");
+  hGenFS->Draw("same,hist");
   legend2->Draw("same");
   canvas[7]->cd();
   hMassUnfolded->Draw("PE");
