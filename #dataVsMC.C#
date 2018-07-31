@@ -42,7 +42,6 @@ double Electron_Energy[MPSIZE], Electron_Px[MPSIZE];
 double Electron_Py[MPSIZE], Electron_Pz[MPSIZE], Electron_charge[MPSIZE];
 bool Electron_passMediumID[MPSIZE];
 int HLT_trigType[MPSIZE],HLT_trigFired[MPSIZE];
-double GENEvt_weight;
 std::vector<std::string> HLT_trigName;
 std::vector<std::string> *pHLT_trigName = &HLT_trigName;
 enum HistBins {
@@ -153,8 +152,7 @@ void dataVsMC()
   TBranch*b_HLT_ntrig;
   TBranch*b_HLT_trigType;
   TBranch*b_HLT_trigFired;
-  TBranch*b_GENEvt_weight;
-
+  
   //Loading ntuples
   cout << "Loading ntuples" << endl;
   //The names of every directory being loaded
@@ -291,9 +289,7 @@ void dataVsMC()
     chains[iChain]->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
     chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
     chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
-    chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);  
-    chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
- 
+    chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);   
   }//end iChain loop
   
   cout << "Total Events Loaded: " << totalentries << endl;
@@ -378,13 +374,16 @@ void dataVsMC()
     cout << endl;
     nentries = chains[iChain]->GetEntries();
     weight=lumi*(xSec[iChain]/nentries);      
-    
+    double SumWeight = 0;
     for(Long64_t i=0;i<nentries;i++) {      
       counter(count,totalentries);
       count = count+1; 
       chains[iChain]->GetEntry(i);
       if(Nelectrons<2) continue;      	    
-      
+      double GenWeight;
+      if(GENEvt_weight<0) GenWeight = -1;
+      else GenWeight = 1;
+      SumWeight =+ GenWeight;
       //HLT cut
       trigNameSize = pHLT_trigName->size();
       bool passHLT = kFALSE;	  

@@ -163,7 +163,7 @@ void unfolding()
   for(int i=0;i<nCanvas;i++)
     {
       canvasName+=i;
-      canvas[i] = new TCanvas(canvasName,"",10,10,1000,700);
+      canvas[i] = new TCanvas(canvasName,"",10,10,900,700);
       canvas[i]->SetLogx();
       canvas[i]->SetLogy();
     }
