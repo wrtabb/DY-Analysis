@@ -91,18 +91,18 @@ void unfolding()
 
   //Placing all matrices in histograms for plotting
   TH2F*hresponseGENvsGEN = (TH2F*)migMatrixGENisHardvsGENFS->Clone("hresponseGENvsGEN");
-  hresponseGENvsGEN->SetTitle("Gen vs Gen response matrix");
+  hresponseGENvsGEN->SetTitle("Gen-Level Final State vs. Gen-Level Hard Process Response Matrix");
   TH2F*hresponseFSvsReco = (TH2F*)migMatrixGENFSvsReco->Clone("hresponseFSvsReco");
-  hresponseFSvsReco->SetTitle("FS vs Reco response matrix");
+  hresponseFSvsReco->SetTitle("Reconstructed vs. Gen-Level Final State Response Matrix");
   TH2F*hresponseHardvsReco = (TH2F*)migMatrixGENisHardvsReco->Clone("hresponseGENvsGEN");
-  hresponseHardvsReco->SetTitle("Hard vs Reco response matrix");
+  hresponseHardvsReco->SetTitle("Reconstructed vs. Gen-Level Hard Process Response Matrix");
 
   TH2F*hunfoldingGENvsGEN = (TH2F*)migMatrixGENisHardvsGENFS->Clone("hunfoldingGENvsGEN");
-  hunfoldingGENvsGEN->SetTitle("Gen vs Gen unfolding matrix");
+  hunfoldingGENvsGEN->SetTitle("Gen-Level Final State vs. Gen-Level Hard Process Unfolding Matrix");
   TH2F*hunfoldingFSvsReco = (TH2F*)migMatrixGENFSvsReco->Clone("hunfoldingFSvsReco");
-  hunfoldingFSvsReco->SetTitle("FS vs Reco unfolding matrix");
+  hunfoldingFSvsReco->SetTitle("Reconstructed vs. Gen-Level Final State Unfolding Matrix");
   TH2F*hunfoldingHardvsReco = (TH2F*)migMatrixGENisHardvsReco->Clone("hunfoldingHardvsReco");
-  hunfoldingHardvsReco->SetTitle("Hard vs Reco unfolding matrix");
+  hunfoldingHardvsReco->SetTitle("Reconstructed vs. Gen-Level Hard Process Unfolding Matrix");
 
   for(int i=0; i<nMassBins; i++)
     {
