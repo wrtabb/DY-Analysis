@@ -113,16 +113,14 @@ const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,/
 			       18810.0,5705.9044344,226.6,7.77,0.4065,0.2334,0.03614,//DY
 			       0.03047,0.01636,0.00218,0.0005156,//DY
 			       1,1,1,1,1,1,1};//data (unweighted)
-
 const float etaHigh = 2.5;
 const float etaGapHigh = 1.566; 
 const float etaGapLow = 1.4442;
 const float ptHigh = 28;
 const float ptLow = 17;
 const float eMass = 0.000511;
-
-const TString treeName = "recoTree/DYTree";
 const float dRMinCut = 0.3;
+const TString treeName = "recoTree/DYTree";
 
 void dataVsMC()
 {
@@ -160,13 +158,13 @@ void dataVsMC()
     "/ZZTo4L_13TeV_powheg_pythia8",
     "/WZ_TuneCUETP8M1_13TeV-pythia8",
     "/WZTo3LNu_TuneCUETP8M1_13TeV-powheg-pythia8",
-    "/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_truncated_M0To700/crab_ttbar",
+    "/deprecated_TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_truncated_M0To700/crab_ttbar",
     "/TT_Mtt-700to1000_TuneCUETP8M2T4_13TeV-powheg-pythia8",
     "/TT_Mtt-1000toInf_TuneCUETP8M2T4_13TeV-powheg-pythia8",
     "/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1",
     "/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1",
     "/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M10to50",
-    "/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100",
+    "/deprecated_DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100",
     "/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_DYLL_M100to200",
     "/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
     "/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8",
