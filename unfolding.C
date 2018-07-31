@@ -157,6 +157,13 @@ void unfolding()
   legend2->AddEntry(hReco,"Reco-Level");
   legend2->AddEntry(hGenFS,"Gen-Level");
 
+  TCanvas*c=new TCanvas("c","",10,10,900,700);
+  c->SetLogx();
+  c->SetLogy();
+  c->cd();
+  auto hRatio = new TRatioPlot(hMassUnfolded,hGenFS);
+  hRatio->Draw();
+
   //Plotting and saving histograms
   TCanvas*canvas[nCanvas];
   TString canvasName = "canvas";
