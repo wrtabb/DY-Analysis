@@ -27,13 +27,11 @@ void unfolding()
   TH2F*migMatrixGENisHardvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsReco");
   TH1F*hGenFS = (TH1F*)fMigrationMatrix->Get("hHLTGenDielectronInvMass");  
   hGenFS->SetTitle("Gen-Level Final State vs. Reconstructed");
-  hGenFS->SetMarkerStyle(20);
   hGenFS->SetLineColor(kBlack);
   TH1F*hReco = (TH1F*)fMigrationMatrix->Get("hRecoInvMass");
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kRed);
   hReco->SetLineColor(kRed);
-  //hReco->SetMarkerSize(1);
   
   //Defininig migration matrix objects
   TMatrixD migrationGENvsGEN(nMassBins,nMassBins);
@@ -202,7 +200,7 @@ void unfolding()
       "./plots/FSvsReco.png",
       "./plots/UnfoldedvsFS.png"
     };
-  /*  
+ 
   TFile *rootFile = new TFile("./plots/unfoldingMatrices.root","RECREATE");
   rootFile->cd();
   hresponseGENvsGEN->Write();
@@ -221,5 +219,5 @@ void unfolding()
     }
   rootFile->Write();
   rootFile->Close();
-  */
+ 
 }//end main
