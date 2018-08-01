@@ -363,8 +363,8 @@ void dataVsMC()
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   int trigNameSize;
-  //double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100]; //50to100 lumi
-  double lumi = 35900; //data lumi
+  double lumi = chains[EE50to100]->GetEntries()/xSec[EE50to100]; //50to100 lumi
+  //double lumi = 35900; //data lumi
   for(int iChain=0;iChain<numChains;iChain++) {
     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
     if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
@@ -441,7 +441,7 @@ void dataVsMC()
   }//end chain loop 
   
   double integralData, integralMC;
-  /*  
+    
   integralData = 
     histos[BINS_DATA]->Integral(histos[BINS_DATA]->GetXaxis()->FindBin(binLow),
 				histos[BINS_DATA]->GetXaxis()->FindBin(binHigh));
@@ -460,8 +460,7 @@ void dataVsMC()
     if(i==BINS_DATA||i==BINS_DATA_LINEAR) continue;
     histos[i]->Scale(norm);
   }
-  */
-  
+    
   //Place histograms into stacks
   THStack*hStack = new THStack("hStack","");
   THStack*hStacklinear = new THStack("hStacklinear","");
@@ -503,10 +502,10 @@ void dataVsMC()
   hDataMCRatiolinear->GetUpperPad()->cd();
   legend->Draw("same");
   
-  canvas1->SaveAs("./plots/dataVsMClog.png");
-  canvas2->SaveAs("./plots/dataVsMClinear.png");
+  canvas1->SaveAs("./plots/dataVsMClogZpeakScale.png");
+  canvas2->SaveAs("./plots/dataVsMClinearZpeakScale.png");
   
-  TFile *rootFile = new TFile("./plots/dataVsMC.root","RECREATE");
+  TFile *rootFile = new TFile("./plots/dataVsMCZpeakScale.root","RECREATE");
   rootFile->cd();
   hStack->Write();
   hStacklinear->Write();
