@@ -144,7 +144,7 @@ void unfolding()
   hMassUnfolded->GetXaxis()->SetMoreLogLabels();
   for(int i=0; i<nMassBins; i++)
     {
-      hMassUnfolded->SetBinContent(i+1, yieldsUnfolded(i));
+      hMassUnfolded->SetBinContent(i+1,yieldsUnfolded(i));
     }
 
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.7);
