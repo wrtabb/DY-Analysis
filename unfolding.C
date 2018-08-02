@@ -150,30 +150,30 @@ void unfolding()
 
   TCanvas*canvas2[nMassBins];  
   TCanvas*canvas3 = new TCanvas("canvas3","",10,10,900,700);
-  Int_t firstbin = 1;
-  Int_t lastbin = 43;
+  const int firstbin = 1;
+  const int lastbin = 44;
   TH2F*hprojMat[nMassBins];
   canvas3->SetLogx();
   canvas3->SetLogy();
   hresponseFSvsReco->Draw("colz");
   TH1D*proj[nMassBins];
-  //for(int i=0;i<nMassBins;i++)
+  for(int i=0;i<nMassBins;i++)
     {
-      int i = 38;
-      TString cutname = "cutg";
+      //int i = 38;
+      TString cutName = "cutg";
       TString canvasName2 = "canvas2_";
       TString projName = "proj";
       TString cloneName = "clone";
       cloneName+=i;
       projName+=i;
-      cutname+=i;
+      cutName+=i;
       canvasName2+=i;
-      TCutG*cutg = new TCutG(cutname,5);
-      cutg->SetPoint(0,massbins[i],0);
-      cutg->SetPoint(1,massbins[i+1],0);
+      TCutG*cutg = new TCutG(cutName,5);
+      cutg->SetPoint(0,massbins[i],15);
+      cutg->SetPoint(1,massbins[i+1],15);
       cutg->SetPoint(2,massbins[i+1],3000);
       cutg->SetPoint(3,massbins[i],3000);
-      cutg->SetPoint(4,massbins[i],0);
+      cutg->SetPoint(4,massbins[i],15);
       hprojMat[i] = (TH2F*)hresponseFSvsReco->Clone(cloneName);
       proj[i] = hprojMat[i]->ProjectionY(projName,firstbin,lastbin,"[cutg]");      
       canvas2[i] = new TCanvas(canvasName2,"",10,10,900,700);
@@ -210,7 +210,7 @@ void unfolding()
   hunfoldingHardvsReco->Draw("colz");
   */
 
-  TString canvasSaveName[nCanvas] = 
+  const TString canvasSaveName[nCanvas] = 
     {
       "./plots/responseGENvsGEN.png",
       "./plots/responseFSvsReco.png",
