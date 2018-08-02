@@ -130,8 +130,7 @@ void unfolding()
 	  hunfoldingGENvsGEN->SetBinContent(i+1,j+1,unfoldingGENvsGEN(i,j));
 	  hunfoldingFSvsReco->SetBinContent(i+1,j+1,unfoldingFSvsReco(i,j));
 	  hunfoldingHardvsReco->SetBinContent(i+1,j+1,unfoldingHardvsReco(i,j));	  
-	}
-      
+	}      
     }
 
   TVectorD yieldsUnfolded = (unfoldingFSvsReco.T())*yieldsMeasured;
@@ -150,6 +149,9 @@ void unfolding()
 
   TCanvas*canvas2[nMassBins];  
   TCanvas*canvas3 = new TCanvas("canvas3","",10,10,900,700);
+  TLatex*label = new TLatex();
+  label->SetTextFont(42);
+  label->SetTextSize(0.02);
   const int firstbin = 1;
   const int lastbin = 44;
   TH2F*hprojMat[nMassBins];
@@ -159,30 +161,27 @@ void unfolding()
   TH1D*proj[nMassBins];
   for(int i=0;i<nMassBins;i++)
     {
-      //int i = 38;
-      TString cutName = "cutg";
       TString canvasName2 = "canvas2_";
       TString projName = "proj";
       TString cloneName = "clone";
+      TString labelText = "Bin Range: ";
+      labelText+=massbins[i];
+      labelText+="to";
+      labelText+=massbins[i+1];
+      
       cloneName+=i;
       projName+=i;
-      cutName+=i;
       canvasName2+=i;
-      TCutG*cutg = new TCutG(cutName,5);
-      cutg->SetPoint(0,massbins[i],15);
-      cutg->SetPoint(1,massbins[i+1],15);
-      cutg->SetPoint(2,massbins[i+1],3000);
-      cutg->SetPoint(3,massbins[i],3000);
-      cutg->SetPoint(4,massbins[i],15);
-      hprojMat[i] = (TH2F*)hresponseFSvsReco->Clone(cloneName);
-      proj[i] = hprojMat[i]->ProjectionY(projName,firstbin,lastbin,"[cutg]");      
+      hprojMat[i] = (TH2F*)hresponseFSvsReco->Clone(cloneName); 
+      proj[i] = hprojMat[i]->ProjectionY(Form("bin%d",i+1),i+1,i+2);
+      proj[i]->GetXaxis()->SetTitleOffset(1);
       canvas2[i] = new TCanvas(canvasName2,"",10,10,900,700);
       canvas2[i]->SetLogx();
       canvas2[i]->SetLogy(); 
-      canvas3->cd();
-      cutg->Draw("same");
       canvas2[i]->cd();
       proj[i]->Draw("hist");
+      label->DrawLatex(0.6,0.88,labelText);
+      cout << labelText << endl;
     }
   /*
   //Plotting and saving histograms
