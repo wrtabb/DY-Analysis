@@ -12,7 +12,7 @@ const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72,
 			     106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 200, 220, 243, 273, 320, 
 			     380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
 const int nMassBins = 43;
-const int nCanvas = 8;
+const int nCanvas = 6;
 const TString dataFileName = "./plots/plotsDY.root";
 
 void unfolding()
@@ -129,8 +129,9 @@ void unfolding()
 	  
 	  hunfoldingGENvsGEN->SetBinContent(i+1,j+1,unfoldingGENvsGEN(i,j));
 	  hunfoldingFSvsReco->SetBinContent(i+1,j+1,unfoldingFSvsReco(i,j));
-	  hunfoldingHardvsReco->SetBinContent(i+1,j+1,unfoldingHardvsReco(i,j));
+	  hunfoldingHardvsReco->SetBinContent(i+1,j+1,unfoldingHardvsReco(i,j));	  
 	}
+      
     }
 
   TVectorD yieldsUnfolded = (unfoldingFSvsReco.T())*yieldsMeasured;
@@ -147,23 +148,43 @@ void unfolding()
       hMassUnfolded->SetBinContent(i+1,yieldsUnfolded(i));
     }
 
-  TLegend*legend = new TLegend(0.65,0.9,0.9,0.7);
-  legend->SetTextSize(0.02);
-  legend->AddEntry(hMassUnfolded,"Unfolded");
-  legend->AddEntry(hGenFS,"Gen-Level");
-
-  TLegend*legend2 = new TLegend(0.65,0.9,0.9,0.7);
-  legend2->SetTextSize(0.02);
-  legend2->AddEntry(hReco,"Reco-Level");
-  legend2->AddEntry(hGenFS,"Gen-Level");
-
-  TCanvas*c=new TCanvas("c","",10,10,900,700);
-  c->SetLogx();
-  c->SetLogy();
-  c->cd();
-  auto hRatio = new TRatioPlot(hMassUnfolded,hGenFS);
-  hRatio->Draw();
-
+  TCanvas*canvas2[nMassBins];  
+  TCanvas*canvas3 = new TCanvas("canvas3","",10,10,900,700);
+  Int_t firstbin = 1;
+  Int_t lastbin = 43;
+  TH2F*hprojMat[nMassBins];
+  canvas3->SetLogx();
+  canvas3->SetLogy();
+  hresponseFSvsReco->Draw("colz");
+  TH1D*proj[nMassBins];
+  //for(int i=0;i<nMassBins;i++)
+    {
+      int i = 38;
+      TString cutname = "cutg";
+      TString canvasName2 = "canvas2_";
+      TString projName = "proj";
+      TString cloneName = "clone";
+      cloneName+=i;
+      projName+=i;
+      cutname+=i;
+      canvasName2+=i;
+      TCutG*cutg = new TCutG(cutname,5);
+      cutg->SetPoint(0,massbins[i],0);
+      cutg->SetPoint(1,massbins[i+1],0);
+      cutg->SetPoint(2,massbins[i+1],3000);
+      cutg->SetPoint(3,massbins[i],3000);
+      cutg->SetPoint(4,massbins[i],0);
+      hprojMat[i] = (TH2F*)hresponseFSvsReco->Clone(cloneName);
+      proj[i] = hprojMat[i]->ProjectionY(projName,firstbin,lastbin,"[cutg]");      
+      canvas2[i] = new TCanvas(canvasName2,"",10,10,900,700);
+      canvas2[i]->SetLogx();
+      canvas2[i]->SetLogy(); 
+      canvas3->cd();
+      cutg->Draw("same");
+      canvas2[i]->cd();
+      proj[i]->Draw("hist");
+    }
+  /*
   //Plotting and saving histograms
   TCanvas*canvas[nCanvas];
   TString canvasName = "canvas";
@@ -187,15 +208,7 @@ void unfolding()
   hunfoldingFSvsReco->Draw("colz");
   canvas[5]->cd();
   hunfoldingHardvsReco->Draw("colz");
-  
-  canvas[6]->cd();
-  hReco->Draw("PE");
-  hGenFS->Draw("same,hist");
-  legend2->Draw("same");
-  canvas[7]->cd();
-  hMassUnfolded->Draw("PE");
-  hGenFS->Draw("same,hist");
-  legend->Draw("same");
+  */
 
   TString canvasSaveName[nCanvas] = 
     {
@@ -205,10 +218,8 @@ void unfolding()
       "./plots/unfoldingGENvsGEN.png",
       "./plots/unfoldingFSvsReco.png",
       "./plots/unfoldingHardvsReco.png",
-      "./plots/FSvsReco.png",
-      "./plots/UnfoldedvsFS.png"
     };
- 
+  /* 
   TFile *rootFile = new TFile("./plots/unfoldingMatrices.root","RECREATE");
   rootFile->cd();
   hresponseGENvsGEN->Write();
@@ -227,5 +238,5 @@ void unfolding()
     }
   rootFile->Write();
   rootFile->Close();
- 
+  */
 }//end main
