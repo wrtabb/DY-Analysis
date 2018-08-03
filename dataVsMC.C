@@ -260,14 +260,11 @@ void dataVsMC()
 	 iChain==TAUTAU10to50||iChain==TAUTAU50to100||iChain==TAUTAU100to200||iChain==TAUTAU200to400||
 	 iChain==TAUTAU400to500||iChain==TAUTAU500to700||iChain==TAUTAU700to800||iChain==TAUTAU800to1000||
 	 iChain==TAUTAU1000to1500||iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000) {
-	files+=subDirectoryMC;
-	files+=subFiles[iChain]->at(k);
-	files+="/*.root";	 
-      }
-      else {
-	files+=subFiles[iChain]->at(k);
-	files+="/skims_0002/*.root";
-      }
+	files+=subDirectoryMC;	 
+      }      
+
+      files+=subFiles[iChain]->at(k);
+      files+="/skims_0002/*.root";      
       
       filecoll.Add(files);
       chains[iChain]->AddFileInfoList(filecoll.GetList());
@@ -366,14 +363,15 @@ void dataVsMC()
   //Event Loop
   cout << "Starting Event Loop" << endl;
   double invMass, xSecWeight, genWeight, totalWeight;
-  Long64_t nentries;
+  Long64_t nentries, localEntry, sumGenWeight;
   Long64_t count = 0;
-  Long64_t sumGenWeight;
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   int trigNameSize;
   //double lumi = chains[EE50to100]->GetEntries()/xSec[EE50to100]; //50to100 lumi
-  double lumi = dataLuminosity;
+  double lumi = dataLuminosity;//luminosity for xsec weighting
+  ofstream genWeightFile;
+  genWeightFile.open("genWeights.txt");
   for(int iChain=0;iChain<numChains;iChain++) {
     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
     if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
@@ -389,13 +387,16 @@ void dataVsMC()
     sumGenWeight = 0;
     if(iChain<DataRunB){
       for(Long64_t i=0;i<nentries;i++){
-	b_GENEvt_weight->GetEntry(i);
-	genWeight = GENEvt_weight/fabs(GENEvt_weight);
-	sumGenWeight += genWeight;			     
-      }           
+	localEntry = chains[iChain]->LoadTree(i);
+	b_GENEvt_weight->GetEntry(localEntry);
+	genWeight = GENEvt_weight/fabs(GENEvt_weight);	
+	sumGenWeight += genWeight;
+      }          
+      cout << "genWeight for this chain is: " << 1.0/sumGenWeight << endl;
+      cout << endl;
+      genWeightFile << "Chain: " << dirNames[iChain] << ", gen weight: " << 1.0/sumGenWeight << endl;
     }
-    cout << "genWeight for this chain is: " << 1.0/sumGenWeight << endl;
-    cout << endl;
+    
     for(Long64_t i=0;i<nentries;i++) {      
       counter(count,totalentries);
       count = count+1; 
@@ -463,7 +464,7 @@ void dataVsMC()
       }//end electron loop
     }//end event loop   
   }//end chain loop 
-  
+  genWeightFile.close();
   double integralData, integralMC;
   /*    
   integralData = 

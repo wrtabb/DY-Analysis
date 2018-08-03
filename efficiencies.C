@@ -125,7 +125,7 @@ void efficiencies()
  TString baseDirectory = 
    "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/DYJetsToLL_allMasses_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8"; 
  TChain*chains[numChains];
- vector <TString> *subFiles[numChains];  
+ vector <TString> *subFiles[numChains]; 
  for(int iChain=0;iChain<numChains;iChain++)
    {
      subFiles[iChain] = new vector<TString>;
@@ -142,7 +142,6 @@ void efficiencies()
        }
      else subFiles[iChain]->push_back(dirNames[iChain]);      
    } 
- 
  TString files;  
  Long64_t subDirectorySize;
  Long64_t totalentries = 0;
@@ -171,7 +170,7 @@ void efficiencies()
 	  }
 	}
   
-      //Setting addresses for all branches
+      chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
       chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
       chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
       chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
@@ -181,7 +180,6 @@ void efficiencies()
 				       &b_GENLepton_isHardProcess);
       chains[iChain]->SetBranchAddress("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState, 
 				       &b_GENLepton_fromHardProcessFinalState);
-      chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
       chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
       chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
       chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
@@ -191,19 +189,19 @@ void efficiencies()
       chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
       chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
       chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);
-
+      
       totalentries=totalentries+chains[iChain]->GetEntries();      
-    }//end loading ntuples
+   }//end loading ntuples
  cout << endl;
-  cout << "Total Events Loaded: " << totalentries << endl;
-  
-  //Defining histograms
-  TH1F*hGenDielectronInvMass = new TH1F("hDielectronInvMass","",nLogBins,massbins);
-  hGenDielectronInvMass->Sumw2();
-  hGenDielectronInvMass->SetLineColor(kRed);
-  hGenDielectronInvMass->SetTitle("Only Kinematic Cut Dielectrons");
-  hGenDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");
-  hGenDielectronInvMass->GetXaxis()->SetMoreLogLabels();
+ cout << "Total Events Loaded: " << totalentries << endl;
+ 
+ //Defining histograms
+ TH1F*hGenDielectronInvMass = new TH1F("hDielectronInvMass","",nLogBins,massbins);
+ hGenDielectronInvMass->Sumw2();
+ hGenDielectronInvMass->SetLineColor(kRed);
+ hGenDielectronInvMass->SetTitle("Only Kinematic Cut Dielectrons");
+ hGenDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");
+ hGenDielectronInvMass->GetXaxis()->SetMoreLogLabels();
   hGenDielectronInvMass->GetXaxis()->SetNoExponent();
   TH1F*hGenMatchedDielectronInvMass = new TH1F("hGenMatchedDielectronInvMass","",nLogBins,massbins);
   hGenMatchedDielectronInvMass->Sumw2();
@@ -277,7 +275,7 @@ void efficiencies()
   TString histbasename = "hHardProcess";
   TString histname;
   for(int jChain=0;jChain<numChains;jChain++)
-    {
+  {
       histname = histbasename;
       histname+=jChain;
       hHardProcess[jChain] = new TH1F(histname,"",598,10,3000);
@@ -303,9 +301,8 @@ void efficiencies()
   cout << "Starting Event Loop" << endl;
   double dpT, invMass, invMassHardProcess, xSecWeight, genWeight, totalWeight, dRMin;
   int dRMinIndex;  
-  Long64_t nentries;
+  Long64_t nentries, sumGenWeight,localEntry;
   Long64_t count = 0;
-  Long64_t sumGenWeight;
   double nEvents = 250000;
   double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100];//luminosity of 50to100
   //double lumi = nEvents/xSec[MC50to100];//luminosity of 50to100
@@ -314,7 +311,8 @@ void efficiencies()
   int trigNameSize;
   long int nTooManyDielectrons = 0;
   long int nTooManyDielectronsFS = 0;  
-  
+  ofstream genWeightFile;
+  genWeightFile.open("genWeights.txt");//File for writing weights
   for(int iChain=0;iChain<numChains;iChain++)
     {
       cout << endl;
@@ -323,16 +321,16 @@ void efficiencies()
 
       nentries = chains[iChain]->GetEntries();
       //nentries = nEvents;
-      xSecWeight=lumi*(xSec[iChain]/1.0);
-      
+      xSecWeight=lumi*(xSec[iChain]/1.0);      
       sumGenWeight = 0;
       for(Long64_t i=0;i<nentries;i++){
-	b_GENEvt_weight->GetEntry(i);
+	localEntry = chains[iChain]->LoadTree(i);
+	b_GENEvt_weight->GetEntry(localEntry);
 	genWeight = GENEvt_weight/fabs(GENEvt_weight);	
 	sumGenWeight += genWeight;	
       }
-      cout << "genWeight for this chain is: " << 1.0/sumGenWeight << endl;
-      cout << endl;
+      
+      genWeightFile << "Chain: " << dirNames[iChain] << ", Sum: " << sumGenWeight << endl;
       for(Long64_t i=0;i<nentries;i++)
 	{      
 	  chains[iChain]->GetEntry(i);
@@ -499,7 +497,7 @@ void efficiencies()
       else hHardProcess[iChain]->Draw("Barsame");
       	 	
     }//end chain loop 
-  
+  genWeightFile.close();//close gen weight text file
   legend2->AddEntry(hHardProcess[0],"DYEE M10-50");
   legend2->AddEntry(hHardProcess[1],"DYEE M50-100");
   legend2->AddEntry(hHardProcess[2],"DYEE M100-200");
