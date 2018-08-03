@@ -301,7 +301,7 @@ void efficiencies()
   cout << "Starting Event Loop" << endl;
   double dpT, invMass, invMassHardProcess, xSecWeight, genWeight, totalWeight, dRMin;
   int dRMinIndex;  
-  Long64_t nentries, sumGenWeight,localEntry;
+  Long64_t nentries, sumGenWeight,localEntry,nEffective;
   Long64_t count = 0;
   double nEvents = 250000;
   double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100];//luminosity of 50to100
@@ -329,7 +329,7 @@ void efficiencies()
 	genWeight = GENEvt_weight/fabs(GENEvt_weight);	
 	sumGenWeight += genWeight;	
       }
-      
+
       genWeightFile << "Chain: " << dirNames[iChain] << ", Sum: " << sumGenWeight << endl;
       for(Long64_t i=0;i<nentries;i++)
 	{      
