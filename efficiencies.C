@@ -34,6 +34,7 @@ bool findGenToRecoMatch(int genIndex,int &recoIndex);
 //Defining variables and arrays
 const int MPSIZE = 2000;
 int GENnPair, Nelectrons, HLT_ntrig;
+double GENEvt_weight;
 double GENLepton_phi[MPSIZE],GENLepton_eta[MPSIZE],GENLepton_pT[MPSIZE],GENLepton_Px[MPSIZE],GENLepton_Py[MPSIZE];
 double GENLepton_Pz[MPSIZE],GENLepton_E[MPSIZE];
 int GENLepton_ID[MPSIZE],GENLepton_isHardProcess[MPSIZE],GENLepton_fromHardProcessFinalState[MPSIZE];
@@ -94,6 +95,7 @@ void efficiencies()
   TBranch*b_GENLepton_ID;
   TBranch*b_GENLepton_isHardProcess;
   TBranch*b_GENLepton_fromHardProcessFinalState;
+  TBranch*b_GENEvt_weight;
   TBranch*b_Nelectrons;
   TBranch*b_Electron_pT;
   TBranch*b_Electron_eta;
@@ -121,7 +123,7 @@ void efficiencies()
 	"/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE"
       }; 
  TString baseDirectory = 
-   "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/deprecated_DYJetsToLL_allMasses_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8"; 
+   "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/DYJetsToLL_allMasses_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8"; 
  TChain*chains[numChains];
  vector <TString> *subFiles[numChains];  
  for(int iChain=0;iChain<numChains;iChain++)
@@ -145,7 +147,7 @@ void efficiencies()
  Long64_t subDirectorySize;
  Long64_t totalentries = 0;
  for(int iChain=0;iChain<numChains;iChain++)
-   {          
+   {
      chains[iChain] = new TChain(treeName);
      subDirectorySize = subFiles[iChain]->size();
       for(int k=0;k<subDirectorySize;k++)
@@ -159,14 +161,14 @@ void efficiencies()
 	  cout << files << endl;
 	  cout << chains[iChain]->GetEntries() << " events loaded" << endl;	
 	  if(chains[iChain]->GetEntries()==0){
-	cout << endl;
-	cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-	cout << "ERROR: Broken files or files not found in: " << endl;
-	cout << files << endl;
-	cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-	cout << endl;
-	return;
-      }
+	    cout << endl;
+	    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+	    cout << "ERROR: Broken files or files not found in: " << endl;
+	    cout << files << endl;
+	    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+	    cout << endl;
+	    return;
+	  }
 	}
   
       //Setting addresses for all branches
@@ -179,6 +181,7 @@ void efficiencies()
 				       &b_GENLepton_isHardProcess);
       chains[iChain]->SetBranchAddress("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState, 
 				       &b_GENLepton_fromHardProcessFinalState);
+      chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
       chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
       chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
       chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
@@ -191,7 +194,7 @@ void efficiencies()
 
       totalentries=totalentries+chains[iChain]->GetEntries();      
     }//end loading ntuples
-  
+ cout << endl;
   cout << "Total Events Loaded: " << totalentries << endl;
   
   //Defining histograms
@@ -298,10 +301,11 @@ void efficiencies()
 
   //Event Loop
   cout << "Starting Event Loop" << endl;
-  double dpT, invMass, invMassHardProcess, weight, dRMin;
+  double dpT, invMass, invMassHardProcess, xSecWeight, genWeight, totalWeight, dRMin;
   int dRMinIndex;  
   Long64_t nentries;
   Long64_t count = 0;
+  Long64_t sumGenWeight;
   double nEvents = 250000;
   double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100];//luminosity of 50to100
   //double lumi = nEvents/xSec[MC50to100];//luminosity of 50to100
@@ -309,19 +313,36 @@ void efficiencies()
   TString trigName;
   int trigNameSize;
   long int nTooManyDielectrons = 0;
-  long int nTooManyDielectronsFS = 0;
-
+  long int nTooManyDielectronsFS = 0;  
+  
   for(int iChain=0;iChain<numChains;iChain++)
     {
+      cout << endl;
+      cout << "Processing chain: " << dirNames[iChain] << endl;
+      cout << endl;
+
       nentries = chains[iChain]->GetEntries();
       //nentries = nEvents;
-      weight=lumi*(xSec[iChain]/nentries);
+      xSecWeight=lumi*(xSec[iChain]/1.0);
+      
+      sumGenWeight = 0;
+      for(Long64_t i=0;i<nentries;i++){
+	b_GENEvt_weight->GetEntry(i);
+	genWeight = GENEvt_weight/fabs(GENEvt_weight);	
+	sumGenWeight += genWeight;	
+      }
+      cout << "genWeight for this chain is: " << 1.0/sumGenWeight << endl;
+      cout << endl;
       for(Long64_t i=0;i<nentries;i++)
 	{      
 	  chains[iChain]->GetEntry(i);
 	  counter(count,totalentries);
 	  //counter(count,11*nentries);
 	  count = count+1;
+	  
+	  genWeight = GENEvt_weight/fabs(GENEvt_weight);
+	  genWeight = genWeight/sumGenWeight;
+	  totalWeight = genWeight*xSecWeight;
 
 	  // Loop over gen leptons and find the electron pair at the isHardProcess
 	  // and isHardProcessFinalState level.
@@ -412,7 +433,7 @@ void efficiencies()
 				GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],
 				GENLepton_eta[idxGenEleFS2],GENLepton_phi[idxGenEleFS2],eMass);		  
 
-	  hHardProcess[iChain]->Fill(invMassHardProcess,weight);//Fill if hard process gen-electrons
+	  hHardProcess[iChain]->Fill(invMassHardProcess,totalWeight);//Fill if hard process gen-electrons
 	  
 	  //HLT cut
 	  trigNameSize = pHLT_trigName->size();
@@ -436,16 +457,16 @@ void efficiencies()
 
 	  // Fill histograms for acceptance and efficiency
 	  // First, fill histogram for all dielectrons
-	  hGenAllDielectronInvMass->Fill(invMass,weight);
+	  hGenAllDielectronInvMass->Fill(invMass,totalWeight);
 
 	  // Apply kinematic acceptance criteria
 	  if(!passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
 				     GENLepton_eta[idxGenEleFS1], GENLepton_eta[idxGenEleFS2])) 
 	    continue;	      
 	  // Both electrons are in kinematic acceptance at gen level
-	  hGenDielectronInvMass->Fill(invMass,weight);
-	  hpTvsMass->Fill(invMass,GENLepton_pT[idxGenEleFS1],weight);
-	  hpTvsMass->Fill(invMass,GENLepton_pT[idxGenEleFS2],weight);
+	  hGenDielectronInvMass->Fill(invMass,totalWeight);
+	  hpTvsMass->Fill(invMass,GENLepton_pT[idxGenEleFS1],totalWeight);
+	  hpTvsMass->Fill(invMass,GENLepton_pT[idxGenEleFS2],totalWeight);
 
 	  // Apply matching to reconstructed electrons requirement
 	  int closestTrackLep1, closestTrackLep2;
@@ -455,29 +476,30 @@ void efficiencies()
 	  if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) continue;
 
 	  // Both electrons are reconstructed
-	  hGenMatchedDielectronInvMass->Fill(invMass,weight);
+	  hGenMatchedDielectronInvMass->Fill(invMass,totalWeight);
 	  
 	  // Apply ID criteria:
 	  // Dilepton pair at gen level matched to reco and passing ID at reco level
 	  if(!Electron_passMediumID[closestTrackLep1]) continue;
 	  if(!Electron_passMediumID[closestTrackLep2]) continue;
 	  // Both electrons pass ID
-	  hGenPassIDdielectronInvMass->Fill(invMass,weight);
+	  hGenPassIDdielectronInvMass->Fill(invMass,totalWeight);
 	  
 	  // Apply HLT requirement
 	  if(!passHLT) continue;
 	  // Event passed HLT cut
-	  hHLTGenDielectronInvMass->Fill(invMass,weight);
-	  hRecoInvMass->Fill(invMassReco,weight);
-	  migMatrixGENisHardvsGENFS->Fill(invMassHardProcess,invMass,weight);
-	  migMatrixGENFSvsReco->Fill(invMass,invMassReco,weight);
-	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,weight);
+	  hHLTGenDielectronInvMass->Fill(invMass,totalWeight);
+	  hRecoInvMass->Fill(invMassReco,totalWeight);
+	  migMatrixGENisHardvsGENFS->Fill(invMassHardProcess,invMass,totalWeight);
+	  migMatrixGENFSvsReco->Fill(invMass,invMassReco,totalWeight);
+	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight);
 	}//end event loop   
 
       if(iChain==0)hHardProcess[iChain]->Draw("Bar");      
-      else hHardProcess[iChain]->Draw("Barsame");	 	
+      else hHardProcess[iChain]->Draw("Barsame");
+      	 	
     }//end chain loop 
-
+  
   legend2->AddEntry(hHardProcess[0],"DYEE M10-50");
   legend2->AddEntry(hHardProcess[1],"DYEE M50-100");
   legend2->AddEntry(hHardProcess[2],"DYEE M100-200");
@@ -680,7 +702,7 @@ void efficiencies()
   cout << "Number of Events Processed: " << count << endl;
   cout << "*****************************************************************************" << endl;
   cout << endl;
- 
+  
 }//end main function
 
 //Counter for tracking program progress

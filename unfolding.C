@@ -146,7 +146,7 @@ void unfolding()
     {
       hMassUnfolded->SetBinContent(i+1,yieldsUnfolded(i));
     }
-
+  /*
   TCanvas*canvas2[nMassBins];  
   TCanvas*canvas3 = new TCanvas("canvas3","",10,10,900,700);
   TLatex*label = new TLatex();
@@ -183,7 +183,7 @@ void unfolding()
       label->DrawLatex(0.6,0.88,labelText);
       cout << labelText << endl;
     }
-  /*
+  */
   //Plotting and saving histograms
   TCanvas*canvas[nCanvas];
   TString canvasName = "canvas";
@@ -207,7 +207,7 @@ void unfolding()
   hunfoldingFSvsReco->Draw("colz");
   canvas[5]->cd();
   hunfoldingHardvsReco->Draw("colz");
-  */
+  
 
   const TString canvasSaveName[nCanvas] = 
     {
@@ -218,7 +218,7 @@ void unfolding()
       "./plots/unfoldingFSvsReco.png",
       "./plots/unfoldingHardvsReco.png",
     };
-  /* 
+   
   TFile *rootFile = new TFile("./plots/unfoldingMatrices.root","RECREATE");
   rootFile->cd();
   hresponseGENvsGEN->Write();
@@ -237,5 +237,5 @@ void unfolding()
     }
   rootFile->Write();
   rootFile->Close();
-  */
+ 
 }//end main

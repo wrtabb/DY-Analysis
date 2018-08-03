@@ -37,6 +37,7 @@ bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 //Defining variables and arrays
 const int MPSIZE = 2000;
 int Nelectrons, HLT_ntrig;
+double GENEvt_weight;
 double Electron_pT[MPSIZE], Electron_eta[MPSIZE], Electron_phi[MPSIZE];
 double Electron_Energy[MPSIZE], Electron_Px[MPSIZE];
 double Electron_Py[MPSIZE], Electron_Pz[MPSIZE], Electron_charge[MPSIZE];
@@ -133,6 +134,7 @@ const float ptHigh = 28;
 const float ptLow = 17;
 const float eMass = 0.000511;
 const float dRMinCut = 0.3;
+const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
 const TString treeName = "recoTree/DYTree";
 
 void dataVsMC()
@@ -152,6 +154,7 @@ void dataVsMC()
   TBranch*b_HLT_ntrig;
   TBranch*b_HLT_trigType;
   TBranch*b_HLT_trigFired;
+  TBranch*b_GENEvt_weight;
   
   //Loading ntuples
   cout << "Loading ntuples" << endl;
@@ -171,7 +174,7 @@ void dataVsMC()
     "/ZZTo4L_13TeV_powheg_pythia8",
     "/WZ_TuneCUETP8M1_13TeV-pythia8",
     "/WZTo3LNu_TuneCUETP8M1_13TeV-powheg-pythia8",
-    "/deprecated_TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_truncated_M0To700/crab_ttbar",
+    "/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_truncated_M0To700/crab_ttbar",
     "/TT_Mtt-700to1000_TuneCUETP8M2T4_13TeV-powheg-pythia8",
     "/TT_Mtt-1000toInf_TuneCUETP8M2T4_13TeV-powheg-pythia8",
     "/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1",
@@ -209,8 +212,9 @@ void dataVsMC()
 
   TString baseDirectory =
     "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3";
-  TString subDirectoryMC = "/deprecated_DYJetsToLL_allMasses_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8";
+  TString subDirectoryMC = "/DYJetsToLL_allMasses_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8";
   TChain*chains[numChains];
+
   vector <TString> *subFiles[numChains];  
   for(int iChain=0;iChain<numChains;iChain++) {
     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//Not using these in this analysis
@@ -262,7 +266,7 @@ void dataVsMC()
       }
       else {
 	files+=subFiles[iChain]->at(k);
-	files+="/skims_0001/*.root";
+	files+="/skims_0002/*.root";
       }
       
       filecoll.Add(files);
@@ -275,6 +279,7 @@ void dataVsMC()
 	cout << "ERROR: Broken files or files not found in: " << endl;
 	cout << files << endl;
 	cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+	cout << endl;
 	return;
       }
     }                
@@ -290,6 +295,9 @@ void dataVsMC()
     chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
     chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
     chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);   
+    if(iChain<DataRunB) 
+      chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
+    else continue;
   }//end iChain loop
   
   cout << "Total Events Loaded: " << totalentries << endl;
@@ -357,30 +365,47 @@ void dataVsMC()
   
   //Event Loop
   cout << "Starting Event Loop" << endl;
-  double invMass, weight;
+  double invMass, xSecWeight, genWeight, totalWeight;
   Long64_t nentries;
   Long64_t count = 0;
+  Long64_t sumGenWeight;
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   int trigNameSize;
-  double lumi = chains[EE50to100]->GetEntries()/xSec[EE50to100]; //50to100 lumi
-  //double lumi = 35900; //data lumi
+  //double lumi = chains[EE50to100]->GetEntries()/xSec[EE50to100]; //50to100 lumi
+  double lumi = dataLuminosity;
   for(int iChain=0;iChain<numChains;iChain++) {
     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
     if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
        iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
+
     cout << endl;
     cout << "Processing chain: " << dirNames[iChain] << endl;
     cout << endl;
+
     nentries = chains[iChain]->GetEntries();
-    weight=lumi*(xSec[iChain]/nentries);      
+    xSecWeight=lumi*(xSec[iChain]/1.0);     
     
+    sumGenWeight = 0;
+    if(iChain<DataRunB){
+      for(Long64_t i=0;i<nentries;i++){
+	b_GENEvt_weight->GetEntry(i);
+	genWeight = GENEvt_weight/fabs(GENEvt_weight);
+	sumGenWeight += genWeight;			     
+      }           
+    }
+    cout << "genWeight for this chain is: " << 1.0/sumGenWeight << endl;
+    cout << endl;
     for(Long64_t i=0;i<nentries;i++) {      
       counter(count,totalentries);
       count = count+1; 
       chains[iChain]->GetEntry(i);
-      if(Nelectrons<2) continue;      	    
-      
+      if(Nelectrons<2) continue;   	  
+
+      genWeight = GENEvt_weight/fabs(GENEvt_weight);
+      genWeight = genWeight/sumGenWeight;
+      totalWeight = genWeight*xSecWeight;
+
       //HLT cut
       trigNameSize = pHLT_trigName->size();
       bool passHLT = kFALSE;	  
@@ -414,34 +439,33 @@ void dataVsMC()
 	  }		  
 	  else if(iChain==wJets||iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80
 		  ||iChain==QCD80to120||iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) {
-	    histos[BINS_FAKES]->Fill(invMass,weight);
-	    histos[BINS_FAKES_LINEAR]->Fill(invMass,weight);
+	    histos[BINS_FAKES]->Fill(invMass,totalWeight);
+	    histos[BINS_FAKES_LINEAR]->Fill(invMass,totalWeight);
 	  }
 	  else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu||
 		  iChain==TAUTAU10to50||iChain==TAUTAU50to100||iChain==TAUTAU100to200||iChain==TAUTAU200to400||
 		  iChain==TAUTAU400to500||iChain==TAUTAU500to700||iChain==TAUTAU700to800||iChain==TAUTAU800to1000||
 		  iChain==TAUTAU1000to1500||iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000){
-	    histos[BINS_EW]->Fill(invMass,weight);
-	    histos[BINS_EW_LINEAR]->Fill(invMass,weight);
+	    histos[BINS_EW]->Fill(invMass,totalWeight);
+	    histos[BINS_EW_LINEAR]->Fill(invMass,totalWeight);
 	  }
 	  else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW) {
-	    histos[BINS_TOPS]->Fill(invMass,weight);
-	    histos[BINS_TOPS_LINEAR]->Fill(invMass,weight);
+	    histos[BINS_TOPS]->Fill(invMass,totalWeight);
+	    histos[BINS_TOPS_LINEAR]->Fill(invMass,totalWeight);
 	  }		  
 	  else if(iChain==EE10to50||iChain==EE50to100||iChain==EE100to200||iChain==EE200to400||
 		  iChain==EE400to500||iChain==EE500to700||iChain==EE700to800||iChain==EE800to1000||
 		  iChain==EE1000to1500||iChain==EE1500to2000||iChain==EE2000to3000) {
-	    histos[BINS_EE]->Fill(invMass,weight);
-	    histos[BINS_EE_LINEAR]->Fill(invMass,weight);
-	  }
-	  
+	    histos[BINS_EE]->Fill(invMass,totalWeight);
+	    histos[BINS_EE_LINEAR]->Fill(invMass,totalWeight);
+	  }	  
 	}//end inner electron loop	   
       }//end electron loop
     }//end event loop   
   }//end chain loop 
   
   double integralData, integralMC;
-    
+  /*    
   integralData = 
     histos[BINS_DATA]->Integral(histos[BINS_DATA]->GetXaxis()->FindBin(binLow),
 				histos[BINS_DATA]->GetXaxis()->FindBin(binHigh));
@@ -454,13 +478,13 @@ void dataVsMC()
 			      histos[BINS_EW]->GetXaxis()->FindBin(binHigh))+
     histos[BINS_TOPS]->Integral(histos[BINS_TOPS]->GetXaxis()->FindBin(binLow),
 				histos[BINS_TOPS]->GetXaxis()->FindBin(binHigh));
-  
+    
   double norm = integralData/integralMC;
   for(int i=0;i<nHistos;i++) {
     if(i==BINS_DATA||i==BINS_DATA_LINEAR) continue;
     histos[i]->Scale(norm);
   }
-    
+  */
   //Place histograms into stacks
   THStack*hStack = new THStack("hStack","");
   THStack*hStacklinear = new THStack("hStacklinear","");
@@ -502,8 +526,8 @@ void dataVsMC()
   hDataMCRatiolinear->GetUpperPad()->cd();
   legend->Draw("same");
   
-  canvas1->SaveAs("./plots/dataVsMClogZpeakScale.png");
-  canvas2->SaveAs("./plots/dataVsMClinearZpeakScale.png");
+  canvas1->SaveAs("./plots/dataVsMClog.png");
+  canvas2->SaveAs("./plots/dataVsMClinear.png");
   
   TFile *rootFile = new TFile("./plots/dataVsMCZpeakScale.root","RECREATE");
   rootFile->cd();
