@@ -80,8 +80,8 @@ void drawDataVsMC()
   legend->AddEntry(histos[BINS_FAKES],"Fakes (W+Jets)");
 
   TCanvas*canvas1 = new TCanvas("canvas3","",10,10,1000,1000);
-  canvas2->SetLogx();
-  canvas2->SetLogy();
+  canvas1->SetLogx();
+  canvas1->SetLogy();
 
   TCanvas*canvas2 = new TCanvas("canvas4","",10,10,1000,1000);
   canvas2->SetLogy();
