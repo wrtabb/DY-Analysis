@@ -270,7 +270,8 @@ void dataVsMC()
       chains[iChain]->AddFileInfoList(filecoll.GetList());
       cout << files << endl;
       cout << chains[iChain]->GetEntries() << " events loaded" << endl;	 
-      if(chains[iChain]->GetEntries()==0){
+      
+      if(chains[iChain]->GetEntries()==0){//error message if no events loaded
 	cout << endl;
 	cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
 	cout << "ERROR: Broken files or files not found in: " << endl;
@@ -280,7 +281,7 @@ void dataVsMC()
 	return;
       }
     }                
-    totalentries=totalentries+chains[iChain]->GetEntries(); 
+    totalentries+=chains[iChain]->GetEntries(); 
 
     //Setting addresses for branches
     chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
@@ -362,11 +363,12 @@ void dataVsMC()
   
   //Event Loop
   cout << "Starting Event Loop" << endl;
-  double invMass, xSecWeight, genWeight, totalWeight;
-  Long64_t nentries, localEntry, sumGenWeight;
+  double invMass, xSecWeight, genWeight, varGenWeight, totalWeight, lumiEffective;
+  Long64_t nentries, nEffective, localEntry, sumGenWeight, sumRawGenWeight;
   Long64_t count = 0;
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
+  bool isMC; //is Monte Carlo
   int trigNameSize;
   //double lumi = chains[EE50to100]->GetEntries()/xSec[EE50to100]; //50to100 lumi
   double lumi = dataLuminosity;//luminosity for xsec weighting
@@ -376,7 +378,9 @@ void dataVsMC()
     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
     if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
        iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
-
+    if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
+       iChain==DataRunG||iChain==DataRunH) isMC = kFALSE;
+    else isMC = kTRUE;
     cout << endl;
     cout << "Processing chain: " << dirNames[iChain] << endl;
     cout << endl;
@@ -385,17 +389,22 @@ void dataVsMC()
     xSecWeight=lumi*(xSec[iChain]/1.0);     
     
     sumGenWeight = 0;
-    if(iChain<DataRunB){
+    sumRawGenWeight = 0;
+    varGenWeight = 0;
+    if(isMC==kTRUE){
       for(Long64_t i=0;i<nentries;i++){
 	localEntry = chains[iChain]->LoadTree(i);
 	b_GENEvt_weight->GetEntry(localEntry);
-	genWeight = GENEvt_weight/fabs(GENEvt_weight);	
+	genWeight = GENEvt_weight/fabs(GENEvt_weight);	//normalized genweight
 	sumGenWeight += genWeight;
+	varGenWeight += GENEvt_weight*GENEvt_weight; //variance in genweights
+	sumRawGenWeight += GENEvt_weight;
       }          
-      cout << "genWeight for this chain is: " << 1.0/sumGenWeight << endl;
-      cout << endl;
-      genWeightFile << "Chain: " << dirNames[iChain] << ", gen weight: " << 1.0/sumGenWeight << endl;
-    }
+      nEffective = (sumRawGenWeight*sumRawGenWeight)/varGenWeight;
+      lumiEffective = nEffective/xSec[iChain];
+      genWeightFile << "iChain : Nevents : Neffective : LumiEffective" << endl;
+      genWeightFile << iChain << ", " << nentries << ", " << nEffective << ", " << lumiEffective << endl;
+    }//end if iChain<DataRunB
     
     for(Long64_t i=0;i<nentries;i++) {      
       counter(count,totalentries);

@@ -88,7 +88,6 @@ void drawDataVsMC()
   legend->Draw("same");
 
   TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
-  canvas2->SetLogx();
   canvas2->SetLogy();
   hStacklinear->Draw("bar");
   histos[BINS_DATA_LINEAR]->Draw("PE,same");
@@ -96,9 +95,16 @@ void drawDataVsMC()
   TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1000,1000);
   canvas3->SetLogx();
   canvas3->SetLogy();
-  histos[BINS_EE]->Draw("bar");
 
+  auto hDataMCRatio = new TRatioPlot(hStack,histos[BINS_DATA]);
+  hDataMCRatio->GetXaxis()->SetTitle("m_{ee} [GeV]");  
+  canvas3->cd();
+  hDataMCRatio->Draw();
+  hDataMCRatio->GetUpperPad()->cd();
+  legend->Draw("same");
+  canvas3->Update();
+  
   canvas1->SaveAs("./plots/dataVsMClog.png");
   canvas2->SaveAs("./plots/dataVsMClinear.png");
-  canvas3->SaveAs("./plots/DYEE.png");
+  canvas3->SaveAs("./plots/dataVsMCRatiolog.png");
 }//end invMassDraw
