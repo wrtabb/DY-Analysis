@@ -1,62 +1,32 @@
 iChain : Nevents : Neffective : LumiEffective
 7, 259519989, 0, 0
-iChain : Nevents : Neffective : LumiEffective
 8, 6987123, 6986859, 58861.5
-iChain : Nevents : Neffective : LumiEffective
 10, 998034, 998034, 60402.7
-iChain : Nevents : Neffective : LumiEffective
 12, 2995828, 2995828, 63565.2
-iChain : Nevents : Neffective : LumiEffective
 14, 135983471, 135983471, 185118
-iChain : Nevents : Neffective : LumiEffective
 15, 38422582, 38422582, 501568
-iChain : Nevents : Neffective : LumiEffective
 16, 24561630, 24561630, 1.19359e+06
-iChain : Nevents : Neffective : LumiEffective
 17, 6952830, 6952830, 193942
-iChain : Nevents : Neffective : LumiEffective
 18, 6933093, 6933093, 193392
-iChain : Nevents : Neffective : LumiEffective
 19, 45832206, -19, -0.0030303
-iChain : Nevents : Neffective : LumiEffective
 20, 39000836, -360, -0.189278
-iChain : Nevents : Neffective : LumiEffective
 21, 5402483, -1493119, -19767.7
-iChain : Nevents : Neffective : LumiEffective
 22, 98238, 30147, 11639.8
-iChain : Nevents : Neffective : LumiEffective
 23, 95664, 10748, 79321
-iChain : Nevents : Neffective : LumiEffective
 24, 93785, 3132, 40257.1
-iChain : Nevents : Neffective : LumiEffective
 25, 91914, 0, 0
-iChain : Nevents : Neffective : LumiEffective
 26, 90832, 0, 0
-iChain : Nevents : Neffective : LumiEffective
 27, 85916, 0, 0
-iChain : Nevents : Neffective : LumiEffective
 28, 86365, 0, 0
-iChain : Nevents : Neffective : LumiEffective
 29, 85109, 0, 0
-iChain : Nevents : Neffective : LumiEffective
 30, 45243315, 34, 0.00542265
-iChain : Nevents : Neffective : LumiEffective
 31, 39015354, -295, -0.155102
-iChain : Nevents : Neffective : LumiEffective
 32, 5404367, -1490620, -19734.6
-iChain : Nevents : Neffective : LumiEffective
 33, 98576, 31196, 12044.8
-iChain : Nevents : Neffective : LumiEffective
 34, 96368, 10719, 79107
-iChain : Nevents : Neffective : LumiEffective
 35, 93415, 3130, 40231.4
-iChain : Nevents : Neffective : LumiEffective
 36, 92460, 0, 0
-iChain : Nevents : Neffective : LumiEffective
 37, 91002, 0, 0
-iChain : Nevents : Neffective : LumiEffective
 38, 86390, 0, 0
-iChain : Nevents : Neffective : LumiEffective
 39, 86432, 0, 0
-iChain : Nevents : Neffective : LumiEffective
 40, 85271, 0, 0
