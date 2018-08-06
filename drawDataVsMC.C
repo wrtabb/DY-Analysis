@@ -92,15 +92,15 @@ void drawDataVsMC()
   hDataMCRatio->Draw();
   hDataMCRatio->GetUpperPad()->cd();
   legend->Draw("same");
-  hDataMCRatio->GetLowerRefGraph()->SetMinimum(0.7);
-  hDataMCRatio->GetLowerRefGraph()->SetMaximum(1.3);
+  hDataMCRatio->GetLowerRefGraph()->SetMinimum(0.5);
+  hDataMCRatio->GetLowerRefGraph()->SetMaximum(1.5);
   hDataMCRatio->GetLowerRefXaxis()->SetNoExponent();
   hDataMCRatio->GetLowerRefXaxis()->SetMoreLogLabels();
   hDataMCRatio->GetUpperRefXaxis()->SetTitle("Dielectron Invariant Mass [GeV]");
   hDataMCRatio->GetLowerRefYaxis()->SetTitle("MC/Data Ratio");
+  hDataMCRatio->GetLowerRefYaxis()->SetLabelSize(0.02);
   hDataMCRatio->GetUpperRefYaxis()->SetTitle("Entries");
-  canvas1->Update();
-  
+  canvas1->Update();  
 
   auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,histos[BINS_DATA_LINEAR]);
   hDataMCRatiolinear->GetXaxis()->SetTitle("m_{ee} [GeV]");  
@@ -108,10 +108,11 @@ void drawDataVsMC()
   hDataMCRatiolinear->Draw();
   hDataMCRatiolinear->GetUpperPad()->cd();
   legend->Draw("same");
-  hDataMCRatiolinear->GetLowerRefGraph()->SetMinimum(0.7);
-  hDataMCRatiolinear->GetLowerRefGraph()->SetMaximum(1.3);
+  hDataMCRatiolinear->GetLowerRefGraph()->SetMinimum(0.5);
+  hDataMCRatiolinear->GetLowerRefGraph()->SetMaximum(1.5);
   hDataMCRatiolinear->GetUpperRefXaxis()->SetTitle("Dielectron Invariant Mass [GeV]");
   hDataMCRatiolinear->GetLowerRefYaxis()->SetTitle("MC/Data Ratio");
+  hDataMCRatiolinear->GetLowerRefYaxis()->SetLabelSize(0.02);
   hDataMCRatiolinear->GetUpperRefYaxis()->SetTitle("Entries");
   canvas2->Update();
 

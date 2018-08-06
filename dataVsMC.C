@@ -111,6 +111,8 @@ const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72,
 			     106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 200, 220, 243, 273, 320, 
 			     380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
 const double pi=TMath::Pi();
+
+//inv mass
 const float binLow = 60.001;
 const float binHigh = 119.999;
 const float axisLow = 0.0001;
@@ -118,6 +120,20 @@ const int nLinearBins = 30;
 const int nLogBins = 43;
 const int nHistos = 10;
 const int numChains = 48;
+
+//pT
+const int npTBins = 100;
+const float pTHigh = 1000;
+const float pTLow = 0;
+//eta
+const int nEtaBins = 100;
+const float etaLow = -2.5;
+const float etaHigh = 2.5;
+//rapidity
+const int nYBins = 100;
+const float yLow = -2.5;
+const float yHigh = 2.5;
+
 //Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
 const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,//QCD
 			       61526.7,118.7,12.178,16.523,1.256,47.13,4.4297,//Bosons
@@ -304,37 +320,16 @@ void dataVsMC()
   //defining histograms
   TH1F*histos[nHistos];
   const TString histName[nHistos] = {
-    "hFakes",
-    "hFakeslinear",
-    "hEW",
-    "hEWlinear",
-    "hTops",
-    "hTopslinear",   
-    "hMCInvMass",
-    "hMCInvMasslinear",
-    "hDataInvMass",
-    "hDataInvMasslinear"        
+    "hFakesInvMass", "hFakesInvMasslinear", "hEWInvMass", "hEWInvMasslinear", "hTopsInvMass", 
+    "hTopslinearInvMass", "hMCInvMass", "hMCInvMasslinear", "hDataInvMass", "hDataInvMasslinear"
   };
   const Color_t histFillColors[8] = {
-    kViolet+5,
-    kViolet+5,
-    kRed+2,
-    kRed+2,
-    kBlue+2,
-    kBlue+2,
-    kOrange-2,
-    kOrange-2
+    kViolet+5, kViolet+5, kRed+2, kRed+2, kBlue+2, kBlue+2, kOrange-2, kOrange-2
   };
   const Color_t histLineColors[8] = {
-    kViolet+3,
-    kViolet+3,
-    kRed+4,
-    kRed+4,
-    kBlue+3,
-    kBlue+3,
-    kOrange+3,
-    kOrange+3
+    kViolet+3, kViolet+3, kRed+4, kRed+4, kBlue+3, kBlue+3, kOrange+3, kOrange+3
   };
+
   for(int i=0;i<nHistos;i++) {
     if(i%2!=0) {
       histos[i]=new TH1F(histName[i],"",nLinearBins,binLow,binHigh);
@@ -348,7 +343,6 @@ void dataVsMC()
     histos[i]->GetXaxis()->SetNoExponent();
     histos[i]->SetMinimum(axisLow);
     histos[i]->SetTitle("MC vs. Data");
-    
     if(i==BINS_DATA||i==BINS_DATA_LINEAR) {
       histos[i]->SetLineColor(kBlack);
       histos[i]->SetMarkerColor(kBlack);
@@ -360,7 +354,7 @@ void dataVsMC()
       histos[i]->SetLineColor(histLineColors[i]);
     }
   }
-  
+
   //Event Loop
   cout << "Starting Event Loop" << endl;
   double invMass, xSecWeight, genWeight, varGenWeight, totalWeight, lumiEffective;
@@ -369,11 +363,12 @@ void dataVsMC()
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   bool isMC; //is Monte Carlo
-  int trigNameSize;
+  int trigNameSize, subEle, leadEle;
   //double lumi = chains[EE50to100]->GetEntries()/xSec[EE50to100]; //50to100 lumi
   double lumi = dataLuminosity;//luminosity for xsec weighting
   ofstream genWeightFile;
   genWeightFile.open("genWeights.txt");
+  genWeightFile << "iChain : Nevents : Neffective : LumiEffective" << endl;
   for(int iChain=0;iChain<numChains;iChain++) {
     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
     if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
@@ -391,20 +386,19 @@ void dataVsMC()
     sumGenWeight = 0;
     sumRawGenWeight = 0;
     varGenWeight = 0;
-    if(isMC==kTRUE){
+    if(isMC){ //Only MonteCarlo gets gen weights
       for(Long64_t i=0;i<nentries;i++){
 	localEntry = chains[iChain]->LoadTree(i);
 	b_GENEvt_weight->GetEntry(localEntry);
 	genWeight = GENEvt_weight/fabs(GENEvt_weight);	//normalized genweight
 	sumGenWeight += genWeight;
-	varGenWeight += GENEvt_weight*GENEvt_weight; //variance in genweights
-	sumRawGenWeight += GENEvt_weight;
+	varGenWeight += GENEvt_weight*GENEvt_weight; //variance of genweights
+	sumRawGenWeight += GENEvt_weight; 
       }          
       nEffective = (sumRawGenWeight*sumRawGenWeight)/varGenWeight;
       lumiEffective = nEffective/xSec[iChain];
-      genWeightFile << "iChain : Nevents : Neffective : LumiEffective" << endl;
       genWeightFile << iChain << ", " << nentries << ", " << nEffective << ", " << lumiEffective << endl;
-    }//end if iChain<DataRunB
+    }//end if isMC
     
     for(Long64_t i=0;i<nentries;i++) {      
       counter(count,totalentries);
@@ -436,7 +430,14 @@ void dataVsMC()
       //Electron loop
       for(int iEle = 0; iEle < Nelectrons; iEle++) {
 	if(!Electron_passMediumID[iEle]) continue;
-	for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {	  
+	for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
+	  if(Electron_pT[iEle]>Electron_pT[jEle]){
+	    leadEle = iEle; subEle = jEle;
+	  }
+	  else {
+	    leadEle = jEle; subEle = iEle;
+	  }
+	  
 	  if(!Electron_passMediumID[jEle]) continue;
 	  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
 				     Electron_eta[jEle])) continue; 
@@ -474,8 +475,9 @@ void dataVsMC()
     }//end event loop   
   }//end chain loop 
   genWeightFile.close();
-  double integralData, integralMC;
-  /*    
+
+  /*
+  double integralData, integralMC;    
   integralData = 
     histos[BINS_DATA]->Integral(histos[BINS_DATA]->GetXaxis()->FindBin(binLow),
 				histos[BINS_DATA]->GetXaxis()->FindBin(binHigh));
@@ -520,6 +522,17 @@ void dataVsMC()
   legend->AddEntry(histos[BINS_EW],"EW (Dibosons, #gamma^{*}/Z #rightarrow #tau^{-}#tau^{+})");
   legend->AddEntry(histos[BINS_FAKES],"Fakes (W+Jets)");
 
+  TLegend*legend2 = new TLegend(0.65,0.9,0.9,0.7);
+  legend2->SetTextSize(0.02);
+  legend2->AddEntry(histos[BINS_LEAD_PT],"Leading Electron p_{T}");
+  legend2->AddEntry(histos[BINS_SUB_PT],"Sub-Leading Electron p_{T}");
+  legend2->AddEntry(histos[BINS_DIELECTRON_PT],"Dielectron p_{T}");
+
+  TLegend*legend3 = new TLegend(0.65,0.9,0.9,0.7);
+  legend3->SetTextSize(0.02);
+  legend3->AddEntry(histos[BINS_LEAD_ETA],"Leading Electron #eta");
+  legend3->AddEntry(histos[BINS_SUB_ETA],"Sub-Leading Electron #eta");
+
   auto hDataMCRatio = new TRatioPlot(hStack,histos[BINS_DATA]);
   hDataMCRatio->GetXaxis()->SetTitle("m_{ee} [GeV]");  
   canvas1->cd();
@@ -536,10 +549,10 @@ void dataVsMC()
   hDataMCRatiolinear->GetUpperPad()->cd();
   legend->Draw("same");
   
-  canvas1->SaveAs("./plots/dataVsMClog.png");
-  canvas2->SaveAs("./plots/dataVsMClinear.png");
+  //canvas1->SaveAs("./plots/dataVsMClog.png");
+  //canvas2->SaveAs("./plots/dataVsMClinear.png");
   
-  TFile *rootFile = new TFile("./plots/dataVsMCZpeakScale.root","RECREATE");
+  TFile *rootFile = new TFile("./plots/dataVsMC.root","RECREATE");
   rootFile->cd();
   hStack->Write();
   hStacklinear->Write();
