@@ -42,9 +42,6 @@ void drawDataVsMC()
   TH1F*histos[nHistos];
   for(int i=0; i<nHistos;i++) {
     histos[i] = (TH1F*)file->Get(histName[i]);
-    histos[i]->GetXaxis()->SetTitle("m_{ee} [GeV]");
-    histos[i]->GetXaxis()->SetMoreLogLabels();
-    histos[i]->GetXaxis()->SetNoExponent();
     histos[i]->SetMinimum(axisLow);
     histos[i]->SetTitle("MC vs. Data");
     if(i==BINS_DATA||i==BINS_DATA_LINEAR) {
@@ -62,7 +59,8 @@ void drawDataVsMC()
 //Place histograms into stacks
   THStack*hStack = new THStack("hStack","");
   THStack*hStacklinear = new THStack("hStacklinear","");
-
+  hStack->SetMinimum(axisLow);
+  hStacklinear->SetMinimum(axisLow);
   for(int i=0;i<nHistos;i++) {
     if(i==BINS_DATA||i==BINS_DATA_LINEAR) continue;
     if(i%2!=0) {
@@ -73,55 +71,50 @@ void drawDataVsMC()
     }
   }  
 
-  hStack->SetMinimum(axisLow);
-  //hStack->GetXaxis()->SetTitle("Dielectron invariant mass [GeV]");
-  hStacklinear->SetMinimum(axisLow);
-  //hStacklinear->GetXaxis()->SetTitle("Dielectron invariant mass [GeV]");
-
-  TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1000,1000);
-  canvas1->SetLogx();
-  canvas1->SetLogy();
-  TLegend*legend = new TLegend(0.6,0.9,0.9,0.7);
+  TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
   legend->SetTextSize(0.02);
   legend->AddEntry(histos[BINS_DATA],"Data");
   legend->AddEntry(histos[BINS_EE],"#gamma^{*}/Z #rightarrow e^{-}e^{+}");
   legend->AddEntry(histos[BINS_TOPS],"t#bar{t}+tW+#bar{t}W");
   legend->AddEntry(histos[BINS_EW],"EW (Dibosons, #gamma^{*}/Z #rightarrow #tau^{-}#tau^{+})");
   legend->AddEntry(histos[BINS_FAKES],"Fakes (W+Jets)");
-  hStack->Draw("bar");
-  histos[BINS_DATA]->Draw("PE,same");
-  legend->Draw("same");
 
-  TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
+  TCanvas*canvas1 = new TCanvas("canvas3","",10,10,1000,1000);
+  canvas2->SetLogx();
   canvas2->SetLogy();
-  hStacklinear->Draw("bar");
-  histos[BINS_DATA_LINEAR]->Draw("PE,same");
 
-  TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1000,1000);
-  canvas3->SetLogx();
-  canvas3->SetLogy();
-
-  TCanvas*canvas4 = new TCanvas("canvas4","",10,10,1000,1000);
-  canvas4->SetLogy();
+  TCanvas*canvas2 = new TCanvas("canvas4","",10,10,1000,1000);
+  canvas2->SetLogy();
 
   auto hDataMCRatio = new TRatioPlot(hStack,histos[BINS_DATA]);
   hDataMCRatio->GetXaxis()->SetTitle("m_{ee} [GeV]");  
-  canvas3->cd();
+  canvas1->cd();
   hDataMCRatio->Draw();
   hDataMCRatio->GetUpperPad()->cd();
   legend->Draw("same");
-  canvas3->Update();
+  hDataMCRatio->GetLowerRefGraph()->SetMinimum(0.7);
+  hDataMCRatio->GetLowerRefGraph()->SetMaximum(1.3);
+  hDataMCRatio->GetLowerRefXaxis()->SetNoExponent();
+  hDataMCRatio->GetLowerRefXaxis()->SetMoreLogLabels();
+  hDataMCRatio->GetUpperRefXaxis()->SetTitle("Dielectron Invariant Mass [GeV]");
+  hDataMCRatio->GetLowerRefYaxis()->SetTitle("MC/Data Ratio");
+  hDataMCRatio->GetUpperRefYaxis()->SetTitle("Entries");
+  canvas1->Update();
   
+
   auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,histos[BINS_DATA_LINEAR]);
   hDataMCRatiolinear->GetXaxis()->SetTitle("m_{ee} [GeV]");  
-  canvas4->cd();
+  canvas2->cd();
   hDataMCRatiolinear->Draw();
   hDataMCRatiolinear->GetUpperPad()->cd();
-  canvas4->Update();
-
+  legend->Draw("same");
+  hDataMCRatiolinear->GetLowerRefGraph()->SetMinimum(0.7);
+  hDataMCRatiolinear->GetLowerRefGraph()->SetMaximum(1.3);
+  hDataMCRatiolinear->GetUpperRefXaxis()->SetTitle("Dielectron Invariant Mass [GeV]");
+  hDataMCRatiolinear->GetLowerRefYaxis()->SetTitle("MC/Data Ratio");
+  hDataMCRatiolinear->GetUpperRefYaxis()->SetTitle("Entries");
+  canvas2->Update();
 
   canvas1->SaveAs("./plots/dataVsMClog.png");
   canvas2->SaveAs("./plots/dataVsMClinear.png");
-  canvas3->SaveAs("./plots/dataVsMCRatiolog.png");
-  canvas4->SaveAs("./plots/dataVsMCRatiolinear.png");
 }//end invMassDraw
