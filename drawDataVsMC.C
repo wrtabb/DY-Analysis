@@ -3,6 +3,7 @@
 #include "TCanvas.h"
 #include "TH1F.h"
 #include "TH2F.h"
+#include "THStack.h"
 #include "TRatioPlot.h"
 
 
@@ -60,9 +61,8 @@ void drawDataVsMC()
   
 //Place histograms into stacks
   THStack*hStack = new THStack("hStack","");
-  hStack->SetMinimum(axisLow);
   THStack*hStacklinear = new THStack("hStacklinear","");
-  hStacklinear->SetMinimum(axisLow);
+
   for(int i=0;i<nHistos;i++) {
     if(i==BINS_DATA||i==BINS_DATA_LINEAR) continue;
     if(i%2!=0) {
@@ -72,7 +72,12 @@ void drawDataVsMC()
       hStack->Add(histos[i]);
     }
   }  
-  
+
+  hStack->SetMinimum(axisLow);
+  //hStack->GetXaxis()->SetTitle("Dielectron invariant mass [GeV]");
+  hStacklinear->SetMinimum(axisLow);
+  //hStacklinear->GetXaxis()->SetTitle("Dielectron invariant mass [GeV]");
+
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1000,1000);
   canvas1->SetLogx();
   canvas1->SetLogy();
@@ -96,6 +101,9 @@ void drawDataVsMC()
   canvas3->SetLogx();
   canvas3->SetLogy();
 
+  TCanvas*canvas4 = new TCanvas("canvas4","",10,10,1000,1000);
+  canvas4->SetLogy();
+
   auto hDataMCRatio = new TRatioPlot(hStack,histos[BINS_DATA]);
   hDataMCRatio->GetXaxis()->SetTitle("m_{ee} [GeV]");  
   canvas3->cd();
@@ -104,7 +112,16 @@ void drawDataVsMC()
   legend->Draw("same");
   canvas3->Update();
   
+  auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,histos[BINS_DATA_LINEAR]);
+  hDataMCRatiolinear->GetXaxis()->SetTitle("m_{ee} [GeV]");  
+  canvas4->cd();
+  hDataMCRatiolinear->Draw();
+  hDataMCRatiolinear->GetUpperPad()->cd();
+  canvas4->Update();
+
+
   canvas1->SaveAs("./plots/dataVsMClog.png");
   canvas2->SaveAs("./plots/dataVsMClinear.png");
   canvas3->SaveAs("./plots/dataVsMCRatiolog.png");
+  canvas4->SaveAs("./plots/dataVsMCRatiolinear.png");
 }//end invMassDraw
