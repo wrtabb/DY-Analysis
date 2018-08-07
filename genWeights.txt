@@ -1,2 +1,0 @@
-iChain, Nevents, Neffective, LumiEffective
-7, 259519989, 1.2143e+08, 1973.62
