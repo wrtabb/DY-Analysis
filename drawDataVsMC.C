@@ -144,13 +144,13 @@ void drawDataVsMC()
   TH1F*hPileupData = new TH1F("hPileupData","",100,0,100);
   hPileupData->Sumw2();
   hPileupData->GetXaxis()->SetTitle("Pileup");
-  hPileupData->SetLineColor(kBlue+2);
+  hPileupData->SetLineColor(kBlue);
   hPileupData->SetLineWidth(2);
 
   TH1F*hPileupMC = new TH1F("hPileupMC","",100,0,100);
   hPileupMC->Sumw2();
   hPileupMC->GetXaxis()->SetTitle("Pileup");
-  hPileupMC->SetLineColor(kOrange+2);
+  hPileupMC->SetLineColor(kRed);
   hPileupMC->SetLineWidth(2);
 
   for(int i=0; i<nPileupBins;i++){
@@ -160,6 +160,11 @@ void drawDataVsMC()
   hPileupData->Scale(norm/hPileupData->Integral());
   hPileupMC->Scale(norm/hPileupMC->Integral());
   
+  TLegend*legend2 = new TLegend(0.65,0.9,0.9,0.75);
+  legend2->SetTextSize(0.02);
+  legend2->AddEntry(hPileupData,"Data");
+  legend2->AddEntry(hPileupMC,"MC");
+
   TH1F*hPileupRatio = (TH1F*)hPileupData->Clone();
   hPileupRatio->Divide(hPileupMC);
   hPileupRatio->SetMarkerStyle(20);
@@ -172,8 +177,9 @@ void drawDataVsMC()
   canvas3->cd(1);
   hPileupData->Draw("hist");
   hPileupMC->Draw("hist,same");
+  legend2->Draw("same");
   canvas3->cd(2);
-  hPileupRatio->Draw("PE");
+  hPileupRatio->Draw("PE");  
 
   TFile*pileupSaveFile = new TFile("./plots/pileup.root","RECREATE");
   pileupSaveFile->cd();
