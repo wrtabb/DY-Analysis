@@ -180,7 +180,8 @@ void drawDataVsMC()
   legend2->Draw("same");
   canvas3->cd(2);
   hPileupRatio->Draw("PE");  
-
+  
+  canvas3->SaveAs("./plots/pileup.png");
   TFile*pileupSaveFile = new TFile("./plots/pileup.root","RECREATE");
   pileupSaveFile->cd();
   hPileupData->Write();
