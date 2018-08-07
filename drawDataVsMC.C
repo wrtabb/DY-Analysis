@@ -15,11 +15,29 @@ const int nCanvas = 6;
 const int nHistos = 10;
 const float axisLow = 1.0;
 
+const TString pileupFileName = "./plots/MyDataPileupHistogram.root";
 const TString dataFileName = "./plots/dataVsMC.root";
 const TString histName[nHistos] = {"hFakes", "hFakeslinear", "hEW", "hEWlinear", "hTops", "hTopslinear",   
 				   "hMCInvMass", "hMCInvMasslinear", "hDataInvMass", "hDataInvMasslinear"};
 const Color_t histFillColors[8] = {kViolet+5, kViolet+5, kRed+2, kRed+2, kBlue+2, kBlue+2, kOrange-2, kOrange-2};
 const Color_t histLineColors[8] = {kViolet+3, kViolet+3, kRed+4, kRed+4, kBlue+3, kBlue+3, kOrange-3, kOrange-3};
+
+const int nPileupBins = 75;
+//obtained from https://github.com/cms-sw/cmssw/blob/master/SimGeneral/MixingModule/python/mix_2016_25ns_Moriond17MC_PoissonOOTPU_cfi.py#L25
+const double pileupMC[nPileupBins] = {1.78653e-05 ,2.56602e-05 ,5.27857e-05 ,8.88954e-05 ,0.000109362 ,
+					0.000140973 , 0.000240998 ,0.00071209 ,0.00130121 ,0.00245255 ,0.00502589 ,
+					0.00919534 ,0.0146697 , 0.0204126 ,0.0267586 ,0.0337697 ,0.0401478 ,
+					0.0450159 ,0.0490577 ,0.0524855 ,0.0548159 , 0.0559937 ,0.0554468 ,
+					0.0537687 ,0.0512055 ,0.0476713 ,0.0435312 ,0.0393107 ,0.0349812 ,
+					0.0307413 ,0.0272425 ,0.0237115 ,0.0208329 ,0.0182459 ,0.0160712 ,
+					0.0142498 ,0.012804 , 0.011571 ,0.010547 ,0.00959489 ,0.00891718 ,
+					0.00829292 ,0.0076195 ,0.0069806 ,0.0062025, 0.00546581 ,0.00484127 ,
+					0.00407168 ,0.00337681 ,0.00269893 ,0.00212473 ,0.00160208 , 0.00117884 ,
+					0.000859662 ,0.000569085 ,0.000365431 ,0.000243565 ,0.00015688 ,
+					9.88128e-05, 6.53783e-05 ,3.73924e-05 ,2.61382e-05 ,2.0307e-05 ,
+					1.73032e-05 ,1.435e-05 ,1.36486e-05, 1.35555e-05 ,1.37491e-05 ,
+					.34255e-05 ,1.33987e-05 ,1.34061e-05 ,1.34211e-05 , 1.34177e-05 ,
+					1.32959e-05 ,1.33287e-05};
 
 enum HistBins {
   BINS_FAKES,
@@ -55,7 +73,7 @@ void drawDataVsMC()
       histos[i]->SetLineColor(histLineColors[i]);
     }
   }//end histogram loop
-  
+
 //Place histograms into stacks
   THStack*hStack = new THStack("hStack","");
   THStack*hStacklinear = new THStack("hStacklinear","");
@@ -78,12 +96,12 @@ void drawDataVsMC()
   legend->AddEntry(histos[BINS_TOPS],"t#bar{t}+tW+#bar{t}W");
   legend->AddEntry(histos[BINS_EW],"EW (Dibosons, #gamma^{*}/Z #rightarrow #tau^{-}#tau^{+})");
   legend->AddEntry(histos[BINS_FAKES],"Fakes (W+Jets)");
-
-  TCanvas*canvas1 = new TCanvas("canvas3","",10,10,1000,1000);
+  /*
+  TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1000,1000);
   canvas1->SetLogx();
   canvas1->SetLogy();
 
-  TCanvas*canvas2 = new TCanvas("canvas4","",10,10,1000,1000);
+  TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
   canvas2->SetLogy();
 
   auto hDataMCRatio = new TRatioPlot(hStack,histos[BINS_DATA]);
@@ -116,6 +134,55 @@ void drawDataVsMC()
   hDataMCRatiolinear->GetUpperRefYaxis()->SetTitle("Entries");
   canvas2->Update();
 
-  canvas1->SaveAs("./plots/dataVsMClog.png");
-  canvas2->SaveAs("./plots/dataVsMClinear.png");
+  //canvas1->SaveAs("./plots/dataVsMClog.png");
+  //canvas2->SaveAs("./plots/dataVsMClinear.png");
+  */
+
+  //Pileup
+  float norm = 1.0;
+  TFile*filePU = new TFile(pileupFileName);
+  TH1F*hPileupData = new TH1F("hPileupData","",100,0,100);
+  hPileupData->Sumw2();
+  hPileupData->GetXaxis()->SetTitle("Pileup");
+  hPileupData->SetLineColor(kBlue+2);
+  hPileupData->SetLineWidth(2);
+
+  TH1F*hPileupMC = new TH1F("hPileupMC","",100,0,100);
+  hPileupMC->Sumw2();
+  hPileupMC->GetXaxis()->SetTitle("Pileup");
+  hPileupMC->SetLineColor(kOrange+2);
+  hPileupMC->SetLineWidth(2);
+
+  for(int i=0; i<nPileupBins;i++){
+    hPileupMC->SetBinContent(i,pileupMC[i]);
+    hPileupData = (TH1F*)filePU->Get("pileup");
+  }
+  hPileupData->Scale(norm/hPileupData->Integral());
+  hPileupMC->Scale(norm/hPileupMC->Integral());
+  
+  TH1F*hPileupRatio = (TH1F*)hPileupData->Clone();
+  hPileupRatio->Divide(hPileupMC);
+  hPileupRatio->SetMarkerStyle(20);
+  hPileupRatio->SetMarkerColor(kBlack);
+  hPileupRatio->SetMarkerSize(0.5);
+  hPileupRatio->SetTitle("Data/MC Ratio");
+
+  TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1400,700);
+  canvas3->Divide(2);
+  canvas3->cd(1);
+  hPileupData->Draw("hist");
+  hPileupMC->Draw("hist,same");
+  canvas3->cd(2);
+  hPileupRatio->Draw("PE");
+
+  TFile*pileupSaveFile = new TFile("./plots/pileup.root","RECREATE");
+  pileupSaveFile->cd();
+  hPileupData->Write();
+  hPileupMC->Write();
+  hPileupRatio->Write();
+  canvas3->Write();
+  pileupSaveFile->Write();
+  pileupSaveFile->Close();
+  
+  
 }//end invMassDraw

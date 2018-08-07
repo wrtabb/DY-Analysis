@@ -121,6 +121,7 @@ const int nLogBins = 43;
 const int nHistos = 10;
 const int numChains = 48;
 
+/*
 //pT
 const int npTBins = 100;
 const float pTHigh = 1000;
@@ -133,7 +134,7 @@ const float etaHigh = 2.5;
 const int nYBins = 100;
 const float yLow = -2.5;
 const float yHigh = 2.5;
-
+*/
 //Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
 const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,//QCD
 			       61526.7,118.7,12.178,16.523,1.256,47.13,4.4297,//Bosons
@@ -143,7 +144,7 @@ const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,/
 			       18810.0/3.0,5705.9044344/3.0,226.6/3.0,7.77/3.0,0.4065/3.0,//DYTAUTAU
 			       0.2334/3.0,0.03614/3.0,0.03047/3.0,0.01636/3.0,0.00218/3.0,0.0005156/3.0,//DYTAUTAU
 			       1,1,1,1,1,1,1};//data (unweighted)
-const float etaHigh = 2.5;
+const float etaHigh = 2.4;
 const float etaGapHigh = 1.566; 
 const float etaGapLow = 1.4442;
 const float ptHigh = 28;
@@ -358,7 +359,8 @@ void dataVsMC()
   //Event Loop
   cout << "Starting Event Loop" << endl;
   double invMass, xSecWeight, genWeight, varGenWeight, totalWeight, lumiEffective;
-  Long64_t nentries, nEffective, localEntry, sumGenWeight, sumRawGenWeight;
+  Long64_t nentries;
+  double nEffective, localEntry, sumGenWeight, sumRawGenWeight;
   Long64_t count = 0;
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
@@ -368,7 +370,7 @@ void dataVsMC()
   double lumi = dataLuminosity;//luminosity for xsec weighting
   ofstream genWeightFile;
   genWeightFile.open("genWeights.txt");
-  genWeightFile << "iChain : Nevents : Neffective : LumiEffective" << endl;
+  genWeightFile << "iChain, Nevents, Neffective, LumiEffective" << endl;
   for(int iChain=0;iChain<numChains;iChain++) {
     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
     if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
@@ -383,9 +385,9 @@ void dataVsMC()
     nentries = chains[iChain]->GetEntries();
     xSecWeight=lumi*(xSec[iChain]/1.0);     
     
-    sumGenWeight = 0;
-    sumRawGenWeight = 0;
-    varGenWeight = 0;
+    sumGenWeight = 0.0;
+    sumRawGenWeight = 0.0;
+    varGenWeight = 0.0;
     if(isMC){ //Only MonteCarlo gets gen weights
       for(Long64_t i=0;i<nentries;i++){
 	localEntry = chains[iChain]->LoadTree(i);
@@ -521,17 +523,6 @@ void dataVsMC()
   legend->AddEntry(histos[BINS_TOPS],"t#bar{t}+tW+#bar{t}W");
   legend->AddEntry(histos[BINS_EW],"EW (Dibosons, #gamma^{*}/Z #rightarrow #tau^{-}#tau^{+})");
   legend->AddEntry(histos[BINS_FAKES],"Fakes (W+Jets)");
-
-  TLegend*legend2 = new TLegend(0.65,0.9,0.9,0.7);
-  legend2->SetTextSize(0.02);
-  legend2->AddEntry(histos[BINS_LEAD_PT],"Leading Electron p_{T}");
-  legend2->AddEntry(histos[BINS_SUB_PT],"Sub-Leading Electron p_{T}");
-  legend2->AddEntry(histos[BINS_DIELECTRON_PT],"Dielectron p_{T}");
-
-  TLegend*legend3 = new TLegend(0.65,0.9,0.9,0.7);
-  legend3->SetTextSize(0.02);
-  legend3->AddEntry(histos[BINS_LEAD_ETA],"Leading Electron #eta");
-  legend3->AddEntry(histos[BINS_SUB_ETA],"Sub-Leading Electron #eta");
 
   auto hDataMCRatio = new TRatioPlot(hStack,histos[BINS_DATA]);
   hDataMCRatio->GetXaxis()->SetTitle("m_{ee} [GeV]");  
