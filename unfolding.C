@@ -146,7 +146,7 @@ void unfolding()
     {
       hMassUnfolded->SetBinContent(i+1,yieldsUnfolded(i));
     }
-  /*
+  /* //plotting slices of a response matrix
   TCanvas*canvas2[nMassBins];  
   TCanvas*canvas3 = new TCanvas("canvas3","",10,10,900,700);
   TLatex*label = new TLatex();
@@ -211,12 +211,12 @@ void unfolding()
 
   const TString canvasSaveName[nCanvas] = 
     {
-      "./plots/responseGENvsGEN.png",
-      "./plots/responseFSvsReco.png",
-      "./plots/responseHardvsReco.png",
-      "./plots/unfoldingGENvsGEN.png",
-      "./plots/unfoldingFSvsReco.png",
-      "./plots/unfoldingHardvsReco.png",
+      "./plots/matrices/responseGENvsGEN.png",
+      "./plots/matrices/responseFSvsReco.png",
+      "./plots/matrices/responseHardvsReco.png",
+      "./plots/matrices/unfoldingGENvsGEN.png",
+      "./plots/matrices/unfoldingFSvsReco.png",
+      "./plots/matrices/unfoldingHardvsReco.png",
     };
    
   TFile *rootFile = new TFile("./plots/unfoldingMatrices.root","RECREATE");

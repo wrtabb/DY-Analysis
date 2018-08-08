@@ -299,9 +299,10 @@ void efficiencies()
 
   //Event Loop
   cout << "Starting Event Loop" << endl;
-  double dpT, invMass, invMassHardProcess, xSecWeight, genWeight, totalWeight, dRMin;
+  double invMass, invMassHardProcess, xSecWeight, genWeight, varGenWeight, totalWeight, lumiEffective, 
+    nEffective, localEntry, sumGenWeight, sumRawGenWeight, pileupWeight;
   int dRMinIndex;  
-  Long64_t nentries, sumGenWeight,localEntry,nEffective;
+  Long64_t nentries;
   Long64_t count = 0;
   double nEvents = 250000;
   double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100];//luminosity of 50to100
@@ -311,8 +312,7 @@ void efficiencies()
   int trigNameSize;
   long int nTooManyDielectrons = 0;
   long int nTooManyDielectronsFS = 0;  
-  ofstream genWeightFile;
-  genWeightFile.open("genWeights.txt");//File for writing weights
+  
   for(int iChain=0;iChain<numChains;iChain++)
     {
       cout << endl;
@@ -330,7 +330,6 @@ void efficiencies()
 	sumGenWeight += genWeight;	
       }
 
-      genWeightFile << "Chain: " << dirNames[iChain] << ", Sum: " << sumGenWeight << endl;
       for(Long64_t i=0;i<nentries;i++)
 	{      
 	  chains[iChain]->GetEntry(i);
@@ -492,12 +491,11 @@ void efficiencies()
 	  migMatrixGENFSvsReco->Fill(invMass,invMassReco,totalWeight);
 	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight);
 	}//end event loop   
-
+      
       if(iChain==0)hHardProcess[iChain]->Draw("Bar");      
       else hHardProcess[iChain]->Draw("Barsame");
-      	 	
+      
     }//end chain loop 
-  genWeightFile.close();//close gen weight text file
   legend2->AddEntry(hHardProcess[0],"DYEE M10-50");
   legend2->AddEntry(hHardProcess[1],"DYEE M50-100");
   legend2->AddEntry(hHardProcess[2],"DYEE M100-200");
