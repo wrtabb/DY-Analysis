@@ -33,11 +33,12 @@
 void counter(Long64_t i, Long64_t N);
 double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
 double calcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
+double calcDileptonPt(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 
 //Defining variables and arrays
 const int MPSIZE = 2000;
-int Nelectrons, HLT_ntrig, nVertices;
+int Nelectrons, HLT_ntrig, nVertices, nPileUp;
 double GENEvt_weight;
 double Electron_pT[MPSIZE], Electron_eta[MPSIZE], Electron_phi[MPSIZE];
 double Electron_Energy[MPSIZE], Electron_Px[MPSIZE];
@@ -211,7 +212,7 @@ void dataVsMC()
   cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
   TStopwatch totaltime;
   totaltime.Start();
-  
+  bool isMC; //is Monte Carlo
   gStyle->SetOptStat(0);
   //Defining branches
   TBranch*b_Nelectrons;
@@ -224,6 +225,7 @@ void dataVsMC()
   TBranch*b_HLT_trigFired;
   TBranch*b_GENEvt_weight;
   TBranch*b_nVertices;
+  TBranch*b_nPileUp;
   
   //Loading ntuples
   cout << "Loading ntuples" << endl;
@@ -319,6 +321,9 @@ void dataVsMC()
     if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
        iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
     chains[iChain] = new TChain(treeName);
+    if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
+       iChain==DataRunG||iChain==DataRunH) isMC = kFALSE;
+    else isMC = kTRUE;
     subDirectorySize = subFiles[iChain]->size();
     for(int k=0;k<subDirectorySize;k++) {	  	      
       TFileCollection filecoll("dum");//Object for creating a list of files in a directory
@@ -354,6 +359,7 @@ void dataVsMC()
     //Setting addresses for branches
     chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
     chains[iChain]->SetBranchAddress("nVertices", &nVertices, &b_nVertices);
+    chains[iChain]->SetBranchAddress("nPileUp", &nPileUp, &b_nPileUp);
     chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
     chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
     chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
@@ -362,7 +368,7 @@ void dataVsMC()
     chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
     chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
     chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);   
-    if(iChain<DataRunB) 
+    if(isMC) 
       chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
     else continue;
   }//end iChain loop
@@ -385,8 +391,8 @@ void dataVsMC()
 	histos[i][j]->SetMarkerStyle(20);
       }
       else {
-	histos[i][j]->SetFillColor(histFillColors[i]);
-	histos[i][j]->SetLineColor(histLineColors[i]);
+	histos[i][j]->SetFillColor(histFillColors[j]);
+	histos[i][j]->SetLineColor(histLineColors[j]);
       }
       
       histos[i][j]->GetXaxis()->SetTitle(xAxisLabels[i]);
@@ -398,13 +404,12 @@ void dataVsMC()
   
   //Event Loop
   cout << "Starting Event Loop" << endl;
-  double invMass, rapidity, xSecWeight, genWeight, varGenWeight, totalWeight, lumiEffective, 
+  double invMass, rapidity, dileptonPt, xSecWeight, genWeight, varGenWeight, totalWeight, lumiEffective, 
     nEffective, localEntry, sumGenWeight, sumRawGenWeight, pileupWeight;
   Long64_t nentries;
   Long64_t count = 0;
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
-  bool isMC; //is Monte Carlo
   int trigNameSize, subEle, leadEle;
   //double lumi = chains[EE50to100]->GetEntries()/xSec[EE50to100]; //50to100 lumi
   double lumi = dataLuminosity;//luminosity for xsec weighting
@@ -447,7 +452,7 @@ void dataVsMC()
       count = count+1; 
       chains[iChain]->GetEntry(i);
       if(Nelectrons<2) continue;   	  
-      pileupWeight = hPileupRatio->GetBinContent(nVertices);
+      pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
       genWeight = GENEvt_weight/fabs(GENEvt_weight);
       genWeight = genWeight/sumGenWeight;
       totalWeight = genWeight*xSecWeight;
@@ -513,6 +518,8 @@ void dataVsMC()
 			      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
 	  rapidity=calcRapidity(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
 			      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
+	  dileptonPt=calcDileptonPt(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
+			      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
 
 	  if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
 	     iChain==DataRunG||iChain==DataRunH) {
@@ -520,7 +527,7 @@ void dataVsMC()
 	    histos[INV_MASS_LINEAR][DATA]->Fill(invMass);
 	    histos[PT_LEAD][DATA]->Fill(Electron_pT[leadEle]);
 	    histos[PT_SUB][DATA]->Fill(Electron_pT[subEle]);
-	    histos[PT_DI][DATA]->Fill(Electron_pT[leadEle]+Electron_pT[subEle]);	    
+	    histos[PT_DI][DATA]->Fill(dileptonPt);	    
 	    histos[ETA_LEAD][DATA]->Fill(Electron_eta[leadEle]);
 	    histos[ETA_SUB][DATA]->Fill(Electron_eta[subEle]);
 	    histos[ETA_DI][DATA]->Fill(Electron_eta[leadEle]+Electron_eta[subEle]);
@@ -532,7 +539,7 @@ void dataVsMC()
 	    histos[INV_MASS_LINEAR][FAKES]->Fill(invMass,totalWeight);
 	    histos[PT_LEAD][FAKES]->Fill(Electron_pT[leadEle]);
 	    histos[PT_SUB][FAKES]->Fill(Electron_pT[subEle]);
-	    histos[PT_DI][FAKES]->Fill(Electron_pT[leadEle]+Electron_pT[subEle]);	    
+	    histos[PT_DI][FAKES]->Fill(dileptonPt);	    
 	    histos[ETA_LEAD][FAKES]->Fill(Electron_eta[leadEle]);
 	    histos[ETA_SUB][FAKES]->Fill(Electron_eta[subEle]);
 	    histos[ETA_DI][FAKES]->Fill(Electron_eta[leadEle]+Electron_eta[subEle]);
@@ -546,7 +553,7 @@ void dataVsMC()
 	    histos[INV_MASS_LINEAR][EW]->Fill(invMass,totalWeight);
 	    histos[PT_LEAD][EW]->Fill(Electron_pT[leadEle]);
 	    histos[PT_SUB][EW]->Fill(Electron_pT[subEle]);
-	    histos[PT_DI][EW]->Fill(Electron_pT[leadEle]+Electron_pT[subEle]);	    
+	    histos[PT_DI][EW]->Fill(dileptonPt);	    
 	    histos[ETA_LEAD][EW]->Fill(Electron_eta[leadEle]);
 	    histos[ETA_SUB][EW]->Fill(Electron_eta[subEle]);
 	    histos[ETA_DI][EW]->Fill(Electron_eta[leadEle]+Electron_eta[subEle]);
@@ -557,7 +564,7 @@ void dataVsMC()
 	    histos[INV_MASS_LINEAR][TOPS]->Fill(invMass,totalWeight);
 	    histos[PT_LEAD][TOPS]->Fill(Electron_pT[leadEle]);
 	    histos[PT_SUB][TOPS]->Fill(Electron_pT[subEle]);
-	    histos[PT_DI][TOPS]->Fill(Electron_pT[leadEle]+Electron_pT[subEle]);	    
+	    histos[PT_DI][TOPS]->Fill(dileptonPt);	    
 	    histos[ETA_LEAD][TOPS]->Fill(Electron_eta[leadEle]);
 	    histos[ETA_SUB][TOPS]->Fill(Electron_eta[subEle]);
 	    histos[ETA_DI][TOPS]->Fill(Electron_eta[leadEle]+Electron_eta[subEle]);
@@ -570,7 +577,7 @@ void dataVsMC()
 	    histos[INV_MASS_LINEAR][EE]->Fill(invMass,totalWeight);
 	    histos[PT_LEAD][EE]->Fill(Electron_pT[leadEle]);
 	    histos[PT_SUB][EE]->Fill(Electron_pT[subEle]);
-	    histos[PT_DI][EE]->Fill(Electron_pT[leadEle]+Electron_pT[subEle]);	    
+	    histos[PT_DI][EE]->Fill(dileptonPt);	    
 	    histos[ETA_LEAD][EE]->Fill(Electron_eta[leadEle]);
 	    histos[ETA_SUB][EE]->Fill(Electron_eta[subEle]);
 	    histos[ETA_DI][EE]->Fill(Electron_eta[leadEle]+Electron_eta[subEle]);
@@ -650,3 +657,13 @@ double calcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,doub
   double rapidity = (vElectron1+vElectron2).Rapidity();
   return rapidity;
 }//end calcRapidity
+
+double calcDileptonPt(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2)
+{  
+  TLorentzVector vElectron1;
+  TLorentzVector vElectron2;
+  vElectron1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
+  vElectron2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
+  double Pt = (vElectron1+vElectron2).Pt();
+  return Pt;
+}//end calcDileptonPt
