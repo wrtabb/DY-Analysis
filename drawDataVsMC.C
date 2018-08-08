@@ -13,7 +13,7 @@ const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72,
 const int nMassBins = 43;
 const int nCanvas = 6;
 const int nHistos = 10;
-const float axisLow = 1.0;
+const float axisLow = 0.01;
 
 const TString pileupFileName = "./plots/MyDataPileupHistogram.root";
 const TString dataFileName = "./plots/dataVsMC.root";
@@ -36,7 +36,7 @@ const double pileupMC[nPileupBins] = {1.78653e-05 ,2.56602e-05 ,5.27857e-05 ,8.8
 					0.000859662 ,0.000569085 ,0.000365431 ,0.000243565 ,0.00015688 ,
 					9.88128e-05, 6.53783e-05 ,3.73924e-05 ,2.61382e-05 ,2.0307e-05 ,
 					1.73032e-05 ,1.435e-05 ,1.36486e-05, 1.35555e-05 ,1.37491e-05 ,
-					.34255e-05 ,1.33987e-05 ,1.34061e-05 ,1.34211e-05 , 1.34177e-05 ,
+					0.34255e-05 ,1.33987e-05 ,1.34061e-05 ,1.34211e-05 , 1.34177e-05 ,
 					1.32959e-05 ,1.33287e-05};
 
 enum HistBins {
@@ -55,12 +55,19 @@ enum HistBins {
 void drawDataVsMC()
 {
   gStyle->SetOptStat(0);
+  /*
   TFile*file = new TFile(dataFileName);
+  if(!file){
+    cout << endl;
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+    cout << "File failed to load!!!" << endl;
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+    cout << endl;
+  }
   //Getting histograms
   TH1F*histos[nHistos];
   for(int i=0; i<nHistos;i++) {
     histos[i] = (TH1F*)file->Get(histName[i]);
-    histos[i]->SetMinimum(axisLow);
     histos[i]->SetTitle("MC vs. Data");
     if(i==BINS_DATA||i==BINS_DATA_LINEAR) {
       histos[i]->SetLineColor(kBlack);
@@ -96,7 +103,7 @@ void drawDataVsMC()
   legend->AddEntry(histos[BINS_TOPS],"t#bar{t}+tW+#bar{t}W");
   legend->AddEntry(histos[BINS_EW],"EW (Dibosons, #gamma^{*}/Z #rightarrow #tau^{-}#tau^{+})");
   legend->AddEntry(histos[BINS_FAKES],"Fakes (W+Jets)");
-  /*
+  
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1000,1000);
   canvas1->SetLogx();
   canvas1->SetLogy();
@@ -141,13 +148,13 @@ void drawDataVsMC()
   //Pileup
   float norm = 1.0;
   TFile*filePU = new TFile(pileupFileName);
-  TH1F*hPileupData = new TH1F("hPileupData","",100,0,100);
+  TH1F*hPileupData = new TH1F("hPileupData","",75,0,75);
   hPileupData->Sumw2();
   hPileupData->GetXaxis()->SetTitle("Pileup");
   hPileupData->SetLineColor(kBlue);
   hPileupData->SetLineWidth(2);
 
-  TH1F*hPileupMC = new TH1F("hPileupMC","",100,0,100);
+  TH1F*hPileupMC = new TH1F("hPileupMC","",75,0,75);
   hPileupMC->Sumw2();
   hPileupMC->GetXaxis()->SetTitle("Pileup");
   hPileupMC->SetLineColor(kRed);
@@ -155,7 +162,9 @@ void drawDataVsMC()
 
   for(int i=0; i<nPileupBins;i++){
     hPileupMC->SetBinContent(i,pileupMC[i]);
-    hPileupData = (TH1F*)filePU->Get("pileup");
+    TH1F*hPileup = (TH1F*)filePU->Get("pileup");
+    if(i>75) continue;
+    hPileupData->SetBinContent(i,hPileup->GetBinContent(i));
   }
   hPileupData->Scale(norm/hPileupData->Integral());
   hPileupMC->Scale(norm/hPileupMC->Integral());
@@ -166,6 +175,7 @@ void drawDataVsMC()
   legend2->AddEntry(hPileupMC,"MC");
 
   TH1F*hPileupRatio = (TH1F*)hPileupData->Clone();
+  hPileupRatio->SetName("hPileupRatio");
   hPileupRatio->Divide(hPileupMC);
   hPileupRatio->SetMarkerStyle(20);
   hPileupRatio->SetMarkerColor(kBlack);

@@ -32,11 +32,12 @@
 
 void counter(Long64_t i, Long64_t N);
 double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
+double calcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 
 //Defining variables and arrays
 const int MPSIZE = 2000;
-int Nelectrons, HLT_ntrig;
+int Nelectrons, HLT_ntrig, nVertices;
 double GENEvt_weight;
 double Electron_pT[MPSIZE], Electron_eta[MPSIZE], Electron_phi[MPSIZE];
 double Electron_Energy[MPSIZE], Electron_Px[MPSIZE];
@@ -45,18 +46,20 @@ bool Electron_passMediumID[MPSIZE];
 int HLT_trigType[MPSIZE],HLT_trigFired[MPSIZE];
 std::vector<std::string> HLT_trigName;
 std::vector<std::string> *pHLT_trigName = &HLT_trigName;
-enum HistBins {
-  BINS_FAKES,
-  BINS_FAKES_LINEAR,
-  BINS_EW,
-  BINS_EW_LINEAR,
-  BINS_TOPS,
-  BINS_TOPS_LINEAR,
-  BINS_EE,
-  BINS_EE_LINEAR,
-  BINS_DATA,
-  BINS_DATA_LINEAR
-};
+
+//cutting parameters
+const float etaHigh = 2.4;
+const float etaGapHigh = 1.566; 
+const float etaGapLow = 1.4442;
+const float ptHigh = 28;
+const float ptLow = 17;
+const float dRMinCut = 0.3;
+
+const float eMass = 0.000511;
+const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
+const TString treeName = "recoTree/DYTree";
+const TString pileupRatioName = "./plots/pileup.root";
+const int numChains = 48; const double pi=TMath::Pi(); const float axisLow = 0.0001;
 enum ChainNum {
   QCD20to30,
   QCD30to50,
@@ -107,52 +110,100 @@ enum ChainNum {
   DataRunG,
   DataRunH
 }; 
-const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 91, 96, 101, 
-			     106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 200, 220, 243, 273, 320, 
-			     380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
-const double pi=TMath::Pi();
 
-//inv mass
-const float binLow = 60.001;
-const float binHigh = 119.999;
-const float axisLow = 0.0001;
-const int nLinearBins = 30;
-const int nLogBins = 43;
-const int nHistos = 10;
-const int numChains = 48;
-
-/*
-//pT
+//Histogram parameters
+const int nHistoTypes = 11; 
+const int nHistos = 5;
+const TString histName[nHistos] = {
+  "hFakes", "hEW", "hTops", "hMC", "hData"
+};
+const TString histTypeName[nHistoTypes] = {
+  "InvMass", "InvMassLinear", "Vert", "VertWeighted", "pTLead", "pTSub", "pTDi", "EtaLead", "EtaSub", "EtaDi",
+  "Rapidity"
+};
+const Color_t histFillColors[nHistos] = {
+  kViolet+5, kRed+2, kBlue+2, kOrange-2, kWhite
+};
+const Color_t histLineColors[nHistos] = {
+  kViolet+3, kRed+4, kBlue+3, kOrange+3, kBlack
+};
+const TString xAxisLabels[nHistoTypes] = {
+  "Dielectron invariant mass [GeV]",
+  "Dielectron invariant mass [GeV]",
+  "Number of vertices",
+  "Number of vertices"
+  "p_{T} [GeV]",
+  "p_{T} [GeV]",
+  "p_{T} [GeV]",
+  "#eta",
+  "#eta",
+  "#eta",
+  "Y"
+};
+enum HistBins {
+  FAKES,
+  EW,
+  TOPS,
+  EE,
+  DATA
+};
+enum HistTypes {
+  INV_MASS,
+  INV_MASS_LINEAR,
+  VERTICES,
+  VERTICES_WEIGHTED,
+  PT_LEAD,
+  PT_SUB,
+  PT_DI,
+  ETA_LEAD,
+  ETA_SUB,
+  ETA_DI,
+  RAPIDITY
+};
+//InvMass
+const int nBinsInvMass = 43;
+const float massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 91, 96, 101, 
+			    106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 200, 220, 243, 273, 320, 
+			    380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
+const float binLowInvMass = 0;
+const float binHighInvMass = 3000;
+//InvMass Linear Plot
+const int nBinsInvMassLinear = 30;
+const float binLowInvMassLinear = 60;
+const float binHighInvMassLinear = 120;
+//nVertices
+const int nBinsVert = 50;
+const float binLowVert = 0;
+const float binHighVert = 50;
+//pT 
 const int npTBins = 100;
-const float pTHigh = 1000;
-const float pTLow = 0;
+const float binLowpT = 0;
+const float binHighpT = 1000;
 //eta
 const int nEtaBins = 100;
-const float etaLow = -2.5;
-const float etaHigh = 2.5;
+const float binLowEta = -2.5;
+const float binHighEta = 2.5;
 //rapidity
 const int nYBins = 100;
-const float yLow = -2.5;
-const float yHigh = 2.5;
-*/
-//Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
+const float binLowY = -2.5;
+const float binHighY = 2.5;
+
+const int nBins[nHistoTypes] = {nBinsInvMass,nBinsInvMassLinear,nBinsVert,nBinsVert,npTBins,npTBins,npTBins,
+				nEtaBins,nEtaBins,nEtaBins,nYBins};
+const float binLow[nHistoTypes] = {binLowInvMass,binLowInvMassLinear,binLowVert,binLowVert,binLowpT,binLowpT,
+				   binLowpT,binLowEta,binLowEta,binLowEta,binLowY};
+const float binHigh[nHistoTypes] = {binHighInvMass,binHighInvMassLinear,binHighVert,binHighVert,binHighpT,
+				    binHighpT,binHighpT,binHighEta,binHighEta,binHighEta,binHighY};
+
+//Cross sections calculated by Kyeongpil Lee
 const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,//QCD
 			       61526.7,118.7,12.178,16.523,1.256,47.13,4.4297,//Bosons
 			       734.577,76.605,20.578,35.85,35.85,//tops
-			       18810.0/3.0,5705.9044344/3.0,226.6/3.0,7.77/3.0,0.4065/3.0,//DYEE
-			       0.2334/3.0,0.03614/3.0,0.03047/3.0,0.01636/3.0,0.00218/3.0,0.0005156/3.0,//DYEE
-			       18810.0/3.0,5705.9044344/3.0,226.6/3.0,7.77/3.0,0.4065/3.0,//DYTAUTAU
-			       0.2334/3.0,0.03614/3.0,0.03047/3.0,0.01636/3.0,0.00218/3.0,0.0005156/3.0,//DYTAUTAU
+			       6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,0.01042,//DYEE
+			       0.00552772,0.000741613,0.000178737,//DYEE
+			       6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,0.01042,//DYTAUTAU
+			       0.00552772,0.000741613,0.000178737,//DYTAUTAU
 			       1,1,1,1,1,1,1};//data (unweighted)
-const float etaHigh = 2.4;
-const float etaGapHigh = 1.566; 
-const float etaGapLow = 1.4442;
-const float ptHigh = 28;
-const float ptLow = 17;
-const float eMass = 0.000511;
-const float dRMinCut = 0.3;
-const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
-const TString treeName = "recoTree/DYTree";
 
 void dataVsMC()
 {
@@ -172,6 +223,7 @@ void dataVsMC()
   TBranch*b_HLT_trigType;
   TBranch*b_HLT_trigFired;
   TBranch*b_GENEvt_weight;
+  TBranch*b_nVertices;
   
   //Loading ntuples
   cout << "Loading ntuples" << endl;
@@ -282,7 +334,6 @@ void dataVsMC()
 
       files+=subFiles[iChain]->at(k);
       files+="/skims_0002/*.root";      
-      
       filecoll.Add(files);
       chains[iChain]->AddFileInfoList(filecoll.GetList());
       cout << files << endl;
@@ -302,6 +353,7 @@ void dataVsMC()
 
     //Setting addresses for branches
     chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
+    chains[iChain]->SetBranchAddress("nVertices", &nVertices, &b_nVertices);
     chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
     chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
     chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
@@ -319,48 +371,36 @@ void dataVsMC()
   cout << endl;
   
   //defining histograms
-  TH1F*histos[nHistos];
-  const TString histName[nHistos] = {
-    "hFakesInvMass", "hFakesInvMasslinear", "hEWInvMass", "hEWInvMasslinear", "hTopsInvMass", 
-    "hTopslinearInvMass", "hMCInvMass", "hMCInvMasslinear", "hDataInvMass", "hDataInvMasslinear"
-  };
-  const Color_t histFillColors[8] = {
-    kViolet+5, kViolet+5, kRed+2, kRed+2, kBlue+2, kBlue+2, kOrange-2, kOrange-2
-  };
-  const Color_t histLineColors[8] = {
-    kViolet+3, kViolet+3, kRed+4, kRed+4, kBlue+3, kBlue+3, kOrange+3, kOrange+3
-  };
-
-  for(int i=0;i<nHistos;i++) {
-    if(i%2!=0) {
-      histos[i]=new TH1F(histName[i],"",nLinearBins,binLow,binHigh);
-    }
-    else if(i%2==0) {
-      histos[i]=new TH1F(histName[i],"",nLogBins,massbins);
-    }
-    histos[i]->Sumw2();
-    histos[i]->GetXaxis()->SetTitle("m_{ee} [GeV]");
-    histos[i]->GetXaxis()->SetMoreLogLabels();
-    histos[i]->GetXaxis()->SetNoExponent();
-    histos[i]->SetMinimum(axisLow);
-    histos[i]->SetTitle("MC vs. Data");
-    if(i==BINS_DATA||i==BINS_DATA_LINEAR) {
-      histos[i]->SetLineColor(kBlack);
-      histos[i]->SetMarkerColor(kBlack);
-      histos[i]->SetMarkerSize(1);
-      histos[i]->SetMarkerStyle(20);
-    }
-    else {
-      histos[i]->SetFillColor(histFillColors[i]);
-      histos[i]->SetLineColor(histLineColors[i]);
+  TH1F*histos[nHistoTypes][nHistos];  
+  for(int i=0;i<nHistoTypes;i++){//type of histogram
+    for(int j=0;j<nHistos;j++){//histogram within type
+      if(i==VERTICES_WEIGHTED&&j==DATA) continue; //data doesn't get weighted
+      if(i==INV_MASS) histos[i][j]=new TH1F(histName[j]+histTypeName[i],"",nBinsInvMass,massbins);   
+      else histos[i][j]=new TH1F(histName[j]+histTypeName[i],"",nBins[i],binLow[i],binHigh[i]);
+      
+      if(j==DATA) {
+	histos[i][j]->SetLineColor(kBlack);
+	histos[i][j]->SetMarkerColor(kBlack);
+	histos[i][j]->SetMarkerSize(1);
+	histos[i][j]->SetMarkerStyle(20);
+      }
+      else {
+	histos[i][j]->SetFillColor(histFillColors[i]);
+	histos[i][j]->SetLineColor(histLineColors[i]);
+      }
+      
+      histos[i][j]->GetXaxis()->SetTitle(xAxisLabels[i]);
     }
   }
-
+  
+  TFile*pileupRatioFile  = new TFile(pileupRatioName);
+  TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
+  
   //Event Loop
   cout << "Starting Event Loop" << endl;
-  double invMass, xSecWeight, genWeight, varGenWeight, totalWeight, lumiEffective;
+  double invMass, rapidity, xSecWeight, genWeight, varGenWeight, totalWeight, lumiEffective, 
+    nEffective, localEntry, sumGenWeight, sumRawGenWeight, pileupWeight;
   Long64_t nentries;
-  double nEffective, localEntry, sumGenWeight, sumRawGenWeight;
   Long64_t count = 0;
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
@@ -407,11 +447,37 @@ void dataVsMC()
       count = count+1; 
       chains[iChain]->GetEntry(i);
       if(Nelectrons<2) continue;   	  
-
+      pileupWeight = hPileupRatio->GetBinContent(nVertices);
       genWeight = GENEvt_weight/fabs(GENEvt_weight);
       genWeight = genWeight/sumGenWeight;
       totalWeight = genWeight*xSecWeight;
 
+      if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
+	 iChain==DataRunG||iChain==DataRunH) {
+	histos[VERTICES][DATA]->Fill(nVertices);
+      }		  
+      else if(iChain==wJets||iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80
+	      ||iChain==QCD80to120||iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) {
+	histos[VERTICES][FAKES]->Fill(nVertices,totalWeight);
+	histos[VERTICES_WEIGHTED][FAKES]->Fill(nVertices,totalWeight*pileupWeight);
+      }
+      else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu||
+	      iChain==TAUTAU10to50||iChain==TAUTAU50to100||iChain==TAUTAU100to200||iChain==TAUTAU200to400||
+	      iChain==TAUTAU400to500||iChain==TAUTAU500to700||iChain==TAUTAU700to800||iChain==TAUTAU800to1000||
+	      iChain==TAUTAU1000to1500||iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000){
+	histos[VERTICES][EW]->Fill(nVertices,totalWeight);
+	histos[VERTICES_WEIGHTED][EW]->Fill(nVertices,totalWeight*pileupWeight);
+      }
+      else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW) {
+	histos[VERTICES][TOPS]->Fill(nVertices,totalWeight);
+	histos[VERTICES_WEIGHTED][TOPS]->Fill(nVertices,totalWeight*pileupWeight);
+      }		  
+      else if(iChain==EE10to50||iChain==EE50to100||iChain==EE100to200||iChain==EE200to400||
+	      iChain==EE400to500||iChain==EE500to700||iChain==EE700to800||iChain==EE800to1000||
+	      iChain==EE1000to1500||iChain==EE1500to2000||iChain==EE2000to3000) {
+	histos[VERTICES][EE]->Fill(nVertices,totalWeight);
+	histos[VERTICES_WEIGHTED][EE]->Fill(nVertices,totalWeight*pileupWeight);
+      }
       //HLT cut
       trigNameSize = pHLT_trigName->size();
       bool passHLT = kFALSE;	  
@@ -445,113 +511,85 @@ void dataVsMC()
 				     Electron_eta[jEle])) continue; 
 	  invMass=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
 			      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
+	  rapidity=calcRapidity(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
+			      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
+
 	  if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
 	     iChain==DataRunG||iChain==DataRunH) {
-	    histos[BINS_DATA]->Fill(invMass);
-	    histos[BINS_DATA_LINEAR]->Fill(invMass);
+	    histos[INV_MASS][DATA]->Fill(invMass);
+	    histos[INV_MASS_LINEAR][DATA]->Fill(invMass);
+	    histos[PT_LEAD][DATA]->Fill(Electron_pT[leadEle]);
+	    histos[PT_SUB][DATA]->Fill(Electron_pT[subEle]);
+	    histos[PT_DI][DATA]->Fill(Electron_pT[leadEle]+Electron_pT[subEle]);	    
+	    histos[ETA_LEAD][DATA]->Fill(Electron_eta[leadEle]);
+	    histos[ETA_SUB][DATA]->Fill(Electron_eta[subEle]);
+	    histos[ETA_DI][DATA]->Fill(Electron_eta[leadEle]+Electron_eta[subEle]);
+	    histos[RAPIDITY][DATA]->Fill(rapidity);
 	  }		  
 	  else if(iChain==wJets||iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80
 		  ||iChain==QCD80to120||iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) {
-	    histos[BINS_FAKES]->Fill(invMass,totalWeight);
-	    histos[BINS_FAKES_LINEAR]->Fill(invMass,totalWeight);
+	    histos[INV_MASS][FAKES]->Fill(invMass,totalWeight);
+	    histos[INV_MASS_LINEAR][FAKES]->Fill(invMass,totalWeight);
+	    histos[PT_LEAD][FAKES]->Fill(Electron_pT[leadEle]);
+	    histos[PT_SUB][FAKES]->Fill(Electron_pT[subEle]);
+	    histos[PT_DI][FAKES]->Fill(Electron_pT[leadEle]+Electron_pT[subEle]);	    
+	    histos[ETA_LEAD][FAKES]->Fill(Electron_eta[leadEle]);
+	    histos[ETA_SUB][FAKES]->Fill(Electron_eta[subEle]);
+	    histos[ETA_DI][FAKES]->Fill(Electron_eta[leadEle]+Electron_eta[subEle]);
+	    histos[RAPIDITY][FAKES]->Fill(rapidity);
 	  }
 	  else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu||
 		  iChain==TAUTAU10to50||iChain==TAUTAU50to100||iChain==TAUTAU100to200||iChain==TAUTAU200to400||
 		  iChain==TAUTAU400to500||iChain==TAUTAU500to700||iChain==TAUTAU700to800||iChain==TAUTAU800to1000||
 		  iChain==TAUTAU1000to1500||iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000){
-	    histos[BINS_EW]->Fill(invMass,totalWeight);
-	    histos[BINS_EW_LINEAR]->Fill(invMass,totalWeight);
+	    histos[INV_MASS][EW]->Fill(invMass,totalWeight);
+	    histos[INV_MASS_LINEAR][EW]->Fill(invMass,totalWeight);
+	    histos[PT_LEAD][EW]->Fill(Electron_pT[leadEle]);
+	    histos[PT_SUB][EW]->Fill(Electron_pT[subEle]);
+	    histos[PT_DI][EW]->Fill(Electron_pT[leadEle]+Electron_pT[subEle]);	    
+	    histos[ETA_LEAD][EW]->Fill(Electron_eta[leadEle]);
+	    histos[ETA_SUB][EW]->Fill(Electron_eta[subEle]);
+	    histos[ETA_DI][EW]->Fill(Electron_eta[leadEle]+Electron_eta[subEle]);
+	    histos[RAPIDITY][EW]->Fill(rapidity);
 	  }
 	  else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW) {
-	    histos[BINS_TOPS]->Fill(invMass,totalWeight);
-	    histos[BINS_TOPS_LINEAR]->Fill(invMass,totalWeight);
+	    histos[INV_MASS][TOPS]->Fill(invMass,totalWeight);
+	    histos[INV_MASS_LINEAR][TOPS]->Fill(invMass,totalWeight);
+	    histos[PT_LEAD][TOPS]->Fill(Electron_pT[leadEle]);
+	    histos[PT_SUB][TOPS]->Fill(Electron_pT[subEle]);
+	    histos[PT_DI][TOPS]->Fill(Electron_pT[leadEle]+Electron_pT[subEle]);	    
+	    histos[ETA_LEAD][TOPS]->Fill(Electron_eta[leadEle]);
+	    histos[ETA_SUB][TOPS]->Fill(Electron_eta[subEle]);
+	    histos[ETA_DI][TOPS]->Fill(Electron_eta[leadEle]+Electron_eta[subEle]);
+	    histos[RAPIDITY][TOPS]->Fill(rapidity);
 	  }		  
 	  else if(iChain==EE10to50||iChain==EE50to100||iChain==EE100to200||iChain==EE200to400||
 		  iChain==EE400to500||iChain==EE500to700||iChain==EE700to800||iChain==EE800to1000||
 		  iChain==EE1000to1500||iChain==EE1500to2000||iChain==EE2000to3000) {
-	    histos[BINS_EE]->Fill(invMass,totalWeight);
-	    histos[BINS_EE_LINEAR]->Fill(invMass,totalWeight);
+	    histos[INV_MASS][EE]->Fill(invMass,totalWeight);
+	    histos[INV_MASS_LINEAR][EE]->Fill(invMass,totalWeight);
+	    histos[PT_LEAD][EE]->Fill(Electron_pT[leadEle]);
+	    histos[PT_SUB][EE]->Fill(Electron_pT[subEle]);
+	    histos[PT_DI][EE]->Fill(Electron_pT[leadEle]+Electron_pT[subEle]);	    
+	    histos[ETA_LEAD][EE]->Fill(Electron_eta[leadEle]);
+	    histos[ETA_SUB][EE]->Fill(Electron_eta[subEle]);
+	    histos[ETA_DI][EE]->Fill(Electron_eta[leadEle]+Electron_eta[subEle]);
+	    histos[RAPIDITY][EE]->Fill(rapidity);
 	  }	  
 	}//end inner electron loop	   
       }//end electron loop
     }//end event loop   
   }//end chain loop 
   genWeightFile.close();
-
-  /*
-  double integralData, integralMC;    
-  integralData = 
-    histos[BINS_DATA]->Integral(histos[BINS_DATA]->GetXaxis()->FindBin(binLow),
-				histos[BINS_DATA]->GetXaxis()->FindBin(binHigh));
-  integralMC = 
-    histos[BINS_EE]->Integral(histos[BINS_EE]->GetXaxis()->FindBin(binLow),
-			      histos[BINS_EE]->GetXaxis()->FindBin(binHigh))+
-    histos[BINS_FAKES]->Integral(histos[BINS_FAKES]->GetXaxis()->FindBin(binLow),
-				 histos[BINS_FAKES]->GetXaxis()->FindBin(binHigh))+
-    histos[BINS_EW]->Integral(histos[BINS_EW]->GetXaxis()->FindBin(binLow),
-			      histos[BINS_EW]->GetXaxis()->FindBin(binHigh))+
-    histos[BINS_TOPS]->Integral(histos[BINS_TOPS]->GetXaxis()->FindBin(binLow),
-				histos[BINS_TOPS]->GetXaxis()->FindBin(binHigh));
-    
-  double norm = integralData/integralMC;
-  for(int i=0;i<nHistos;i++) {
-    if(i==BINS_DATA||i==BINS_DATA_LINEAR) continue;
-    histos[i]->Scale(norm);
-  }
-  */
-  //Place histograms into stacks
-  THStack*hStack = new THStack("hStack","");
-  THStack*hStacklinear = new THStack("hStacklinear","");
-  for(int i=0;i<nHistos;i++) {
-    if(i==BINS_DATA||i==BINS_DATA_LINEAR) continue;
-    if(i%2!=0) {
-      hStacklinear->Add(histos[i]);
-    }
-    if(i%2==0) {
-      hStack->Add(histos[i]);
-    }
-  }
-  
-  TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1000,1000);
-  canvas1->SetLogx();
-  canvas1->SetLogy();
-  
-  TLegend*legend = new TLegend(0.65,0.9,0.9,0.7);
-  legend->SetTextSize(0.02);
-  legend->AddEntry(histos[BINS_DATA],"Data");
-  legend->AddEntry(histos[BINS_EE],"#gamma^{*}/Z #rightarrow e^{-}e^{+}");
-  legend->AddEntry(histos[BINS_TOPS],"t#bar{t}+tW+#bar{t}W");
-  legend->AddEntry(histos[BINS_EW],"EW (Dibosons, #gamma^{*}/Z #rightarrow #tau^{-}#tau^{+})");
-  legend->AddEntry(histos[BINS_FAKES],"Fakes (W+Jets)");
-
-  auto hDataMCRatio = new TRatioPlot(hStack,histos[BINS_DATA]);
-  hDataMCRatio->GetXaxis()->SetTitle("m_{ee} [GeV]");  
-  canvas1->cd();
-  hDataMCRatio->Draw();
-  hDataMCRatio->GetUpperPad()->cd();
-  legend->Draw("same");
-  canvas1->Update();
-  
-  TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
-  canvas2->SetLogy();
-  auto hDataMCRatiolinear = new TRatioPlot(hStacklinear,histos[BINS_DATA_LINEAR]); 
-  canvas2->cd();
-  hDataMCRatiolinear->Draw();
-  hDataMCRatiolinear->GetUpperPad()->cd();
-  legend->Draw("same");
-  
-  //canvas1->SaveAs("./plots/dataVsMClog.png");
-  //canvas2->SaveAs("./plots/dataVsMClinear.png");
-  
+ 
   TFile *rootFile = new TFile("./plots/dataVsMC.root","RECREATE");
   rootFile->cd();
-  hStack->Write();
-  hStacklinear->Write();
-  for(int i=0;i<nHistos;i++) {
-    histos[i]->Write();
+  for(int i=0;i<nHistoTypes;i++) {
+    for(int j=0;j<nHistos;j++){
+      if(i==VERTICES_WEIGHTED&&j==DATA) continue;
+      histos[i][j]->Write();
+    }
   }
-  canvas1->Write();
-  canvas2->Write();
   rootFile->Write();
   rootFile->Close();
   
@@ -594,10 +632,21 @@ bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)
 //Invariant mass calculator
 double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2)
 {  
-  TLorentzVector vGenElectron1;
-  TLorentzVector vGenElectron2;
-  vGenElectron1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
-  vGenElectron2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
-  double invMass = (vGenElectron1+vGenElectron2).M();
+  TLorentzVector vElectron1;
+  TLorentzVector vElectron2;
+  vElectron1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
+  vElectron2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
+  double invMass = (vElectron1+vElectron2).M();
   return invMass;
 }//end calcInvMass
+
+//Rapidity calculator
+double calcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2)
+{  
+  TLorentzVector vElectron1;
+  TLorentzVector vElectron2;
+  vElectron1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
+  vElectron2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
+  double rapidity = (vElectron1+vElectron2).Rapidity();
+  return rapidity;
+}//end calcRapidity
