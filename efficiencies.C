@@ -33,7 +33,7 @@ bool findGenToRecoMatch(int genIndex,int &recoIndex);
 
 //Defining variables and arrays
 const int MPSIZE = 2000;
-int GENnPair, Nelectrons, HLT_ntrig;
+int GENnPair, Nelectrons, HLT_ntrig, nPileUp;
 double GENEvt_weight;
 double GENLepton_phi[MPSIZE],GENLepton_eta[MPSIZE],GENLepton_pT[MPSIZE],GENLepton_Px[MPSIZE],GENLepton_Py[MPSIZE];
 double GENLepton_Pz[MPSIZE],GENLepton_E[MPSIZE];
@@ -75,6 +75,7 @@ const float ptHigh = 28;
 const float ptLow = 17;
 const float eMass = 0.000511;
 const TString treeName = "recoTree/DYTree";
+const TString pileupRatioName = "./plots/pileup.root";
 const float dRMinCut = 0.3;
 const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
@@ -104,6 +105,7 @@ void efficiencies()
   TBranch*b_HLT_ntrig;
   TBranch*b_HLT_trigType;
   TBranch*b_HLT_trigFired;
+  TBranch*b_nPileUp;
 
   //Loading ntuples
   cout << "Loading ntuples" << endl;
@@ -181,6 +183,7 @@ void efficiencies()
       chains[iChain]->SetBranchAddress("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState, 
 				       &b_GENLepton_fromHardProcessFinalState);
       chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
+      chains[iChain]->SetBranchAddress("nPileUp", &nPileUp, &b_nPileUp);
       chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
       chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
       chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
@@ -299,9 +302,9 @@ void efficiencies()
  
  //Event Loop
  cout << "Starting Event Loop" << endl;
- double invMass, invMassHardProcess, xSecWeight, genWeight, varGenWeight, totalWeight, lumiEffective, 
-   nEffective, localEntry, sumGenWeight, sumRawGenWeight, pileupWeight;
- int dRMinIndex;  
+ double invMass, rapidity, dileptonPt, dileptonEta, xSecWeight, weightNoPileup, genWeight, varGenWeight, 
+   totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, sumRawGenWeight, pileupWeight;
+ double invMassHardProcess;
  Long64_t nentries;
  Long64_t count = 0;
  double nEvents = 250000;
@@ -312,7 +315,9 @@ void efficiencies()
  int trigNameSize;
  long int nTooManyDielectrons = 0;
  long int nTooManyDielectronsFS = 0;  
- 
+ TFile*pileupRatioFile  = new TFile(pileupRatioName);
+ TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
+
  for(int iChain=0;iChain<numChains;iChain++)
    {
      cout << endl;
@@ -326,9 +331,16 @@ void efficiencies()
       for(Long64_t i=0;i<nentries;i++){
 	localEntry = chains[iChain]->LoadTree(i);
 	b_GENEvt_weight->GetEntry(localEntry);
-	genWeight = GENEvt_weight/fabs(GENEvt_weight);	
-	sumGenWeight += genWeight;	
+	genWeight = GENEvt_weight/fabs(GENEvt_weight);	//normalized genweight
+	sumGenWeight += genWeight;
+	varGenWeight += GENEvt_weight*GENEvt_weight; //variance of genweights
+	sumRawGenWeight += GENEvt_weight; 	
       }
+      nEffective = (sumRawGenWeight*sumRawGenWeight)/varGenWeight;
+      lumiEffective = nEffective/xSec[iChain];
+      pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
+      genWeight = GENEvt_weight/fabs(GENEvt_weight);
+      genWeight = genWeight/sumGenWeight;
 
       for(Long64_t i=0;i<nentries;i++)
 	{      
@@ -337,9 +349,10 @@ void efficiencies()
 	  //counter(count,11*nentries);
 	  count = count+1;
 	  
+	  pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
 	  genWeight = GENEvt_weight/fabs(GENEvt_weight);
 	  genWeight = genWeight/sumGenWeight;
-	  totalWeight = genWeight*xSecWeight;
+	  totalWeight = genWeight*xSecWeight*pileupWeight;
 
 	  // Loop over gen leptons and find the electron pair at the isHardProcess
 	  // and isHardProcessFinalState level.
@@ -492,7 +505,7 @@ void efficiencies()
 	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight);
 	}//end event loop   
       
-      if(iChain==0)hHardProcess[iChain]->Draw("Bar");      
+      if(iChain==0) hHardProcess[iChain]->Draw("Bar");      
       else hHardProcess[iChain]->Draw("Barsame");
       
     }//end chain loop 
@@ -652,10 +665,10 @@ void efficiencies()
   canvas2->SaveAs("./plots/allEfficiencies.png");
   canvas3->SaveAs("./plots/efficiency.png");
   canvas4->SaveAs("./plots/acceptance.png");
-  canvas5->SaveAs("./plots/pTvsMassProf.png");
-  canvas6->SaveAs("./plots/migMatrixGENFSvsGENisHard.png");
-  canvas7->SaveAs("./plots/migMatrixGENFSvsGReco.png");
-  canvas8->SaveAs("./plots/migMatrixGENisHardvsReco.png");
+  canvas5->SaveAs("./plots/matrices/pTvsMassProf.png");
+  canvas6->SaveAs("./plots/matrices/migMatrixGENFSvsGENisHard.png");
+  canvas7->SaveAs("./plots/matrices/migMatrixGENFSvsGReco.png");
+  canvas8->SaveAs("./plots/matrices/migMatrixGENisHardvsReco.png");
   
   rootFile->cd();
   hIDEfficiency->Write();

@@ -107,12 +107,14 @@ void drawDataVsMC()
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
-  //Setting negative bin content found in FAKES to ZERO!!!!!!!!!!!!!!!!!!!!!!
+  //Setting negative bin content found to ZERO!!!!!!!!!!!!!!!!!!!!!!
   for(int i=0;i<3000;i++){
-      if(histos[INV_MASS][FAKES]->GetBinContent(i) < 0) histos[INV_MASS][FAKES]->SetBinContent(i,0);
+      for(int j=0;j<nHistoTypes;j++){
+	if(histos[INV_MASS][j]->GetBinContent(i) < 0) histos[INV_MASS][j]->SetBinContent(i,0);
+      }
     }
   //////////////////////////////////////////////////////////////////////////////////////////////////
-  
+	
   //Place histograms into stacks
   THStack*hStack[nHistoTypes];
   TRatioPlot*hDataMCRatio[nHistoTypes];
