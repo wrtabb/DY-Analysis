@@ -405,7 +405,7 @@ void dataVsMC()
   
   //Event Loop
   cout << "Starting Event Loop" << endl;
-  double invMass, rapidity, dileptonPt, dileptonEta, xSecWeight, vertWeightnoPileup, genWeight, varGenWeight, 
+  double invMass, rapidity, dileptonPt, dileptonEta, xSecWeight, weightnoPileup, genWeight, varGenWeight, 
     totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, sumRawGenWeight, pileupWeight;
   Long64_t nentries;
   Long64_t count = 0;
@@ -456,7 +456,7 @@ void dataVsMC()
       pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
       genWeight = GENEvt_weight/fabs(GENEvt_weight);
       genWeight = genWeight/sumGenWeight;
-      vertWeightnoPileup = genWeight*xSecWeight;
+      weightnoPileup = genWeight*xSecWeight;
       totalWeight = genWeight*xSecWeight*pileupWeight;
 
       if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
@@ -473,7 +473,7 @@ void dataVsMC()
 	      iChain==TAUTAU400to500||iChain==TAUTAU500to700||iChain==TAUTAU700to800||iChain==TAUTAU800to1000||
 	      iChain==TAUTAU1000to1500||iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000){
 	histos[VERTICES][EW]->Fill(nVertices,vertWeightnoPileup);
-	histos[VERTICES_WEIGHTED][EW]->Fill(nVertices,totalWeight*pileupWeight);
+	histos[VERTICES_WEIGHTED][EW]->Fill(nVertices,totalWeight);
       }
       else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW) {
 	histos[VERTICES][TOPS]->Fill(nVertices,totalWeight);

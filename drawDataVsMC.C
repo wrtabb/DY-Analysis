@@ -105,6 +105,13 @@ void drawDataVsMC()
       histos[i][j]->GetXaxis()->SetTitle(xAxisLabels[i]);
     }
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  //Setting negative bin content found in FAKES to ZERO!!!!!!!!!!!!!!!!!!!!!!
+  for(int i=0;i<3000;i++){
+      if(histos[INV_MASS][FAKES]->GetBinContent(i) < 0) histos[INV_MASS][FAKES]->SetBinContent(i,0);
+    }
+  //////////////////////////////////////////////////////////////////////////////////////////////////
   
   //Place histograms into stacks
   THStack*hStack[nHistoTypes];
@@ -140,7 +147,7 @@ void drawDataVsMC()
     }
     else canvas[i]->SetLogy();
     canvas[i]->cd();
-
+    
     /*
     hStack[i]->Draw("bar");
     hStack[i]->GetXaxis()->SetTitle(xAxisLabels[i]);
@@ -177,6 +184,4 @@ void drawDataVsMC()
     
   }
 
-  
-  
 }//end invMassDraw
