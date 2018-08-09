@@ -133,12 +133,14 @@ void drawDataVsMC()
     TString canvasName = "canvas";
     canvasName+=i;
     canvas[i] = new TCanvas(canvasName,"",10,10,1000,1000);
+
     if(i==INV_MASS){
       canvas[i]->SetLogx();
       canvas[i]->SetLogy();
     }
     else canvas[i]->SetLogy();
     canvas[i]->cd();
+
     /*
     hStack[i]->Draw("bar");
     hStack[i]->GetXaxis()->SetTitle(xAxisLabels[i]);
@@ -165,6 +167,8 @@ void drawDataVsMC()
     hDataMCRatio[i]->GetLowerRefYaxis()->SetTitle("MC/Data Ratio");
     hDataMCRatio[i]->GetLowerRefYaxis()->SetLabelSize(0.02);
     hDataMCRatio[i]->GetUpperRefYaxis()->SetTitle("Entries");
+    hDataMCRatio[i]->GetUpperPad()->SetGrid();
+    hDataMCRatio[i]->GetUpperPad()->SetGrid();
     canvas[i]->Update();  
     TString saveName = "./plots/dataVsMC/dataVsMC_";
     saveName+=histTypeName[i];

@@ -180,7 +180,7 @@ const float binHighVert = 50;
 //pT 
 const int npTBins = 100;
 const float binLowpT = 0;
-const float binHighpT = 1000;
+const float binHighpT = 500;
 //eta
 const int nEtaBins = 100;
 const float binLowEta = -2.5;
@@ -405,8 +405,8 @@ void dataVsMC()
   
   //Event Loop
   cout << "Starting Event Loop" << endl;
-  double invMass, rapidity, dileptonPt, dileptonEta, xSecWeight, genWeight, varGenWeight, totalWeight, 
-    lumiEffective, nEffective, localEntry, sumGenWeight, sumRawGenWeight, pileupWeight;
+  double invMass, rapidity, dileptonPt, dileptonEta, xSecWeight, vertWeightnoPileup, genWeight, varGenWeight, 
+    totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, sumRawGenWeight, pileupWeight;
   Long64_t nentries;
   Long64_t count = 0;
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
@@ -456,7 +456,8 @@ void dataVsMC()
       pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
       genWeight = GENEvt_weight/fabs(GENEvt_weight);
       genWeight = genWeight/sumGenWeight;
-      totalWeight = genWeight*xSecWeight;
+      vertWeightnoPileup = genWeight*xSecWeight;
+      totalWeight = genWeight*xSecWeight*pileupWeight;
 
       if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
 	 iChain==DataRunG||iChain==DataRunH) {
@@ -464,25 +465,25 @@ void dataVsMC()
       }		  
       else if(iChain==wJets||iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80
 	      ||iChain==QCD80to120||iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) {
-	histos[VERTICES][FAKES]->Fill(nVertices,totalWeight);
-	histos[VERTICES_WEIGHTED][FAKES]->Fill(nVertices,totalWeight*pileupWeight);
+	histos[VERTICES][FAKES]->Fill(nVertices,vertWeightnoPileup);
+	histos[VERTICES_WEIGHTED][FAKES]->Fill(nVertices,totalWeight);
       }
       else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu||
 	      iChain==TAUTAU10to50||iChain==TAUTAU50to100||iChain==TAUTAU100to200||iChain==TAUTAU200to400||
 	      iChain==TAUTAU400to500||iChain==TAUTAU500to700||iChain==TAUTAU700to800||iChain==TAUTAU800to1000||
 	      iChain==TAUTAU1000to1500||iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000){
-	histos[VERTICES][EW]->Fill(nVertices,totalWeight);
+	histos[VERTICES][EW]->Fill(nVertices,vertWeightnoPileup);
 	histos[VERTICES_WEIGHTED][EW]->Fill(nVertices,totalWeight*pileupWeight);
       }
       else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW) {
 	histos[VERTICES][TOPS]->Fill(nVertices,totalWeight);
-	histos[VERTICES_WEIGHTED][TOPS]->Fill(nVertices,totalWeight*pileupWeight);
+	histos[VERTICES_WEIGHTED][TOPS]->Fill(nVertices,totalWeight);
       }		  
       else if(iChain==EE10to50||iChain==EE50to100||iChain==EE100to200||iChain==EE200to400||
 	      iChain==EE400to500||iChain==EE500to700||iChain==EE700to800||iChain==EE800to1000||
 	      iChain==EE1000to1500||iChain==EE1500to2000||iChain==EE2000to3000) {
-	histos[VERTICES][EE]->Fill(nVertices,totalWeight);
-	histos[VERTICES_WEIGHTED][EE]->Fill(nVertices,totalWeight*pileupWeight);
+	histos[VERTICES][EE]->Fill(nVertices,vertWeightnoPileup);
+	histos[VERTICES_WEIGHTED][EE]->Fill(nVertices,totalWeight);
       }
       //HLT cut
       trigNameSize = pHLT_trigName->size();
@@ -540,13 +541,13 @@ void dataVsMC()
 		  ||iChain==QCD80to120||iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) {
 	    histos[INV_MASS][FAKES]->Fill(invMass,totalWeight);
 	    histos[INV_MASS_LINEAR][FAKES]->Fill(invMass,totalWeight);
-	    histos[PT_LEAD][FAKES]->Fill(Electron_pT[leadEle]);
-	    histos[PT_SUB][FAKES]->Fill(Electron_pT[subEle]);
-	    histos[PT_DI][FAKES]->Fill(dileptonPt);	    
-	    histos[ETA_LEAD][FAKES]->Fill(Electron_eta[leadEle]);
-	    histos[ETA_SUB][FAKES]->Fill(Electron_eta[subEle]);
-	    histos[ETA_DI][FAKES]->Fill(dileptonEta);
-	    histos[RAPIDITY][FAKES]->Fill(rapidity);
+	    histos[PT_LEAD][FAKES]->Fill(Electron_pT[leadEle],totalWeight);
+	    histos[PT_SUB][FAKES]->Fill(Electron_pT[subEle],totalWeight);
+	    histos[PT_DI][FAKES]->Fill(dileptonPt,totalWeight);	    
+	    histos[ETA_LEAD][FAKES]->Fill(Electron_eta[leadEle],totalWeight);
+	    histos[ETA_SUB][FAKES]->Fill(Electron_eta[subEle],totalWeight);
+	    histos[ETA_DI][FAKES]->Fill(dileptonEta,totalWeight);
+	    histos[RAPIDITY][FAKES]->Fill(rapidity,totalWeight);
 	  }
 	  else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu||
 		  iChain==TAUTAU10to50||iChain==TAUTAU50to100||iChain==TAUTAU100to200||iChain==TAUTAU200to400||
@@ -554,37 +555,37 @@ void dataVsMC()
 		  iChain==TAUTAU1000to1500||iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000){
 	    histos[INV_MASS][EW]->Fill(invMass,totalWeight);
 	    histos[INV_MASS_LINEAR][EW]->Fill(invMass,totalWeight);
-	    histos[PT_LEAD][EW]->Fill(Electron_pT[leadEle]);
-	    histos[PT_SUB][EW]->Fill(Electron_pT[subEle]);
-	    histos[PT_DI][EW]->Fill(dileptonPt);	    
-	    histos[ETA_LEAD][EW]->Fill(Electron_eta[leadEle]);
-	    histos[ETA_SUB][EW]->Fill(Electron_eta[subEle]);
-	    histos[ETA_DI][EW]->Fill(dileptonEta);
-	    histos[RAPIDITY][EW]->Fill(rapidity);
+	    histos[PT_LEAD][EW]->Fill(Electron_pT[leadEle],totalWeight);
+	    histos[PT_SUB][EW]->Fill(Electron_pT[subEle],totalWeight);
+	    histos[PT_DI][EW]->Fill(dileptonPt,totalWeight);	    
+	    histos[ETA_LEAD][EW]->Fill(Electron_eta[leadEle],totalWeight);
+	    histos[ETA_SUB][EW]->Fill(Electron_eta[subEle],totalWeight);
+	    histos[ETA_DI][EW]->Fill(dileptonEta,totalWeight);
+	    histos[RAPIDITY][EW]->Fill(rapidity,totalWeight);
 	  }
 	  else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW) {
 	    histos[INV_MASS][TOPS]->Fill(invMass,totalWeight);
 	    histos[INV_MASS_LINEAR][TOPS]->Fill(invMass,totalWeight);
-	    histos[PT_LEAD][TOPS]->Fill(Electron_pT[leadEle]);
-	    histos[PT_SUB][TOPS]->Fill(Electron_pT[subEle]);
-	    histos[PT_DI][TOPS]->Fill(dileptonPt);	    
-	    histos[ETA_LEAD][TOPS]->Fill(Electron_eta[leadEle]);
-	    histos[ETA_SUB][TOPS]->Fill(Electron_eta[subEle]);
-	    histos[ETA_DI][TOPS]->Fill(dileptonEta);
-	    histos[RAPIDITY][TOPS]->Fill(rapidity);
+	    histos[PT_LEAD][TOPS]->Fill(Electron_pT[leadEle],totalWeight);
+	    histos[PT_SUB][TOPS]->Fill(Electron_pT[subEle],totalWeight);
+	    histos[PT_DI][TOPS]->Fill(dileptonPt,totalWeight);	    
+	    histos[ETA_LEAD][TOPS]->Fill(Electron_eta[leadEle],totalWeight);
+	    histos[ETA_SUB][TOPS]->Fill(Electron_eta[subEle],totalWeight);
+	    histos[ETA_DI][TOPS]->Fill(dileptonEta,totalWeight);
+	    histos[RAPIDITY][TOPS]->Fill(rapidity,totalWeight);
 	  }		  
 	  else if(iChain==EE10to50||iChain==EE50to100||iChain==EE100to200||iChain==EE200to400||
 		  iChain==EE400to500||iChain==EE500to700||iChain==EE700to800||iChain==EE800to1000||
 		  iChain==EE1000to1500||iChain==EE1500to2000||iChain==EE2000to3000) {
 	    histos[INV_MASS][EE]->Fill(invMass,totalWeight);
 	    histos[INV_MASS_LINEAR][EE]->Fill(invMass,totalWeight);
-	    histos[PT_LEAD][EE]->Fill(Electron_pT[leadEle]);
-	    histos[PT_SUB][EE]->Fill(Electron_pT[subEle]);
-	    histos[PT_DI][EE]->Fill(dileptonPt);	    
-	    histos[ETA_LEAD][EE]->Fill(Electron_eta[leadEle]);
-	    histos[ETA_SUB][EE]->Fill(Electron_eta[subEle]);
-	    histos[ETA_DI][EE]->Fill(dileptonEta);
-	    histos[RAPIDITY][EE]->Fill(rapidity);
+	    histos[PT_LEAD][EE]->Fill(Electron_pT[leadEle],totalWeight);
+	    histos[PT_SUB][EE]->Fill(Electron_pT[subEle],totalWeight);
+	    histos[PT_DI][EE]->Fill(dileptonPt,totalWeight);	    
+	    histos[ETA_LEAD][EE]->Fill(Electron_eta[leadEle],totalWeight);
+	    histos[ETA_SUB][EE]->Fill(Electron_eta[subEle],totalWeight);
+	    histos[ETA_DI][EE]->Fill(dileptonEta,totalWeight);
+	    histos[RAPIDITY][EE]->Fill(rapidity,totalWeight);
 	  }	  
 	}//end inner electron loop	   
       }//end electron loop
