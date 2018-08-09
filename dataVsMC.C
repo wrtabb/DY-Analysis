@@ -147,7 +147,8 @@ enum HistBins {
   EW,
   TOPS,
   EE,
-  DATA
+  DATA,
+  UNDEF = -1
 };
 enum HistTypes {
   INV_MASS,
@@ -447,7 +448,7 @@ void dataVsMC()
 	      iChain==EE1000to1500||iChain==EE1500to2000||iChain==EE2000to3000)
 	sampleCategory = EE;
     }
-    if(sampleCategory<0) {
+    if(sampleCategory==UNDEF) {
       cout << "Tried to load a chain which does not exist!" << endl;
       return;
     }
@@ -531,7 +532,7 @@ void dataVsMC()
 				    Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
 	  dileptonEta=calcDileptonEta(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
 				      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
-	  
+
 	  histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
 	  histos[INV_MASS_LINEAR][sampleCategory]->Fill(invMass,totalWeight);
 	  histos[PT_LEAD][sampleCategory]->Fill(Electron_pT[leadEle],totalWeight);
@@ -543,7 +544,7 @@ void dataVsMC()
 	  histos[RAPIDITY][sampleCategory]->Fill(rapidity,totalWeight);
 	  histos[VERTICES][sampleCategory]->Fill(nVertices,weightNoPileup);
 	  if(!isMC) continue; //no weighted version for data
-	  histos[VERTICES_WEIGHTED][EE]->Fill(nVertices,totalWeight);
+	  histos[VERTICES_WEIGHTED][sampleCategory]->Fill(nVertices,totalWeight);
 	  
 	}//end inner electron loop	   
       }//end electron loop
