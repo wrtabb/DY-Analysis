@@ -35,6 +35,9 @@ bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 
 //Defining variables and arrays
 const int MPSIZE = 2000;
+const int nPileupBins = 100;
+const float pileupBinLow = 0;
+const float pileupBinHigh = nPileupBins;
 int Nelectrons, HLT_ntrig, nVertices, nPileUp;
 double GENEvt_weight;
 double Electron_pT[MPSIZE], Electron_eta[MPSIZE], Electron_phi[MPSIZE];
@@ -387,12 +390,12 @@ void closureTestPileup()
   TFile*file = new TFile("./plots/pileup.root");
   TH1F*hDatanPileup = (TH1F*)file->Get("hPileupData");
   hDatanPileup->SetLineColor(kBlack);
-  TH1F*hMCnPileup = new TH1F("hMCnPileup","",75,0,75);
+  TH1F*hMCnPileup = new TH1F("hMCnPileup","",nPileupBins,pileupBinLow,pileupBinHigh);
   hMCnPileup->SetMarkerStyle(20);
   hMCnPileup->SetMarkerColor(kRed);
   hMCnPileup->SetLineColor(kRed);
   hMCnPileup->SetTitle("Pileup Unweighted");
-  TH1F*hMCnPileupWeight = new TH1F("hMCnPileupWeight","",75,0,75);
+  TH1F*hMCnPileupWeight = new TH1F("hMCnPileupWeight","",nPileupBins,pileupBinLow,pileupBinHigh);
   hMCnPileupWeight->SetMarkerStyle(20);
   hMCnPileupWeight->SetMarkerColor(kRed); 
   hMCnPileupWeight->SetLineColor(kRed);
@@ -420,78 +423,14 @@ void closureTestPileup()
     if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
        iChain==DataRunG||iChain==DataRunH) isMC = kFALSE; //determine if chain is MC or Data
     else isMC = kTRUE;
-
-    cout << endl;
-    cout << "Processing chain: " << dirNames[iChain] << endl;
-    cout << endl;
-    
-    //Determine which sample is being looped over
-    if(!isMC) sampleCategory = DATA;
-    else if (isMC){
-      if(iChain==wJets||iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80
-	 ||iChain==QCD80to120||iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) 
-	sampleCategory = FAKES;
-      else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu||
-	      iChain==TAUTAU10to50||iChain==TAUTAU50to100||iChain==TAUTAU100to200||iChain==TAUTAU200to400||
-	      iChain==TAUTAU400to500||iChain==TAUTAU500to700||iChain==TAUTAU700to800||iChain==TAUTAU800to1000||
-	      iChain==TAUTAU1000to1500||iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000)
-	sampleCategory = EW;
-      else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW)
-	sampleCategory = TOPS;
-      else if(iChain==EE10to50||iChain==EE50to100||iChain==EE100to200||iChain==EE200to400||
-	      iChain==EE400to500||iChain==EE500to700||iChain==EE700to800||iChain==EE800to1000||
-	      iChain==EE1000to1500||iChain==EE1500to2000||iChain==EE2000to3000)
-	sampleCategory = EE;
-    }
-    if(sampleCategory==UNDEF) {
-      cout << "Tried to load a chain which does not exist!" << endl;
-      return;
-    }
-    
-    nentries = chains[iChain]->GetEntries();
-    xSecWeight=lumi*(xSec[iChain]/1.0);     
-    
-    //Finding normalized genWeights,sums,variances
-    sumGenWeight = 0.0;
-    sumRawGenWeight = 0.0;
-    varGenWeight = 0.0;
-    if(isMC){ //Only MonteCarlo gets gen weights
-      for(Long64_t i=0;i<nentries;i++){
-	localEntry = chains[iChain]->LoadTree(i);
-	b_GENEvt_weight->GetEntry(localEntry);
-	genWeight = GENEvt_weight/fabs(GENEvt_weight);	//normalized genweight
-	sumGenWeight += genWeight;
-	varGenWeight += GENEvt_weight*GENEvt_weight; //variance of genweights
-	sumRawGenWeight += GENEvt_weight; 
-      }          
-      nEffective = (sumRawGenWeight*sumRawGenWeight)/varGenWeight;
-      lumiEffective = nEffective/xSec[iChain];
      
-    }//end if isMC
-    
     //Event loop
+    nentries = chains[iChain]->GetEntries();   
     for(Long64_t i=0;i<nentries;i++) {      
       counter(count,totalentries);
       count = count+1; 
-      chains[iChain]->GetEntry(i);
-      if(Nelectrons<2) continue;   	  
-      
-      //HLT cut
-      trigNameSize = pHLT_trigName->size();
-      bool passHLT = kFALSE;	  
-      for(int iHLT=0;iHLT<trigNameSize;iHLT++) {
-	trigName = pHLT_trigName->at(iHLT);	  
-	if(trigName.CompareTo(compareHLT)==0) {
-	  if(HLT_trigFired[iHLT]==1) {
-	    passHLT = kTRUE;	
-	  }
-	  else {
-	    passHLT = kFALSE;
-	  }		     
-	  break; 
-	}
-      } 
-      if(!passHLT) continue;
+      chains[iChain]->GetEntry(i);	  	  
+
       pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
       genWeight = GENEvt_weight/fabs(GENEvt_weight);
       genWeight = genWeight/sumGenWeight;      
@@ -507,7 +446,6 @@ void closureTestPileup()
 	hMCnPileup->Fill(nPileUp);
 	hMCnPileupWeight->Fill(nPileUp,pileupWeight);
       }
-
     }//end event loop   
   }//end chain loop 
 
@@ -515,10 +453,15 @@ void closureTestPileup()
   double scaleData = norm/hDatanPileup->Integral();
   double scaleMC = norm/hMCnPileup->Integral();
   double scaleMCWeight = norm/hMCnPileupWeight->Integral();
-
   hDatanPileup->Scale(scaleData);
   hMCnPileup->Scale(scaleMC);
   hMCnPileupWeight->Scale(scaleMCWeight);
+  for(int i=1;i<76;i++){
+    double binN = i;
+    double valueBefore = hMCnPileup->GetBinContent(i);
+    double valueAfter = hMCnPileupWeight->GetBinContent(i);
+    double valueData = hDatanPileup->GetBinContent(i);
+  }
 
   hDatanPileup->GetXaxis()->SetRangeUser(0,75);
   hMCnPileup->GetXaxis()->SetRangeUser(0,75);
@@ -539,6 +482,7 @@ void closureTestPileup()
   hDatanPileup->Draw("hist");
   hMCnPileupWeight->Draw("P,same");
     
+  c->SaveAs("./plots/pileupClosureTest.png");
   totaltime.Stop();
   Double_t TotalCPURunTime = totaltime.CpuTime();
   Double_t TotalRunTime = totaltime.RealTime();
