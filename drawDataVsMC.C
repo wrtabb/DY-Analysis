@@ -86,9 +86,15 @@ void drawDataVsMC()
     cout << endl;
   }
 
+
   TH1F*histos[nHistoTypes][nHistos];  
+  TH1F*hDataMCRatio[nHistoTypes];
+  TH1F*hMCSum[nHistoTypes];
+  TString hSumName;
   for(int i=0;i<nHistoTypes;i++){//type of histogram
-    for(int j=0;j<nHistos;j++){//histogram within type
+    hSumName = "hMCSum";
+    hSumName += i;
+    for(int j=0;j<nHistos;j++){//histogram within type      
       if(i==VERTICES_WEIGHTED&&j==DATA) histos[i][j]= (TH1F*)file->Get(histName[j]+histTypeName[i-1]);
       else histos[i][j]=(TH1F*)file->Get(histName[j]+histTypeName[i]); 
       if(j==DATA) {
@@ -100,23 +106,32 @@ void drawDataVsMC()
       else {
 	histos[i][j]->SetFillColor(histFillColors[j]);
 	histos[i][j]->SetLineColor(histLineColors[j]);
-      }
-      
+      }      
       histos[i][j]->GetXaxis()->SetTitle(xAxisLabels[i]);
+      hMCSum[i] = (TH1F*)histos[i][0]->Clone(hSumName);
+      if(j!=DATA&&j!=0)
+	hMCSum[i]->Add(histos[i][j]);
     }
+    hDataMCRatio[i]->Divide(histos[i][DATA],hMCSum[i]);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //Setting negative bin content found to ZERO!!!!!!!!!!!!!!!!!!!!!!
-  for(int i=0;i<3000;i++){
-      for(int j=0;j<nHistoTypes;j++){
-	if(histos[INV_MASS][j]->GetBinContent(i) < 0) histos[INV_MASS][j]->SetBinContent(i,0);
-      }
+  for(int j=0;j<nHistoTypes;j++){
+    int maxBin = histos[INV_MASS][DATA]->GetMaximumBin(); 
+    double x = histos[INV_MASS][DATA]->GetXaxis()->GetBinCenter(maxBin);
+    cout << maxBin << endl;
+    
+    for(int k=0;k<3000;k++){      
+      if(histos[INV_MASS][j]->GetBinContent(k) < 0) histos[INV_MASS][j]->SetBinContent(k,0);
     }
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////////////
 	
   //Place histograms into stacks
   THStack*hStack[nHistoTypes];
+  /* 
   TRatioPlot*hDataMCRatio[nHistoTypes];
   for(int i=0;i<nHistoTypes;i++){  
     hStack[i] = new THStack(hStackName+histTypeName[i],"");
@@ -127,7 +142,7 @@ void drawDataVsMC()
       hStack[i]->SetMinimum(axisLow);
     }
   }
-  
+  */
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
   legend->SetTextSize(0.02);
   legend->AddEntry(histos[0][DATA],"Data");
@@ -135,7 +150,7 @@ void drawDataVsMC()
   legend->AddEntry(histos[0][TOPS],"t#bar{t}+tW+#bar{t}W");
   legend->AddEntry(histos[0][EW],"EW (Dibosons, #gamma^{*}/Z #rightarrow #tau^{-}#tau^{+})");
   legend->AddEntry(histos[0][FAKES],"Fakes (W+Jets)");
-  
+
   TCanvas*canvas[nHistoTypes];
   for(int i=0;i<nHistoTypes;i++){
     
@@ -150,8 +165,8 @@ void drawDataVsMC()
     else canvas[i]->SetLogy();
     canvas[i]->cd();
     
-    /*
-    hStack[i]->Draw("bar");
+    
+    hStack[i]->Draw("hist");
     hStack[i]->GetXaxis()->SetTitle(xAxisLabels[i]);
     hStack[i]->GetXaxis()->SetNoExponent();
     hStack[i]->GetXaxis()->SetMoreLogLabels();
@@ -160,8 +175,8 @@ void drawDataVsMC()
     if(i==VERTICES_WEIGHTED) histos[i-1][DATA]->Draw("same,PE");
     else histos[i][DATA]->Draw("same,PE");
     legend->Draw("same");
-    */
-    
+
+    /*    
     hDataMCRatio[i]=new TRatioPlot(hStack[i],histos[i][DATA]);
     hDataMCRatio[i]->Draw();
     hDataMCRatio[i]->GetUpperPad()->cd();
@@ -182,8 +197,8 @@ void drawDataVsMC()
     TString saveName = "./plots/dataVsMC/dataVsMC_";
     saveName+=histTypeName[i];
     saveName+=".png";
-    canvas[i]->SaveAs(saveName);
-    
+    canvas[i]->SaveAs(saveName);  
+    */  
   }
 
 }//end invMassDraw
