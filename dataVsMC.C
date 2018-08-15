@@ -554,7 +554,6 @@ void dataVsMC()
      if(numDielectrons==1){
         passNumEle = kTRUE;
      }
-     if(invMass<-1000||rapidity<-1000||dileptonPt<-1000||dileptonEta<-1000) continue;
      if(!passNumEle) continue;
      if(leadEle<0||subEle<0) continue;
      invMass=calcInvMass(Electron_pT[leadEle],Electron_eta[leadEle],Electron_phi[leadEle],
@@ -567,6 +566,8 @@ void dataVsMC()
      dileptonEta=calcDileptonEta(Electron_pT[leadEle],Electron_eta[leadEle],
        Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
        Electron_phi[subEle],eMass);
+     
+     if(invMass<-1000||rapidity<-1000||dileptonPt<-1000||dileptonEta<-1000) continue;
 
      histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
      if(invMass<60||invMass>120) continue;
