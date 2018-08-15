@@ -31,10 +31,14 @@
 #include "THashList.h"
 
 void counter(Long64_t i, Long64_t N);
-double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
-double calcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
-double calcDileptonPt(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
-double calcDileptonEta(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
+double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
+  double phi2,double m2);
+double calcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
+  double phi2,double m2);
+double calcDileptonPt(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
+  double phi2,double m2);
+double calcDileptonEta(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
+  double phi2,double m2);
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 
 //Defining variables and arrays
@@ -120,8 +124,8 @@ const TString histName[nHistos] = {
   "hFakes", "hEW", "hTops", "hMC", "hData"
 };
 const TString histTypeName[nHistoTypes] = {
-  "InvMass", "InvMassLinear", "Vert", "VertWeighted", "pTLead", "pTSub", "pTDi", "EtaLead", "EtaSub", "EtaDi",
-  "Rapidity"
+  "InvMass", "InvMassLinear", "Vert", "VertWeighted", "pTLead", "pTSub", "pTDi", "EtaLead", 
+    "EtaSub", "EtaDi", "Rapidity"
 };
 const Color_t histFillColors[nHistos] = {
   kViolet+5, kRed+2, kBlue+2, kOrange-2, kWhite
@@ -165,9 +169,8 @@ enum HistTypes {
 };
 //InvMass
 const int nBinsInvMass = 43;
-const float massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 91, 96, 101, 
-			    106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 200, 220, 243, 273, 320, 
-			    380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
+const float massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 91,                            96, 101, 106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 
+                            200, 220, 243, 273, 320, 380, 440, 510, 600, 700, 830, 1000, 1500,                             3000};
 const float binLowInvMass = 0;
 const float binHighInvMass = 3000;
 //InvMass Linear Plot
@@ -191,21 +194,23 @@ const int nYBins = 100;
 const float binLowY = -2.5;
 const float binHighY = 2.5;
 
-const int nBins[nHistoTypes] = {nBinsInvMass,nBinsInvMassLinear,nBinsVert,nBinsVert,npTBins,npTBins,npTBins,
-				nEtaBins,nEtaBins,nEtaBins,nYBins};
-const float binLow[nHistoTypes] = {binLowInvMass,binLowInvMassLinear,binLowVert,binLowVert,binLowpT,binLowpT,
-				   binLowpT,binLowEta,binLowEta,binLowEta,binLowY};
-const float binHigh[nHistoTypes] = {binHighInvMass,binHighInvMassLinear,binHighVert,binHighVert,binHighpT,
-				    binHighpT,binHighpT,binHighEta,binHighEta,binHighEta,binHighY};
+const int nBins[nHistoTypes] = {nBinsInvMass,nBinsInvMassLinear,nBinsVert,nBinsVert,npTBins,
+                                npTBins,npTBins,nEtaBins,nEtaBins,nEtaBins,nYBins};
+const float binLow[nHistoTypes] = {binLowInvMass,binLowInvMassLinear,binLowVert,binLowVert,
+                                   binLowpT,binLowpT,binLowpT,binLowEta,binLowEta,binLowEta,
+                                   binLowY};
+const float binHigh[nHistoTypes] = {binHighInvMass,binHighInvMassLinear,binHighVert,
+                                    binHighVert,binHighpT,binHighpT,binHighpT,binHighEta,
+                                    binHighEta,binHighEta,binHighY};
 
 //Cross sections calculated by Kyeongpil Lee
 const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,//QCD
 			       61526.7,118.7,12.178,16.523,1.256,47.13,4.4297,//Bosons
 			       734.577,76.605,20.578,35.85,35.85,//tops
-			       6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,0.01042,//DYEE
-			       0.00552772,0.000741613,0.000178737,//DYEE
-			       6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,0.01042,//DYTAUTAU
-			       0.00552772,0.000741613,0.000178737,//DYTAUTAU
+			       6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
+                               0.01042,0.00552772,0.000741613,0.000178737,//DYEE
+			       6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
+                               0.01042,0.00552772,0.000741613,0.000178737,//DYTAUTAU
 			       1,1,1,1,1,1,1};//data (unweighted)
 
 void dataVsMC()
@@ -290,9 +295,11 @@ void dataVsMC()
 
   vector <TString> *subFiles[numChains];  
   for(int iChain=0;iChain<numChains;iChain++) {
-    if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//Not using these in this analysis
-    if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
-       iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
+    //Not using WWTo2L2Nu, ZZTo4L, or WZTo3LNu
+    if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;
+    //Skipping QCD samples due to possible problems with them
+    if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||
+       iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) continue;
     
     subFiles[iChain] = new vector<TString>;
     if(iChain==EE10to50||iChain==TAUTAU10to50) {
@@ -319,12 +326,12 @@ void dataVsMC()
   Long64_t subDirectorySize;
   Long64_t totalentries = 0;
   for(int iChain=0;iChain<numChains;iChain++) {          
-    if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
-    if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
-       iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
+    if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;
+    if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||
+       iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) continue;
     chains[iChain] = new TChain(treeName);
-    if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
-       iChain==DataRunG||iChain==DataRunH) isMC = kFALSE;
+    if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||
+       iChain==DataRunF||iChain==DataRunG||iChain==DataRunH) isMC = kFALSE;
     else isMC = kTRUE;
     subDirectorySize = subFiles[iChain]->size();
     for(int k=0;k<subDirectorySize;k++) {	  	      
@@ -333,9 +340,10 @@ void dataVsMC()
       if(iChain==EE10to50||iChain==EE50to100||iChain==EE100to200||iChain==EE200to400||
 	 iChain==EE400to500||iChain==EE500to700||iChain==EE700to800||iChain==EE800to1000||
 	 iChain==EE1000to1500||iChain==EE1500to2000||iChain==EE2000to3000||
-	 iChain==TAUTAU10to50||iChain==TAUTAU50to100||iChain==TAUTAU100to200||iChain==TAUTAU200to400||
-	 iChain==TAUTAU400to500||iChain==TAUTAU500to700||iChain==TAUTAU700to800||iChain==TAUTAU800to1000||
-	 iChain==TAUTAU1000to1500||iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000) {
+	 iChain==TAUTAU10to50||iChain==TAUTAU50to100||iChain==TAUTAU100to200||
+         iChain==TAUTAU200to400||iChain==TAUTAU400to500||iChain==TAUTAU500to700||
+         iChain==TAUTAU700to800||iChain==TAUTAU800to1000||iChain==TAUTAU1000to1500||
+         iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000) {
 	files+=subDirectoryDY;	 
       }      
 
@@ -365,12 +373,13 @@ void dataVsMC()
     chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
     chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
     chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
-    chains[iChain]->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,&b_Electron_passMediumID);
+    chains[iChain]->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,
+      &b_Electron_passMediumID);
     chains[iChain]->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
     chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
     chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
     chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);   
-    if(isMC) 
+    if(isMC)//No gen weighting for data 
       chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
     else continue;
   }//end iChain loop
@@ -383,7 +392,8 @@ void dataVsMC()
   for(int i=0;i<nHistoTypes;i++){//type of histogram
     for(int j=0;j<nHistos;j++){//histogram within type
       if(i==VERTICES_WEIGHTED&&j==DATA) continue; //data doesn't get weighted
-      if(i==INV_MASS) histos[i][j]=new TH1F(histName[j]+histTypeName[i],"",nBinsInvMass,massbins);   
+      if(i==INV_MASS) 
+        histos[i][j]=new TH1F(histName[j]+histTypeName[i],"",nBinsInvMass,massbins);   
       else histos[i][j]=new TH1F(histName[j]+histTypeName[i],"",nBins[i],binLow[i],binHigh[i]);      
       if(j==DATA) {
 	histos[i][j]->SetLineColor(kBlack);
@@ -404,14 +414,21 @@ void dataVsMC()
   TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
   
   cout << "Starting Event Loop" << endl;
-  double invMass, rapidity, dileptonPt, dileptonEta, xSecWeight, weightNoPileup, genWeight, varGenWeight, 
-    totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, sumRawGenWeight, pileupWeight;
+  double xSecWeight, weightNoPileup, genWeight, 
+    varGenWeight, totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, 
+    sumRawGenWeight, pileupWeight;
+  double invMass= -5000;
+  double rapidity = -5000;
+  double dileptonPt = -5000;
+  double dileptonEta = -5000;
   Long64_t nentries;
   Long64_t count = 0;
   int sampleCategory = -1;
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
-  int trigNameSize, subEle, leadEle;
+  int trigNameSize;
+  int subEle = -1;
+  int leadEle = -1;
   double lumi = dataLuminosity;//luminosity for xsec weighting
   ofstream genWeightFile;
   genWeightFile.open("genWeights.txt");
@@ -419,11 +436,12 @@ void dataVsMC()
 
   //Loop over samples
   for(int iChain=0;iChain<numChains;iChain++) {
-    if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;//not using these in this analysis
-    if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||iChain==QCD120to170||
-       iChain==QCD170to300||iChain==QCD300toInf) continue;//skipping QCD due to possible problems
-    if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||iChain==DataRunF||
-       iChain==DataRunG||iChain==DataRunH) isMC = kFALSE; //determine if chain is MC or Data
+    if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;
+    if(iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||iChain==QCD80to120||
+       iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) continue;
+    //determine if chain is MC or Data
+    if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||
+       iChain==DataRunF||iChain==DataRunG||iChain==DataRunH) isMC = kFALSE; 
     else isMC = kTRUE;
 
     cout << endl;
@@ -433,20 +451,22 @@ void dataVsMC()
     //Determine which sample is being looped over
     if(!isMC) sampleCategory = DATA;
     else if (isMC){
-      if(iChain==wJets||iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80
-	 ||iChain==QCD80to120||iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) 
-	sampleCategory = FAKES;
-      else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu||
-	      iChain==TAUTAU10to50||iChain==TAUTAU50to100||iChain==TAUTAU100to200||iChain==TAUTAU200to400||
-	      iChain==TAUTAU400to500||iChain==TAUTAU500to700||iChain==TAUTAU700to800||iChain==TAUTAU800to1000||
+      if(iChain==wJets||iChain==QCD20to30||iChain==QCD30to50||iChain==QCD50to80||
+         iChain==QCD80to120||iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) 
+	   sampleCategory = FAKES;
+      else if(iChain==WW||iChain==ZZ||iChain==WZ||iChain==WWTo2L2Nu||iChain==ZZTo4L||
+              iChain==WZTo3LNu||iChain==TAUTAU10to50||iChain==TAUTAU50to100||
+              iChain==TAUTAU100to200||iChain==TAUTAU200to400||iChain==TAUTAU400to500||
+              iChain==TAUTAU500to700||iChain==TAUTAU700to800||iChain==TAUTAU800to1000||
 	      iChain==TAUTAU1000to1500||iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000)
-	sampleCategory = EW;
-      else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||iChain==tbarW)
-	sampleCategory = TOPS;
+	        sampleCategory = EW;
+      else if(iChain==tt0to700||iChain==tt700to1000||iChain==tt1000toInf||iChain==tW||
+              iChain==tbarW)
+	        sampleCategory = TOPS;
       else if(iChain==EE10to50||iChain==EE50to100||iChain==EE100to200||iChain==EE200to400||
 	      iChain==EE400to500||iChain==EE500to700||iChain==EE700to800||iChain==EE800to1000||
 	      iChain==EE1000to1500||iChain==EE1500to2000||iChain==EE2000to3000)
-	sampleCategory = EE;
+	        sampleCategory = EE;
     }
     if(sampleCategory==UNDEF) {
       cout << "Tried to load a chain which does not exist!" << endl;
@@ -471,7 +491,8 @@ void dataVsMC()
       }          
       nEffective = (sumRawGenWeight*sumRawGenWeight)/varGenWeight;
       lumiEffective = nEffective/xSec[iChain];
-      genWeightFile << iChain << ", " << nentries << ", " << nEffective << ", " << lumiEffective << endl;
+      genWeightFile << iChain << ", " << nentries << ", " << nEffective << ", " << 
+        lumiEffective << endl;
     }//end if isMC
     
     //Event loop
@@ -511,6 +532,8 @@ void dataVsMC()
       }
       
       //Electron loop
+      bool passNumEle = kTRUE;
+      int numDielectrons = 0;
       for(int iEle = 0; iEle < Nelectrons; iEle++) {
 	if(!Electron_passMediumID[iEle]) continue;
 	for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
@@ -521,33 +544,41 @@ void dataVsMC()
 	  else {
 	    leadEle = jEle; subEle = iEle;
 	  }	  
-	  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
-				     Electron_eta[jEle])) continue; 
-	  
+	  if(passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
+	    Electron_eta[jEle])){
+            numDielectrons++;
+          };
+	  if(numDielectrons!=1){
+	    passNumEle = kFALSE;
+	    cout << "Event: " << i << " has more than 2 electrons!!!!!!!!!!!!!!!!!!!" << endl;
+          }
+	  else passNumEle = kTRUE; 
 	  invMass=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
-			      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
+            Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
 	  rapidity=calcRapidity(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
-				Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
-	  dileptonPt=calcDileptonPt(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
-				    Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
-	  dileptonEta=calcDileptonEta(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
-				      Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
-
-	  histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
-	  histos[INV_MASS_LINEAR][sampleCategory]->Fill(invMass,totalWeight);
-	  histos[PT_LEAD][sampleCategory]->Fill(Electron_pT[leadEle],totalWeight);
-	  histos[PT_SUB][sampleCategory]->Fill(Electron_pT[subEle],totalWeight);
-	  histos[PT_DI][sampleCategory]->Fill(dileptonPt,totalWeight);	    
-	  histos[ETA_LEAD][sampleCategory]->Fill(Electron_eta[leadEle],totalWeight);
-	  histos[ETA_SUB][sampleCategory]->Fill(Electron_eta[subEle],totalWeight);
-	  histos[ETA_DI][sampleCategory]->Fill(dileptonEta,totalWeight);
-	  histos[RAPIDITY][sampleCategory]->Fill(rapidity,totalWeight);
-	  histos[VERTICES][sampleCategory]->Fill(nVertices,weightNoPileup);
-	  if(!isMC) continue; //no weighted version for data
-	  histos[VERTICES_WEIGHTED][sampleCategory]->Fill(nVertices,totalWeight);
-	  
-	}//end inner electron loop	   
-      }//end electron loop
+	    Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
+	  dileptonPt=calcDileptonPt(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],
+            eMass,Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
+	  dileptonEta=calcDileptonEta(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],
+            eMass,Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
+        }//end jEle loop
+      }//end iEle loop
+  
+     if(invMass<-1000||rapidity<-1000||dileptonPt<-1000||dileptonEta<-1000) continue;
+     if(!passNumEle) continue;
+     histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
+     if(invMass<60||invMass>120) continue;
+     histos[INV_MASS_LINEAR][sampleCategory]->Fill(invMass,totalWeight);
+     histos[PT_LEAD][sampleCategory]->Fill(Electron_pT[leadEle],totalWeight);
+     histos[PT_SUB][sampleCategory]->Fill(Electron_pT[subEle],totalWeight);
+     histos[PT_DI][sampleCategory]->Fill(dileptonPt,totalWeight);	    
+     histos[ETA_LEAD][sampleCategory]->Fill(Electron_eta[leadEle],totalWeight);
+     histos[ETA_SUB][sampleCategory]->Fill(Electron_eta[subEle],totalWeight);
+     histos[ETA_DI][sampleCategory]->Fill(dileptonEta,totalWeight);
+     histos[RAPIDITY][sampleCategory]->Fill(rapidity,totalWeight);
+     histos[VERTICES][sampleCategory]->Fill(nVertices,weightNoPileup);
+     if(!isMC) continue; //no weighted version for data
+     histos[VERTICES_WEIGHTED][sampleCategory]->Fill(nVertices,totalWeight);
     }//end event loop   
   }//end chain loop 
   genWeightFile.close();
@@ -568,12 +599,12 @@ void dataVsMC()
   Double_t TotalRunTime = totaltime.RealTime();
   TTimeStamp ts_end;
   cout << endl;
-  cout << "*****************************************************************************" << endl;
+  cout << "**************************************************************************" << endl;
   cout << "Total CPU RunTime: " << TotalCPURunTime/60 << " minutes" << endl;
   cout << "Total Real RunTime: " << TotalRunTime/60 << " minutes" << endl;
   cout << "[End Time(local time): " << ts_end.AsString("l") << "]" << endl;   
   cout << "Number of Events Processed: " << count << endl;
-  cout << "*****************************************************************************" << endl;
+  cout << "**************************************************************************" << endl;
   cout << endl;
   
 }//end main function
@@ -584,7 +615,8 @@ void counter(Long64_t i, Long64_t N)
   int P = 100*(i)/(N);  
   TTimeStamp eventTimeStamp;
   if(i%(N/100)==0) {
-    cout << "dataVsMC.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P << "%" << endl;
+    cout << "dataVsMC.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P 
+      << "%" << endl;
   }
   return;
 }
@@ -592,15 +624,16 @@ void counter(Long64_t i, Long64_t N)
 //Kinematic cuts
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)
 {
-  //if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return kFALSE;//eta cut
-  //if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return kFALSE; //eta cut
-  if(abs(eta1)>etaHigh||abs(eta2)>etaHigh) return kFALSE; //eta cut
+  //if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return kFALSE;
+  //if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return kFALSE; 
+  if(abs(eta1)>etaHigh||abs(eta2)>etaHigh) return kFALSE; 
   if(!((pt1>ptLow && pt2>ptHigh)||(pt1>ptHigh && pt2>ptLow))) return kFALSE;
   return kTRUE;
 }
 
 //Invariant mass calculator
-double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2)
+double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
+  double phi2,double m2)
 {  
   TLorentzVector vElectron1;
   TLorentzVector vElectron2;
