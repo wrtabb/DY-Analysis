@@ -40,6 +40,23 @@ const TString xAxisLabels[nHistoTypes] = {
   "#eta",
   "Y"
 };
+float binLowInvMass = 0;
+const float binHighInvMass = 3000;
+//InvMass Linear Plot
+const float binLowInvMassLinear = 60;
+const float binHighInvMassLinear = 120;
+////nVertices
+const float binLowVert = 0;
+const float binHighVert = 50;
+////pT 
+const float binLowpT = 0;
+const float binHighpT = 500;
+////eta
+const float binLowEta = -2.5;
+const float binHighEta = 2.5;
+////rapidity
+const float binLowY = -2.5;
+const float binHighY = 2.5;
 
 const TString plotTitle[nHistoTypes] = {
   "Dielectron invariant mass 15-3000 GeV",
@@ -168,16 +185,17 @@ void drawDataVsMC()
   TCanvas*canvas[nHistoTypes];
   TPad*pad1[nHistoTypes];
   TPad*pad2[nHistoTypes];
-  TLine*lineUp[nHistoTypes];
-  TLine*lineDown[nHistoTypes];
+  TLine*line[nHistoTypes];
   TVirtualPad*p1[nHistoTypes];
   TVirtualPad*p2[nHistoTypes];
+  float x1[nHistoTypes]={0,60,0,0,0,0,0,-2.5,-2.5,-2.5,-2.5};
+  float x2[nHistoTypes]={3000,120,50,50,500,500,500,2.5,2.5,2.5,2.5};
   for(int i=0;i<nHistoTypes;i++){ 
     TString canvasName = "canvas";
     canvasName+=i;
     canvas[i] = new TCanvas(canvasName,"",10,10,1000,1000);    
-    //lineUp[i] = new TLine(0,1.3,,1.3);
-    //lineDown[i] = new TLine(0,0.7,,0.7);
+    line[i]=new TLine(x1[i],1,x2[i],1);
+    line[i]->SetLineColor(kRed);
     pad1[i] = new TPad("","", 0,0.3,1,1.0);
     pad1[i]->SetBottomMargin(padmargins); 
     pad1[i]->SetGrid();
@@ -216,7 +234,7 @@ void drawDataVsMC()
     hDataMCRatio[i]->GetXaxis()->SetNoExponent();
     hDataMCRatio[i]->GetXaxis()->SetMoreLogLabels();
     hDataMCRatio[i]->Draw("PE");
-     
+    line[i]->Draw("same"); 
     canvas[i]->Update();  
     TString saveName = "./plots/dataVsMC/dataVsMC_";
     saveName+=histTypeName[i];
