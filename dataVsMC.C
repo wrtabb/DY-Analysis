@@ -538,21 +538,21 @@ void dataVsMC()
 	if(!Electron_passMediumID[iEle]) continue;
 	for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
 	  if(!Electron_passMediumID[jEle]) continue;
-	  if(Electron_pT[iEle]>Electron_pT[jEle]){
-	    leadEle = iEle; subEle = jEle;
-	  }
-	  else {
-	    leadEle = jEle; subEle = iEle;
-	  }	  
 	  if(passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
 	    Electron_eta[jEle])){
             numDielectrons++;
+	    if(Electron_pT[iEle]>Electron_pT[jEle]){
+	      leadEle = iEle; subEle = jEle;
+	    }
+	    else {
+	      leadEle = jEle; subEle = iEle;
+	    }	  
           };
 	  if(numDielectrons!=1){
 	    passNumEle = kFALSE;
-	    cout << "Event: " << i << " has more than 2 electrons!!!!!!!!!!!!!!!!!!!" << endl;
           }
-	  else passNumEle = kTRUE; 
+	  else passNumEle = kTRUE;
+ 
 	  invMass=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
             Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
 	  rapidity=calcRapidity(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,

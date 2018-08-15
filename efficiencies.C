@@ -376,7 +376,8 @@ void efficiencies()
 		idxGenEle2 = lLep;
 		nGenDielectrons++;
 		}
-	      if(GENLepton_fromHardProcessFinalState[kLep]==1 && GENLepton_fromHardProcessFinalState[lLep]==1)
+	      if(GENLepton_fromHardProcessFinalState[kLep]==1 && 
+                 GENLepton_fromHardProcessFinalState[lLep]==1)
 		{
 		  // Found a dielectron from final state
 		  idxGenEleFS1 = kLep;
