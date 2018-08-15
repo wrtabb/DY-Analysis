@@ -427,8 +427,6 @@ void dataVsMC()
   TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
   TString trigName;
   int trigNameSize;
-  int subEle = -1;
-  int leadEle = -1;
   double lumi = dataLuminosity;//luminosity for xsec weighting
   ofstream genWeightFile;
   genWeightFile.open("genWeights.txt");
@@ -534,6 +532,8 @@ void dataVsMC()
       //Electron loop
       bool passNumEle = kTRUE;
       int numDielectrons = 0;
+      int subEle = -1;
+      int leadEle = -1;
       for(int iEle = 0; iEle < Nelectrons; iEle++) {
 	if(!Electron_passMediumID[iEle]) continue;
 	for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
@@ -566,6 +566,7 @@ void dataVsMC()
   
      if(invMass<-1000||rapidity<-1000||dileptonPt<-1000||dileptonEta<-1000) continue;
      if(!passNumEle) continue;
+     if(leadEle<0||subEle<0) continue;
      histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
      if(invMass<60||invMass>120) continue;
      histos[INV_MASS_LINEAR][sampleCategory]->Fill(invMass,totalWeight);
