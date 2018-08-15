@@ -417,10 +417,6 @@ void dataVsMC()
   double xSecWeight, weightNoPileup, genWeight, 
     varGenWeight, totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, 
     sumRawGenWeight, pileupWeight;
-  double invMass= -5000;
-  double rapidity = -5000;
-  double dileptonPt = -5000;
-  double dileptonEta = -5000;
   Long64_t nentries;
   Long64_t count = 0;
   int sampleCategory = -1;
@@ -530,10 +526,14 @@ void dataVsMC()
       }
       
       //Electron loop
-      bool passNumEle = kTRUE;
+      bool passNumEle = kFALSE;
       int numDielectrons = 0;
       int subEle = -1;
       int leadEle = -1;
+      double invMass= -5000;
+      double rapidity = -5000;
+      double dileptonPt = -5000;
+      double dileptonEta = -5000;
       for(int iEle = 0; iEle < Nelectrons; iEle++) {
 	if(!Electron_passMediumID[iEle]) continue;
 	for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
@@ -547,26 +547,27 @@ void dataVsMC()
 	    else {
 	      leadEle = jEle; subEle = iEle;
 	    }	  
-          };
-	  if(numDielectrons!=1){
-	    passNumEle = kFALSE;
           }
-	  else passNumEle = kTRUE;
- 
-	  invMass=calcInvMass(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
-            Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
-	  rapidity=calcRapidity(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],eMass,
-	    Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
-	  dileptonPt=calcDileptonPt(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],
-            eMass,Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
-	  dileptonEta=calcDileptonEta(Electron_pT[iEle],Electron_eta[iEle],Electron_phi[iEle],
-            eMass,Electron_pT[jEle],Electron_eta[jEle],Electron_phi[jEle],eMass);
         }//end jEle loop
       }//end iEle loop
-  
+       
+     if(numDielectrons==1){
+        passNumEle = kTRUE;
+     }
      if(invMass<-1000||rapidity<-1000||dileptonPt<-1000||dileptonEta<-1000) continue;
      if(!passNumEle) continue;
      if(leadEle<0||subEle<0) continue;
+     invMass=calcInvMass(Electron_pT[leadEle],Electron_eta[leadEle],Electron_phi[leadEle],
+       eMass,Electron_pT[subEle],Electron_eta[subEle],Electron_phi[subEle],eMass);
+     rapidity=calcRapidity(Electron_pT[leadEle],Electron_eta[leadEle],Electron_phi[leadEle],
+       eMass,Electron_pT[subEle],Electron_eta[subEle],Electron_phi[subEle],eMass);
+     dileptonPt=calcDileptonPt(Electron_pT[leadEle],Electron_eta[leadEle],
+       Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
+       Electron_phi[subEle],eMass);
+     dileptonEta=calcDileptonEta(Electron_pT[leadEle],Electron_eta[leadEle],
+       Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
+       Electron_phi[subEle],eMass);
+
      histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
      if(invMass<60||invMass>120) continue;
      histos[INV_MASS_LINEAR][sampleCategory]->Fill(invMass,totalWeight);
