@@ -11,6 +11,7 @@
 #include "THStack.h"
 #include "TH1F.h"
 #include "TH1I.h"
+#include "TH2F.h"
 #include "TBenchmark.h"
 #include "TRandom.h"
 #include "TSystem.h"
@@ -65,6 +66,10 @@ const float eMass = 0.000511;
 const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
 const TString treeName = "recoTree/DYTree";
 const TString pileupRatioName = "./plots/pileup.root";
+const TString leg2SFName = "./data/Leg2_SF.root";
+const TString medIDSFName = "./data/MediumID_SF.root";
+const TString recoSFName = "./data/Reco_SF.root";
+
 const int numChains = 48; const double pi=TMath::Pi(); const float axisLow = 0.0001;
 enum ChainNum {
   QCD20to30,
@@ -169,8 +174,10 @@ enum HistTypes {
 };
 //InvMass
 const int nBinsInvMass = 43;
-const float massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 91,                            96, 101, 106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 
-                            200, 220, 243, 273, 320, 380, 440, 510, 600, 700, 830, 1000, 1500,                             3000};
+const float massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 91,
+                            96, 101, 106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 
+                            200, 220, 243, 273, 320, 380, 440, 510, 600, 700, 830, 1000, 1500,
+                            3000};
 const float binLowInvMass = 0;
 const float binHighInvMass = 3000;
 //InvMass Linear Plot
@@ -412,7 +419,13 @@ void dataVsMC()
   
   TFile*pileupRatioFile  = new TFile(pileupRatioName);
   TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
-  
+  TFile*fileLeg2SF = new TFile();
+  TH2F*hLeg2SF = (TH2F*)fileLeg2SF->Get("EGamma_SF2D");
+  TFile*fileMedIDSF = new TFile();
+  TH2F*hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
+  TFile*fileRecoSF = new TFile(); 
+  TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
+
   cout << "Starting Event Loop" << endl;
   double xSecWeight, weightNoPileup, genWeight, 
     varGenWeight, totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, 
@@ -427,6 +440,9 @@ void dataVsMC()
   ofstream genWeightFile;
   genWeightFile.open("genWeights.txt");
   genWeightFile << "iChain, Nevents, Neffective, LumiEffective" << endl;
+  double sfReco1,sfReco2,sfID1,sfID2,sfHLT1,sfHLT2;//efficiency scale factors
+  double sfWeight;
+  double eEta1, eEta2, ePt1, ePt2;
 
   //Loop over samples
   for(int iChain=0;iChain<numChains;iChain++) {
@@ -568,6 +584,29 @@ void dataVsMC()
        Electron_phi[subEle],eMass);
      
      if(invMass<-1000||rapidity<-1000||dileptonPt<-1000||dileptonEta<-1000) continue;
+     
+     if(isMC&&iChain!=FAKES){
+       eEta1 = Electron_eta[leadEle];
+       eEta2 = Electron_eta[subEle];
+       ePt1 = Electron_pT[leadEle];
+       ePt2 = Electron_pT[subEle];
+     
+       if(ePt1<25) ePt1 = 25;
+       if(ePt2<25) ePt2 = 25;
+       if(ePt1>500) ePt1 = 500;
+       if(ePt2>500) ePt1 = 500;
+     
+       sfReco1=hRecoSF->GetBinContent(eEta1,ePt1);
+       sfReco2=hRecoSF->GetBinContent(eEta2,ePt2);
+       sfID1=hMedIDSF->GetBinContent(eEta1,ePt1);
+       sfID2=hMedIDSF->GetBinContent(eEta2,ePt2);
+       
+       sfHLT1=(hLeg2SF->GetBinContent(eEta1,ePt1))*(hLeg2SF->GetBinContent(eEta2,ePt2));
+       sfHLT2=sfHLT1;
+       
+       sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT1*sfHLT2;
+       totalWeight = totalWeight*sfWeight;
+     }//applying efficiency SF
 
      histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
      if(invMass<60||invMass>120) continue;
