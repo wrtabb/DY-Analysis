@@ -419,11 +419,11 @@ void dataVsMC()
   
   TFile*pileupRatioFile  = new TFile(pileupRatioName);
   TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
-  TFile*fileLeg2SF = new TFile();
+  TFile*fileLeg2SF = new TFile(leg2SFName);
   TH2F*hLeg2SF = (TH2F*)fileLeg2SF->Get("EGamma_SF2D");
-  TFile*fileMedIDSF = new TFile();
+  TFile*fileMedIDSF = new TFile(medIDSFName);
   TH2F*hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
-  TFile*fileRecoSF = new TFile(); 
+  TFile*fileRecoSF = new TFile(recoSFName); 
   TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
 
   cout << "Starting Event Loop" << endl;
@@ -440,7 +440,7 @@ void dataVsMC()
   ofstream genWeightFile;
   genWeightFile.open("genWeights.txt");
   genWeightFile << "iChain, Nevents, Neffective, LumiEffective" << endl;
-  double sfReco1,sfReco2,sfID1,sfID2,sfHLT1,sfHLT2;//efficiency scale factors
+  double sfReco1,sfReco2,sfID1,sfID2,sfHLT;//efficiency scale factors
   double sfWeight;
   double eEta1, eEta2, ePt1, ePt2;
 
@@ -532,14 +532,6 @@ void dataVsMC()
       pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
       genWeight = GENEvt_weight/fabs(GENEvt_weight);
       genWeight = genWeight/sumGenWeight;      
-      if(isMC) {//weights for MC 
-	totalWeight = genWeight*xSecWeight*pileupWeight;      
-	weightNoPileup = genWeight*xSecWeight;
-      }
-      else {//no weights for data
-	totalWeight = 1.0;      
-	weightNoPileup = 1.0;
-      }
       
       //Electron loop
       bool passNumEle = kFALSE;
@@ -585,28 +577,37 @@ void dataVsMC()
      
      if(invMass<-1000||rapidity<-1000||dileptonPt<-1000||dileptonEta<-1000) continue;
      
-     if(isMC&&iChain!=FAKES){
-       eEta1 = Electron_eta[leadEle];
-       eEta2 = Electron_eta[subEle];
-       ePt1 = Electron_pT[leadEle];
-       ePt2 = Electron_pT[subEle];
+     eEta1 = Electron_eta[leadEle];
+     eEta2 = Electron_eta[subEle];
+     ePt1 = Electron_pT[leadEle];
+     ePt2 = Electron_pT[subEle];
      
-       if(ePt1<25) ePt1 = 25;
-       if(ePt2<25) ePt2 = 25;
-       if(ePt1>500) ePt1 = 500;
-       if(ePt2>500) ePt1 = 500;
+     if(ePt1<25) ePt1 = 25;
+     if(ePt2<25) ePt2 = 25;
+     if(ePt1>500) ePt1 = 500;
+     if(ePt2>500) ePt2 = 500;
      
-       sfReco1=hRecoSF->GetBinContent(eEta1,ePt1);
-       sfReco2=hRecoSF->GetBinContent(eEta2,ePt2);
-       sfID1=hMedIDSF->GetBinContent(eEta1,ePt1);
-       sfID2=hMedIDSF->GetBinContent(eEta2,ePt2);
-       
-       sfHLT1=(hLeg2SF->GetBinContent(eEta1,ePt1))*(hLeg2SF->GetBinContent(eEta2,ePt2));
-       sfHLT2=sfHLT1;
-       
-       sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT1*sfHLT2;
-       totalWeight = totalWeight*sfWeight;
-     }//applying efficiency SF
+     sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
+     sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta2,ePt2));
+     sfID1=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta1,ePt1));
+     sfID2=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta2,ePt2));
+     sfHLT=(hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta1,ePt1)))*
+       (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
+     sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
+
+     if(isMC&&iChain!=FAKES) {//weights for MC except for Fakes 
+       totalWeight = sfWeight*genWeight*xSecWeight*pileupWeight;
+       weightNoPileup = sfWeight*genWeight*xSecWeight;
+     }
+     else if(iChain==FAKES){//Weights for Fakes
+       totalWeight = genWeight*xSecWeight*pileupWeight;
+       weightNoPileup = sfWeight*genWeight*xSecWeight;
+     }
+     else if(!isMC) {//no weights for data
+       totalWeight = 1.0;      
+       weightNoPileup = 1.0;
+     }
+     
 
      histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
      if(invMass<60||invMass>120) continue;
