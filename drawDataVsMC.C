@@ -57,6 +57,9 @@ const float binHighEta = 2.5;
 ////rapidity
 const float binLowY = -2.5;
 const float binHighY = 2.5;
+//Ratio range
+const float ratioLow = 0.7;
+const float ratioHigh = 1.3;
 
 const TString plotTitle[nHistoTypes] = {
   "Dielectron invariant mass 15-3000 GeV",
@@ -95,7 +98,6 @@ enum HistTypes {
 void drawDataVsMC()
 {
   gStyle->SetOptStat(0);
-  
   TFile*file = new TFile(dataFileName);
   if(!file){
     cout << endl;
@@ -129,7 +131,7 @@ void drawDataVsMC()
       //Setting negative bin content to ZERO!!!!!!!!!!!!!!!!!!!!!! 
       int maxBin = histos[i][j]->GetMaximumBin();
       double x = histos[i][j]->GetXaxis()->GetBinCenter(maxBin);
-      for(int k=0;k<x;k++){     
+      for(int k=1;k<x+1;k++){     
 	if(histos[i][j]->GetBinContent(k) < 0) histos[i][j]->SetBinContent(k,0);
       }
       
@@ -153,7 +155,7 @@ void drawDataVsMC()
     hDataMCRatio[i]->SetLineColor(kBlack);
     hDataMCRatio[i]->SetMarkerColor(kBlack);
     hDataMCRatio[i]->SetMarkerStyle(20);
-    hDataMCRatio[i]->GetYaxis()->SetRangeUser(0.5,1.5);    
+    hDataMCRatio[i]->GetYaxis()->SetRangeUser(ratioLow,ratioHigh);    
   }
 
   //////////////////////////////////////////
@@ -200,6 +202,7 @@ void drawDataVsMC()
     pad1[i]->SetBottomMargin(padmargins); 
     pad1[i]->SetGrid();
     pad1[i]->SetLogy();
+    pad1[i]->SetTicks(1,1);
     pad1[i]->Draw(); 
     pad1[i]->cd(); 
     if(i==INV_MASS) pad1[i]->SetLogx();
@@ -223,6 +226,7 @@ void drawDataVsMC()
     pad2[i]->SetTopMargin(padmargins);
     pad2[i]->SetBottomMargin(0.2);
     pad2[i]->SetGrid();
+    pad2[i]->SetTicks(1,1);
     pad2[i]->Draw();
     pad2[i]->cd();
     hDataMCRatio[i]->GetYaxis()->SetLabelSize(0.06);

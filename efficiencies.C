@@ -1,11 +1,13 @@
-
 #include "TFile.h"
+#include "TROOT.h"
 #include "TTree.h"
 #include "TCanvas.h"
 #include "TFrame.h"
+#include "THStack.h"
 #include "TH1F.h"
 #include "TH1I.h"
 #include "TH2F.h"
+#include "TProfile.h"
 #include "TBenchmark.h"
 #include "TRandom.h"
 #include "TSystem.h"
@@ -15,14 +17,15 @@
 #include "TLegend.h"
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include "TStyle.h"
 #include "TEfficiency.h"
 #include "TString.h"
+#include "TLine.h"
 #include "TTimeStamp.h"
-#include "TGraphAsymmErrors.h"
-#include "TProfile.h"
 #include "TFileCollection.h"
 #include "THashList.h"
+#include "TGraphAsymmErrors.h"
 
 void counter(Long64_t i, Long64_t N);
 double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
@@ -59,16 +62,16 @@ enum chainNum
   }; 
 std::vector<std::string> HLT_trigName;
 std::vector<std::string> *pHLT_trigName = &HLT_trigName;
-const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 91, 96, 101, 
-			     106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 200, 220, 243, 273, 320, 
-			     380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
+const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106, 
+                             110,115,120,126,133,141,150,160,171,185,200,220,243,273,320, 
+			     380,440,510,600,700,830,1000,1500,3000};
 const double pi=TMath::Pi();
 const int numChains = 11;
 const int nLogBins = 43;
 //Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
-const float xSec[numChains] = {18810.0/3.0,5705.9044344/3.0,226.6/3.0,7.77/3.0,0.4065/3.0,
-			       0.2334/3.0,0.03614/3.0,0.03047/3.0,0.01636/3.0,0.00218/3.0,0.0005156/3.0};
-const float etaHigh = 2.5;
+const float xSec[numChains] = {6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
+                               0.01042,0.00552772,0.000741613,0.000178737};
+const float etaHigh = 2.4;
 const float etaGapHigh = 1.566; 
 const float etaGapLow = 1.4442;
 const float ptHigh = 28;
@@ -86,8 +89,9 @@ void efficiencies()
   cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
   TStopwatch totaltime;
   totaltime.Start();
-
+  gROOT->SetBatch(kTRUE);
   gStyle->SetOptStat(0);
+  gStyle->SetPalette(1);
   //Defining branches
   TBranch*b_GENnPair;
   TBranch*b_GENLepton_eta;
@@ -639,19 +643,16 @@ void efficiencies()
   TCanvas*canvas6 = new TCanvas("cMigMatrixGENFSvsGENisHard","",10,10,900,700);
   canvas6->SetLogy();
   canvas6->SetLogx();
-  gStyle->SetPalette(1);
   migMatrixGENisHardvsGENFS->Draw("colz");
 
   TCanvas*canvas7 = new TCanvas("cmigMatrixGENFSvsReco","",10,10,900,700);
   canvas7->SetLogy();
   canvas7->SetLogx();
-  gStyle->SetPalette(1);
   migMatrixGENFSvsReco->Draw("colz");
 
   TCanvas*canvas8 = new TCanvas("cmigMatrixGENisHardvsReco","",10,10,900,700);
   canvas8->SetLogy();
   canvas8->SetLogx();
-  gStyle->SetPalette(1);
   migMatrixGENisHardvsReco->Draw("colz");
     
   TCanvas*canvas9 = new TCanvas("cRecovsFS","",10,10,900,700);
@@ -662,14 +663,14 @@ void efficiencies()
   hHLTGenDielectronInvMass->Draw();
   hRecoInvMass->Draw("same");
 
-  canvas1->SaveAs("./plots/hardProcessInvMass.png");
-  canvas2->SaveAs("./plots/allEfficiencies.png");
-  canvas3->SaveAs("./plots/efficiency.png");
-  canvas4->SaveAs("./plots/acceptance.png");
-  canvas5->SaveAs("./plots/matrices/pTvsMassProf.png");
-  canvas6->SaveAs("./plots/matrices/migMatrixGENFSvsGENisHard.png");
-  canvas7->SaveAs("./plots/matrices/migMatrixGENFSvsGReco.png");
-  canvas8->SaveAs("./plots/matrices/migMatrixGENisHardvsReco.png");
+  canvas1->SaveAs("./plots/efficiency/hardProcessInvMass.png");
+  canvas2->SaveAs("./plots/efficiency/hallEfficiencies.png");
+  canvas3->SaveAs("./plots/efficiency/hefficiency.png");
+  canvas4->SaveAs("./plots/efficiency/hacceptance.png");
+  canvas5->SaveAs("./plots/efficiency/hmatrices/pTvsMassProf.png");
+  canvas6->SaveAs("./plots/unfolding/migMatrixGENFSvsGENisHard.png");
+  canvas7->SaveAs("./plots/unfolding/migMatrixGENFSvsGReco.png");
+  canvas8->SaveAs("./plots/unfolding/migMatrixGENisHardvsReco.png");
   
   rootFile->cd();
   hIDEfficiency->Write();

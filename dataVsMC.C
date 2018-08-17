@@ -32,14 +32,8 @@
 #include "THashList.h"
 
 void counter(Long64_t i, Long64_t N);
-double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
-  double phi2,double m2);
-double calcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
-  double phi2,double m2);
-double calcDileptonPt(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
-  double phi2,double m2);
-double calcDileptonEta(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
-  double phi2,double m2);
+TLorentzVector getDielectronP4(double pt1,double eta1,double phi1,double m1,double pt2,
+  double eta2,double phi2,double m2);
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 
 //Defining variables and arrays
@@ -181,7 +175,7 @@ const float massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 
 const float binLowInvMass = 0;
 const float binHighInvMass = 3000;
 //InvMass Linear Plot
-const int nBinsInvMassLinear = 30;
+const int nBinsInvMassLinear = 60;
 const float binLowInvMassLinear = 60;
 const float binHighInvMassLinear = 120;
 //nVertices
@@ -193,11 +187,11 @@ const int npTBins = 100;
 const float binLowpT = 0;
 const float binHighpT = 500;
 //eta
-const int nEtaBins = 100;
+const int nEtaBins = 50;
 const float binLowEta = -2.5;
 const float binHighEta = 2.5;
 //rapidity
-const int nYBins = 100;
+const int nYBins = 50;
 const float binLowY = -2.5;
 const float binHighY = 2.5;
 
@@ -538,10 +532,12 @@ void dataVsMC()
       int numDielectrons = 0;
       int subEle = -1;
       int leadEle = -1;
-      double invMass= -5000;
+      double invMass = -5000;
       double rapidity = -5000;
-      double dileptonPt = -5000;
-      double dileptonEta = -5000;
+      double dielectronPt = -5000;
+      double dielectronEta = -5000;
+      TLorentzVector dielectronP4;
+
       for(int iEle = 0; iEle < Nelectrons; iEle++) {
 	if(!Electron_passMediumID[iEle]) continue;
 	for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
@@ -564,18 +560,14 @@ void dataVsMC()
      }
      if(!passNumEle) continue;
      if(leadEle<0||subEle<0) continue;
-     invMass=calcInvMass(Electron_pT[leadEle],Electron_eta[leadEle],Electron_phi[leadEle],
-       eMass,Electron_pT[subEle],Electron_eta[subEle],Electron_phi[subEle],eMass);
-     rapidity=calcRapidity(Electron_pT[leadEle],Electron_eta[leadEle],Electron_phi[leadEle],
-       eMass,Electron_pT[subEle],Electron_eta[subEle],Electron_phi[subEle],eMass);
-     dileptonPt=calcDileptonPt(Electron_pT[leadEle],Electron_eta[leadEle],
+     dielectronP4 = getDielectronP4(Electron_pT[leadEle],Electron_eta[leadEle],
        Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
        Electron_phi[subEle],eMass);
-     dileptonEta=calcDileptonEta(Electron_pT[leadEle],Electron_eta[leadEle],
-       Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
-       Electron_phi[subEle],eMass);
-     
-     if(invMass<-1000||rapidity<-1000||dileptonPt<-1000||dileptonEta<-1000) continue;
+     invMass=dielectronP4.M();
+     rapidity=dielectronP4.Rapidity();
+     dielectronPt=dielectronP4.Pt();
+     dielectronEta=dielectronP4.Eta();  
+     if(invMass<-1000||rapidity<-1000||dielectronPt<-1000||dielectronEta<-1000) continue;
      
      eEta1 = Electron_eta[leadEle];
      eEta2 = Electron_eta[subEle];
@@ -601,23 +593,22 @@ void dataVsMC()
      }
      else if(iChain==FAKES){//Weights for Fakes
        totalWeight = genWeight*xSecWeight*pileupWeight;
-       weightNoPileup = sfWeight*genWeight*xSecWeight;
+       weightNoPileup = genWeight*xSecWeight;
      }
      else if(!isMC) {//no weights for data
        totalWeight = 1.0;      
        weightNoPileup = 1.0;
      }
-     
 
      histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
      if(invMass<60||invMass>120) continue;
      histos[INV_MASS_LINEAR][sampleCategory]->Fill(invMass,totalWeight);
      histos[PT_LEAD][sampleCategory]->Fill(Electron_pT[leadEle],totalWeight);
      histos[PT_SUB][sampleCategory]->Fill(Electron_pT[subEle],totalWeight);
-     histos[PT_DI][sampleCategory]->Fill(dileptonPt,totalWeight);	    
+     histos[PT_DI][sampleCategory]->Fill(dielectronPt,totalWeight);	    
      histos[ETA_LEAD][sampleCategory]->Fill(Electron_eta[leadEle],totalWeight);
      histos[ETA_SUB][sampleCategory]->Fill(Electron_eta[subEle],totalWeight);
-     histos[ETA_DI][sampleCategory]->Fill(dileptonEta,totalWeight);
+     histos[ETA_DI][sampleCategory]->Fill(dielectronEta,totalWeight);
      histos[RAPIDITY][sampleCategory]->Fill(rapidity,totalWeight);
      histos[VERTICES][sampleCategory]->Fill(nVertices,weightNoPileup);
      if(!isMC) continue; //no weighted version for data
@@ -674,45 +665,12 @@ bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)
   return kTRUE;
 }
 
-//Invariant mass calculator
-double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
-  double phi2,double m2)
-{  
+TLorentzVector getDielectronP4(double pt1,double eta1,double phi1,double m1,double pt2,
+  double eta2,double phi2,double m2)
+{
   TLorentzVector vElectron1;
   TLorentzVector vElectron2;
   vElectron1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
   vElectron2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
-  double invMass = (vElectron1+vElectron2).M();
-  return invMass;
-}//end calcInvMass
-
-//Rapidity calculator
-double calcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2)
-{  
-  TLorentzVector vElectron1;
-  TLorentzVector vElectron2;
-  vElectron1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
-  vElectron2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
-  double rapidity = (vElectron1+vElectron2).Rapidity();
-  return rapidity;
-}//end calcRapidity
-
-double calcDileptonPt(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2)
-{  
-  TLorentzVector vElectron1;
-  TLorentzVector vElectron2;
-  vElectron1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
-  vElectron2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
-  double Pt = (vElectron1+vElectron2).Pt();
-  return Pt;
-}//end calcDileptonPt
-
-double calcDileptonEta(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2)
-{  
-  TLorentzVector vElectron1;
-  TLorentzVector vElectron2;
-  vElectron1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
-  vElectron2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
-  double Eta = (vElectron1+vElectron2).Eta();
-  return Eta;
-}//end calcDileptonEta
+  return vElectron1+vElectron2;
+}

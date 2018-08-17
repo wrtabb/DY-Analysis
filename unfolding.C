@@ -211,12 +211,12 @@ void unfolding()
 
   const TString canvasSaveName[nCanvas] = 
     {
-      "./plots/matrices/responseGENvsGEN.png",
-      "./plots/matrices/responseFSvsReco.png",
-      "./plots/matrices/responseHardvsReco.png",
-      "./plots/matrices/unfoldingGENvsGEN.png",
-      "./plots/matrices/unfoldingFSvsReco.png",
-      "./plots/matrices/unfoldingHardvsReco.png",
+      "./plots/unfolding/responseGENvsGEN.png",
+      "./plots/unfolding/responseFSvsReco.png",
+      "./plots/unfolding/responseHardvsReco.png",
+      "./plots/unfolding/unfoldingGENvsGEN.png",
+      "./plots/unfolding/unfoldingFSvsReco.png",
+      "./plots/unfolding/unfoldingHardvsReco.png",
     };
    
   TFile *rootFile = new TFile("./plots/unfoldingMatrices.root","RECREATE");
