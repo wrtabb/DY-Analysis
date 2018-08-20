@@ -30,6 +30,7 @@
 #include "TFileCollection.h"
 #include "TRatioPlot.h"
 #include "THashList.h"
+#include "TProfile.h"
 
 void counter(Long64_t i, Long64_t N);
 TLorentzVector getDielectronP4(double pt1,double eta1,double phi1,double m1,double pt2,
@@ -117,14 +118,14 @@ enum ChainNum {
 }; 
 
 //Histogram parameters
-const int nHistoTypes = 11; 
+const int nHistoTypes = 15; 
 const int nHistos = 5;
 const TString histName[nHistos] = {
   "hFakes", "hEW", "hTops", "hMC", "hData"
 };
 const TString histTypeName[nHistoTypes] = {
   "InvMass", "InvMassLinear", "Vert", "VertWeighted", "pTLead", "pTSub", "pTDi", "EtaLead", 
-    "EtaSub", "EtaDi", "Rapidity"
+    "EtaSub", "EtaDi", "Rapidity", "InvMass0","InvMass1","InvMass2","InvMass3"
 };
 const Color_t histFillColors[nHistos] = {
   kViolet+5, kRed+2, kBlue+2, kOrange-2, kWhite
@@ -144,6 +145,10 @@ const TString xAxisLabels[nHistoTypes] = {
   "#eta",
   "#eta",
   "Y"
+  "Dielectron invariant mass [GeV]",
+  "Dielectron invariant mass [GeV]",
+  "Dielectron invariant mass [GeV]",
+  "Dielectron invariant mass [GeV]"
 };
 enum HistBins {
   FAKES,
@@ -164,14 +169,18 @@ enum HistTypes {
   ETA_LEAD,
   ETA_SUB,
   ETA_DI,
-  RAPIDITY
+  RAPIDITY,
+  INV_MASS0,
+  INV_MASS1,
+  INV_MASS2,
+  INV_MASS3
 };
 //InvMass
 const int nBinsInvMass = 43;
-const float massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 91,
-                            96, 101, 106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 
-                            200, 220, 243, 273, 320, 380, 440, 510, 600, 700, 830, 1000, 1500,
-                            3000};
+const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 
+                             91,96, 101, 106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 
+                             185,200, 220, 243, 273, 320, 380, 440, 510, 600, 700, 830, 1000, 
+                             1500,3000};
 const float binLowInvMass = 0;
 const float binHighInvMass = 3000;
 //InvMass Linear Plot
@@ -410,7 +419,7 @@ void dataVsMC()
       histos[i][j]->GetXaxis()->SetTitle(xAxisLabels[i]);
     }
   }
-  
+
   TFile*pileupRatioFile  = new TFile(pileupRatioName);
   TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
   TFile*fileLeg2SF = new TFile(leg2SFName);
@@ -419,6 +428,11 @@ void dataVsMC()
   TH2F*hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
   TFile*fileRecoSF = new TFile(recoSFName); 
   TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
+  
+  TH2F*hSFvsInvMassAll = new TH2F("hSFvsInvMassAll","",nBinsInvMass,massbins,150,0,1.5);
+  TH2F*hSFvsInvMassHLT = new TH2F("hSFvsInvMassHLT","",nBinsInvMass,massbins,150,0,1.5);
+  TH2F*hSFvsInvMassReco = new TH2F("hSFvsInvMassReco","",nBinsInvMass,massbins,150,0,1.5);
+  TH2F*hSFvsInvMassID = new TH2F("hSFvsInvMassID","",nBinsInvMass,massbins,150,0,1.5);
 
   cout << "Starting Event Loop" << endl;
   double xSecWeight, weightNoPileup, genWeight, 
@@ -574,10 +588,10 @@ void dataVsMC()
      ePt1 = Electron_pT[leadEle];
      ePt2 = Electron_pT[subEle];
      
-     if(ePt1<25) ePt1 = 25;
-     if(ePt2<25) ePt2 = 25;
-     if(ePt1>500) ePt1 = 500;
-     if(ePt2>500) ePt2 = 500;
+     if(ePt1<26) ePt1 = 26;//pull this information from the histograms
+     if(ePt2<26) ePt2 = 26;//raise bin
+     if(ePt1>499) ePt1 = 499;//lower bin
+     if(ePt2>499) ePt2 = 499;//
      
      sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
      sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta2,ePt2));
@@ -599,8 +613,19 @@ void dataVsMC()
        totalWeight = 1.0;      
        weightNoPileup = 1.0;
      }
+     
+     histos[INV_MASS0][sampleCategory]->Fill(invMass,xSecWeight);
+     histos[INV_MASS1][sampleCategory]->Fill(invMass,xSecWeight*genWeight);
+     histos[INV_MASS2][sampleCategory]->Fill(invMass,xSecWeight*pileupWeight*genWeight);
+     histos[INV_MASS3][sampleCategory]->
+       Fill(invMass,xSecWeight*pileupWeight*genWeight*sfWeight);
 
      histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
+     hSFvsInvMassAll->Fill(invMass,sfWeight);
+     hSFvsInvMassHLT->Fill(invMass,sfHLT);
+     hSFvsInvMassID->Fill(invMass,sfID1*sfID2);
+     hSFvsInvMassReco->Fill(invMass,sfReco1*sfReco2);
+
      if(invMass<60||invMass>120) continue;
      histos[INV_MASS_LINEAR][sampleCategory]->Fill(invMass,totalWeight);
      histos[PT_LEAD][sampleCategory]->Fill(Electron_pT[leadEle],totalWeight);
@@ -625,6 +650,27 @@ void dataVsMC()
       histos[i][j]->Write();
     }
   }
+  
+  TProfile*hSFvsInvMassProfAll = hSFvsInvMassAll->ProfileX();
+  hSFvsInvMassProfAll->GetXaxis()->SetMoreLogLabels();
+  hSFvsInvMassProfAll->GetXaxis()->SetNoExponent();
+  hSFvsInvMassProfAll->SetTitle("#LTSF#GT vs.Invariant Mass");
+  hSFvsInvMassProfAll->Write();
+  TProfile*hSFvsInvMassProfHLT = hSFvsInvMassHLT->ProfileX();
+  hSFvsInvMassProfHLT->GetXaxis()->SetMoreLogLabels();
+  hSFvsInvMassProfHLT->GetXaxis()->SetNoExponent();
+  hSFvsInvMassProfHLT->SetTitle("#LTSF#GT vs.Invariant Mass");
+  hSFvsInvMassProfHLT->Write();
+  TProfile*hSFvsInvMassProfReco = hSFvsInvMassReco->ProfileX();
+  hSFvsInvMassProfReco->GetXaxis()->SetMoreLogLabels();
+  hSFvsInvMassProfReco->GetXaxis()->SetNoExponent();
+  hSFvsInvMassProfReco->SetTitle("#LTSF#GT vs.Invariant Mass");
+  hSFvsInvMassProfReco->Write();
+  TProfile*hSFvsInvMassProfID = hSFvsInvMassID->ProfileX();
+  hSFvsInvMassProfID->GetXaxis()->SetMoreLogLabels();
+  hSFvsInvMassProfID->GetXaxis()->SetNoExponent();
+  hSFvsInvMassProfID->SetTitle("#LTSF#GT vs.Invariant Mass");
+  hSFvsInvMassProfID->Write();
   rootFile->Write();
   rootFile->Close();
   

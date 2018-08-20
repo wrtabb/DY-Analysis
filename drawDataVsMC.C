@@ -7,7 +7,7 @@
 #include "TRatioPlot.h"
 
 //Histogram parameters
-const int nHistoTypes = 11; 
+const int nHistoTypes = 15; 
 const int nHistos = 5;
 const float axisLow = 0.1;
 const float axisHigh = 100000000;
@@ -18,8 +18,8 @@ const TString histName[nHistos] = {
   "hFakes", "hEW", "hTops", "hMC", "hData"
 };
 const TString histTypeName[nHistoTypes] = {
-  "InvMass", "InvMassLinear", "Vert", "VertWeighted", "pTLead", "pTSub", "pTDi", "EtaLead", "EtaSub", "EtaDi",
-  "Rapidity"
+  "InvMass", "InvMassLinear", "Vert", "VertWeighted", "pTLead", "pTSub", "pTDi", "EtaLead", 
+  "EtaSub", "EtaDi","Rapidity","InvMass0","InvMass1","InvMass2","InvMass3"
 };
 const Color_t histFillColors[nHistos] = {
   kViolet+5, kRed+2, kBlue+2, kOrange-2, kWhite
@@ -38,7 +38,11 @@ const TString xAxisLabels[nHistoTypes] = {
   "#eta",
   "#eta",
   "#eta",
-  "Y"
+  "Y",
+  "mass [GeV]",
+  "mass [GeV]",
+  "mass [GeV]",
+  "mass [GeV]"
 };
 float binLowInvMass = 0;
 const float binHighInvMass = 3000;
@@ -72,7 +76,11 @@ const TString plotTitle[nHistoTypes] = {
   "Leading electron #eta",
   "Sub-leading electron #eta",
   "Dielectron #eta",
-  "Dielectron Rapidity"
+  "Dielectron Rapidity",
+  "Invariant Mass: Cross-section weights",
+  "Invariant Mass: Cross-section and gen weights",
+  "Invariant Mass: Cross-section, gen, and pileup weights",
+  "Invariant Mass: Cross-section, gen, pileup, and SF weights"
 };
 enum HistBins {
   FAKES,
@@ -92,7 +100,11 @@ enum HistTypes {
   ETA_LEAD,
   ETA_SUB,
   ETA_DI,
-  RAPIDITY
+  RAPIDITY,
+  INV_MASS0,
+  INV_MASS1,
+  INV_MASS2,
+  INV_MASS3
 };
 
 void drawDataVsMC()
@@ -114,18 +126,33 @@ void drawDataVsMC()
   //                                //
   ////////////////////////////////////
 
+  int l=0;
   TH1F*histos[nHistoTypes][nHistos];  
   TH1F*hDataMCRatio[nHistoTypes];
   TH1F*hMCSum[nHistoTypes];
   TString hSumName;
   TString hRatioName;
+  //TProfile*hSFvsInvMassProf = (TProfile*)file->Get("hSFvsInvMassProf");
+  //TCanvas*cSFvsInvMass = new TCanvas("cSFvsInvMass","",10,10,1000,1000);
+  //cSFvsInvMass->SetGrid();
+  //cSFvsInvMass->SetLogx();
+  //hSFvsInvMassProf->Draw("PE");
+
   for(int i=0;i<nHistoTypes;i++){//type of histogram
     hSumName = "hMCSum";
     hSumName += i;
     hRatioName = "hDataMCRatio";
     hRatioName += i;
     for(int j=0;j<nHistos;j++){//histogram within type (backgrounds, signal, etc)  
-      if(i==VERTICES_WEIGHTED&&j==DATA) histos[i][j]= (TH1F*)file->Get(histName[j]+histTypeName[i-1]);
+      if(i==VERTICES_WEIGHTED&&j==DATA) 
+        histos[i][j] = (TH1F*)file->Get(histName[j]+histTypeName[i-1]);
+      else if(i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3){
+        TString hInvMassName = "hInvMass";
+        l=i-11;
+        hInvMassName+=l;
+        hInvMassName+=j;
+        histos[i][j] = (TH1F*)file->Get(hInvMassName);
+      }
       else histos[i][j]=(TH1F*)file->Get(histName[j]+histTypeName[i]); 
 
       //Setting negative bin content to ZERO!!!!!!!!!!!!!!!!!!!!!! 
@@ -157,7 +184,7 @@ void drawDataVsMC()
     hDataMCRatio[i]->SetMarkerStyle(20);
     hDataMCRatio[i]->GetYaxis()->SetRangeUser(ratioLow,ratioHigh);    
   }
-
+  
   //////////////////////////////////////////
   //                                      //
   //-----Place histograms into stacks-----//
@@ -183,7 +210,7 @@ void drawDataVsMC()
   legend->AddEntry(histos[0][TOPS],"t#bar{t}+tW+#bar{t}W");
   legend->AddEntry(histos[0][EW],"EW (Dibosons, #gamma^{*}/Z #rightarrow #tau^{-}#tau^{+})");
   legend->AddEntry(histos[0][FAKES],"Fakes (W+Jets)");  
-
+  
   TCanvas*canvas[nHistoTypes];
   TPad*pad1[nHistoTypes];
   TPad*pad2[nHistoTypes];
@@ -193,7 +220,7 @@ void drawDataVsMC()
   float x1[nHistoTypes]={0,60,0,0,0,0,0,-2.5,-2.5,-2.5,-2.5};
   float x2[nHistoTypes]={3000,120,50,50,500,500,500,2.5,2.5,2.5,2.5};
   for(int i=0;i<nHistoTypes;i++){ 
-    TString canvasName = "canvas";
+    TString canvasName = "canvas_";
     canvasName+=i;
     canvas[i] = new TCanvas(canvasName,"",10,10,1000,1000);    
     line[i]=new TLine(x1[i],1,x2[i],1);
