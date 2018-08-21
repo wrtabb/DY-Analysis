@@ -12,6 +12,8 @@ const int nHistos = 5;
 const float axisLow = 0.1;
 const float axisHigh = 100000000;
 const float padmargins = 0.03;
+const float profYHigh = 1.05;
+const float profYLow = 0.85;
 const TString hStackName = "hStack";
 const TString dataFileName = "./plots/dataVsMC.root";
 const TString histName[nHistos] = {
@@ -110,6 +112,7 @@ enum HistTypes {
 void drawDataVsMC()
 {
   gStyle->SetOptStat(0);
+  gROOT->SetBatch(kTRUE);
   TFile*file = new TFile(dataFileName);
   if(!file){
     cout << endl;
@@ -132,12 +135,40 @@ void drawDataVsMC()
   TH1F*hMCSum[nHistoTypes];
   TString hSumName;
   TString hRatioName;
-  //TProfile*hSFvsInvMassProf = (TProfile*)file->Get("hSFvsInvMassProf");
-  //TCanvas*cSFvsInvMass = new TCanvas("cSFvsInvMass","",10,10,1000,1000);
-  //cSFvsInvMass->SetGrid();
-  //cSFvsInvMass->SetLogx();
-  //hSFvsInvMassProf->Draw("PE");
+  TProfile*hSFvsInvMassProfAll = (TProfile*)file->Get("hSFvsInvMassAll_pfx");
+  hSFvsInvMassProfAll->SetMarkerStyle(20);
+  hSFvsInvMassProfAll->SetMarkerColor(kRed);
+  hSFvsInvMassProfAll->SetLineColor(kRed);
+  TProfile*hSFvsInvMassProfHLT = (TProfile*)file->Get("hSFvsInvMassHLT_pfx");
+  hSFvsInvMassProfHLT->SetMarkerStyle(21);
+  hSFvsInvMassProfHLT->SetMarkerColor(kBlue);
+  hSFvsInvMassProfHLT->SetLineColor(kBlue);
+  TProfile*hSFvsInvMassProfReco = (TProfile*)file->Get("hSFvsInvMassReco_pfx");
+  hSFvsInvMassProfReco->SetMarkerStyle(22);
+  hSFvsInvMassProfReco->SetMarkerColor(kOrange+2);
+  hSFvsInvMassProfReco->SetLineColor(kOrange+2);
+  TProfile*hSFvsInvMassProfID = (TProfile*)file->Get("hSFvsInvMassID_pfx");
+  hSFvsInvMassProfID->SetMarkerStyle(27);
+  hSFvsInvMassProfID->SetMarkerColor(kGreen+2);
+  hSFvsInvMassProfID->SetLineColor(kGreen+2);
+  TCanvas*cSFvsInvMass = new TCanvas("cSFvsInvMass","",10,10,1000,1000);
+  TLegend*legend2 = new TLegend(0.1,0.9,0.35,0.75);
+  legend2->SetTextSize(0.02);
+  legend2->AddEntry(hSFvsInvMassProfAll,"Total");
+  legend2->AddEntry(hSFvsInvMassProfHLT,"HLT");
+  legend2->AddEntry(hSFvsInvMassProfReco,"Reco");
+  legend2->AddEntry(hSFvsInvMassProfID,"ID");
 
+  cSFvsInvMass->SetGrid();
+  cSFvsInvMass->SetLogx();
+  hSFvsInvMassProfAll->GetYaxis()->SetRangeUser(profYLow,profYHigh);
+  hSFvsInvMassProfAll->GetXaxis()->SetTitle("dielectron invariant mass [GeV]");
+  hSFvsInvMassProfAll->Draw("PE");
+  hSFvsInvMassProfHLT->Draw("same,PE");
+  hSFvsInvMassProfReco->Draw("same,PE");
+  hSFvsInvMassProfID->Draw("same,PE");
+  legend2->Draw("same");
+  cSFvsInvMass->SaveAs("./plots/SF/SFvsInvMass.png"); 
   for(int i=0;i<nHistoTypes;i++){//type of histogram
     hSumName = "hMCSum";
     hSumName += i;
@@ -146,13 +177,6 @@ void drawDataVsMC()
     for(int j=0;j<nHistos;j++){//histogram within type (backgrounds, signal, etc)  
       if(i==VERTICES_WEIGHTED&&j==DATA) 
         histos[i][j] = (TH1F*)file->Get(histName[j]+histTypeName[i-1]);
-      else if(i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3){
-        TString hInvMassName = "hInvMass";
-        l=i-11;
-        hInvMassName+=l;
-        hInvMassName+=j;
-        histos[i][j] = (TH1F*)file->Get(hInvMassName);
-      }
       else histos[i][j]=(TH1F*)file->Get(histName[j]+histTypeName[i]); 
 
       //Setting negative bin content to ZERO!!!!!!!!!!!!!!!!!!!!!! 
@@ -232,7 +256,8 @@ void drawDataVsMC()
     pad1[i]->SetTicks(1,1);
     pad1[i]->Draw(); 
     pad1[i]->cd(); 
-    if(i==INV_MASS) pad1[i]->SetLogx();
+    if(i==INV_MASS||i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3) 
+      pad1[i]->SetLogx();
     hStack[i]->Draw("hist");
     hStack[i]->GetXaxis()->SetTitle(xAxisLabels[i]);
     hStack[i]->GetXaxis()->SetNoExponent();

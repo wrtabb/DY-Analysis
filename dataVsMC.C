@@ -56,7 +56,10 @@ const float etaGapLow = 1.4442;
 const float ptHigh = 28;
 const float ptLow = 17;
 const float dRMinCut = 0.3;
-
+const int ptBinHigh = 499;
+const int ptBinLow = 26;
+const int invMassHigh = 120;
+const int invMassLow = 60;
 const float eMass = 0.000511;
 const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
 const TString treeName = "recoTree/DYTree";
@@ -205,13 +208,16 @@ const float binLowY = -2.5;
 const float binHighY = 2.5;
 
 const int nBins[nHistoTypes] = {nBinsInvMass,nBinsInvMassLinear,nBinsVert,nBinsVert,npTBins,
-                                npTBins,npTBins,nEtaBins,nEtaBins,nEtaBins,nYBins};
+                                npTBins,npTBins,nEtaBins,nEtaBins,nEtaBins,nYBins,
+                                nBinsInvMass,nBinsInvMass,nBinsInvMass,nBinsInvMass};
 const float binLow[nHistoTypes] = {binLowInvMass,binLowInvMassLinear,binLowVert,binLowVert,
                                    binLowpT,binLowpT,binLowpT,binLowEta,binLowEta,binLowEta,
-                                   binLowY};
+                                   binLowY,binLowInvMass,binLowInvMass,binLowInvMass,
+                                   binLowInvMass};
 const float binHigh[nHistoTypes] = {binHighInvMass,binHighInvMassLinear,binHighVert,
                                     binHighVert,binHighpT,binHighpT,binHighpT,binHighEta,
-                                    binHighEta,binHighEta,binHighY};
+                                    binHighEta,binHighEta,binHighY,binHighInvMass,
+                                    binHighInvMass,binHighInvMass,binHighInvMass};
 
 //Cross sections calculated by Kyeongpil Lee
 const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,//QCD
@@ -402,7 +408,7 @@ void dataVsMC()
   for(int i=0;i<nHistoTypes;i++){//type of histogram
     for(int j=0;j<nHistos;j++){//histogram within type
       if(i==VERTICES_WEIGHTED&&j==DATA) continue; //data doesn't get weighted
-      if(i==INV_MASS) 
+      if(i==INV_MASS||i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3) 
         histos[i][j]=new TH1F(histName[j]+histTypeName[i],"",nBinsInvMass,massbins);   
       else histos[i][j]=new TH1F(histName[j]+histTypeName[i],"",nBins[i],binLow[i],binHigh[i]);      
       if(j==DATA) {
@@ -588,10 +594,10 @@ void dataVsMC()
      ePt1 = Electron_pT[leadEle];
      ePt2 = Electron_pT[subEle];
      
-     if(ePt1<26) ePt1 = 26;//pull this information from the histograms
-     if(ePt2<26) ePt2 = 26;//raise bin
-     if(ePt1>499) ePt1 = 499;//lower bin
-     if(ePt2>499) ePt2 = 499;//
+     if(ePt1<ptBinLow) ePt1 = ptBinLow;//pull this information from the histograms
+     if(ePt2<ptBinLow) ePt2 = ptBinLow;//raise bin
+     if(ePt1>ptBinHigh) ePt1 = ptBinHigh;//lower bin
+     if(ePt2>ptBinHigh) ePt2 = ptBinHigh;//
      
      sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
      sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta2,ePt2));
@@ -607,10 +613,14 @@ void dataVsMC()
      }
      else if(iChain==FAKES){//Weights for Fakes
        totalWeight = genWeight*xSecWeight*pileupWeight;
+       sfWeight = 1.0;
        weightNoPileup = genWeight*xSecWeight;
      }
      else if(!isMC) {//no weights for data
-       totalWeight = 1.0;      
+       totalWeight = 1.0;  
+       xSecWeight = 1.0;
+       genWeight = 1.0;
+       pileupWeight = 1.0;    
        weightNoPileup = 1.0;
      }
      
@@ -626,7 +636,7 @@ void dataVsMC()
      hSFvsInvMassID->Fill(invMass,sfID1*sfID2);
      hSFvsInvMassReco->Fill(invMass,sfReco1*sfReco2);
 
-     if(invMass<60||invMass>120) continue;
+     if(invMass<invMassLow||invMass>invMassHigh) continue;
      histos[INV_MASS_LINEAR][sampleCategory]->Fill(invMass,totalWeight);
      histos[PT_LEAD][sampleCategory]->Fill(Electron_pT[leadEle],totalWeight);
      histos[PT_SUB][sampleCategory]->Fill(Electron_pT[subEle],totalWeight);
