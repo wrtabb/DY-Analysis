@@ -274,7 +274,8 @@ void drawDataVsMC()
     canvas[i]->cd();
     pad2[i] = new TPad("","",0,0.05,1,0.3);
     p2[i] = pad2[i];
-    if(i==INV_MASS) p2[i]->SetLogx();
+    if(i==INV_MASS||i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3) 
+      pad2[i]->SetLogx();
     pad2[i]->SetTopMargin(padmargins);
     pad2[i]->SetBottomMargin(0.2);
     pad2[i]->SetGrid();
