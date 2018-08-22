@@ -441,9 +441,8 @@ void dataVsMC()
   TH2F*hSFvsInvMassID = new TH2F("hSFvsInvMassID","",nBinsInvMass,massbins,150,0,1.5);
 
   cout << "Starting Event Loop" << endl;
-  double xSecWeight, weightNoPileup, genWeight, 
-    varGenWeight, totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, 
-    sumRawGenWeight, pileupWeight;
+  double varGenWeight, lumiEffective, nEffective, localEntry, sumGenWeight, sumRawGenWeight, 
+    totalWeight, sfWeight, weightNoPileup, xSecWeight, genWeight, pileupWeight;
   Long64_t nentries;
   Long64_t count = 0;
   int sampleCategory = -1;
@@ -455,7 +454,6 @@ void dataVsMC()
   genWeightFile.open("genWeights.txt");
   genWeightFile << "iChain, Nevents, Neffective, LumiEffective" << endl;
   double sfReco1,sfReco2,sfID1,sfID2,sfHLT;//efficiency scale factors
-  double sfWeight;
   double eEta1, eEta2, ePt1, ePt2;
 
   //Loop over samples
@@ -498,7 +496,6 @@ void dataVsMC()
     }
     
     nentries = chains[iChain]->GetEntries();
-    xSecWeight=lumi*(xSec[iChain]/1.0);     
     
     //Finding normalized genWeights,sums,variances
     sumGenWeight = 0.0;
@@ -525,6 +522,13 @@ void dataVsMC()
       count = count+1; 
       chains[iChain]->GetEntry(i);
       if(Nelectrons<2) continue;   	  
+      //Weights
+      totalWeight = 1.0;
+      sfWeight = 1.0;
+      weightNoPileup = 1.0;
+      xSecWeight = 1.0;
+      genWeight = 1.0;
+      pileupWeight = 1.0;
       
       //HLT cut
       trigNameSize = pHLT_trigName->size();
@@ -542,12 +546,7 @@ void dataVsMC()
 	}
       } 
       if(!passHLT) continue;
-
-      pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
-      genWeight = GENEvt_weight/fabs(GENEvt_weight);
-      genWeight = genWeight/sumGenWeight;      
-      
-      //Electron loop
+     
       bool passNumEle = kFALSE;
       int numDielectrons = 0;
       int subEle = -1;
@@ -558,6 +557,7 @@ void dataVsMC()
       double dielectronEta = -5000;
       TLorentzVector dielectronP4;
 
+      //Electron loop
       for(int iEle = 0; iEle < Nelectrons; iEle++) {
 	if(!Electron_passMediumID[iEle]) continue;
 	for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
@@ -605,25 +605,34 @@ void dataVsMC()
      sfID2=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta2,ePt2));
      sfHLT=(hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta1,ePt1)))*
        (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
-     sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
 
-     if(isMC&&iChain!=FAKES) {//weights for MC except for Fakes 
-       totalWeight = sfWeight*genWeight*xSecWeight*pileupWeight;
-       weightNoPileup = sfWeight*genWeight*xSecWeight;
-     }
-     else if(iChain==FAKES){//Weights for Fakes
-       totalWeight = genWeight*xSecWeight*pileupWeight;
-       sfWeight = 1.0;
-       weightNoPileup = genWeight*xSecWeight;
-     }
-     else if(!isMC) {//no weights for data
-       totalWeight = 1.0;  
-       xSecWeight = 1.0;
-       genWeight = 1.0;
-       pileupWeight = 1.0;    
-       weightNoPileup = 1.0;
-     }
+     //Determining weighting factors
+     if(isMC){
+       xSecWeight=lumi*(xSec[iChain]/1.0);     
+       pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
+       genWeight = (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
+
+       if(sampleCategory==FAKES){
+         totalWeight = genWeight*xSecWeight*pileupWeight;
+         weightNoPileup = genWeight*xSecWeight;
+       }
+       else{
+         sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
+         totalWeight = sfWeight*genWeight*xSecWeight*pileupWeight;
+         weightNoPileup = sfWeight*genWeight*xSecWeight;
+         hSFvsInvMassAll->Fill(invMass,sfWeight);
+         hSFvsInvMassHLT->Fill(invMass,sfHLT);
+         hSFvsInvMassID->Fill(invMass,sfID1*sfID2);
+         hSFvsInvMassReco->Fill(invMass,sfReco1*sfReco2);
+       }
+     }//end if isMC
      
+     if(totalWeight!=xSecWeight*pileupWeight*genWeight*sfWeight){
+       cout << "!!!!!!!!!!!!!!!!!!!!" << endl;
+       cout << "!Weight discrepancy!" << endl;
+       cout << "!!!!!!!!!!!!!!!!!!!!" << endl;
+       return;
+     }
      histos[INV_MASS0][sampleCategory]->Fill(invMass,xSecWeight);
      histos[INV_MASS1][sampleCategory]->Fill(invMass,xSecWeight*genWeight);
      histos[INV_MASS2][sampleCategory]->Fill(invMass,xSecWeight*pileupWeight*genWeight);
@@ -631,10 +640,6 @@ void dataVsMC()
        Fill(invMass,xSecWeight*pileupWeight*genWeight*sfWeight);
 
      histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
-     hSFvsInvMassAll->Fill(invMass,sfWeight);
-     hSFvsInvMassHLT->Fill(invMass,sfHLT);
-     hSFvsInvMassID->Fill(invMass,sfID1*sfID2);
-     hSFvsInvMassReco->Fill(invMass,sfReco1*sfReco2);
 
      if(invMass<invMassLow||invMass>invMassHigh) continue;
      histos[INV_MASS_LINEAR][sampleCategory]->Fill(invMass,totalWeight);
