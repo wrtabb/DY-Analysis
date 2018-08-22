@@ -598,13 +598,6 @@ void dataVsMC()
      if(ePt2<ptBinLow) ePt2 = ptBinLow;//raise bin
      if(ePt1>ptBinHigh) ePt1 = ptBinHigh;//lower bin
      if(ePt2>ptBinHigh) ePt2 = ptBinHigh;//
-     
-     sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
-     sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta2,ePt2));
-     sfID1=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta1,ePt1));
-     sfID2=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta2,ePt2));
-     sfHLT=(hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta1,ePt1)))*
-       (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
 
      //Determining weighting factors
      if(isMC){
@@ -617,6 +610,12 @@ void dataVsMC()
          weightNoPileup = genWeight*xSecWeight;
        }
        else{
+         sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
+         sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta2,ePt2));
+         sfID1=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta1,ePt1));
+         sfID2=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta2,ePt2));
+         sfHLT=(hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta1,ePt1)))*
+           (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
          sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
          totalWeight = sfWeight*genWeight*xSecWeight*pileupWeight;
          weightNoPileup = sfWeight*genWeight*xSecWeight;
@@ -636,14 +635,13 @@ void dataVsMC()
        cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
        return;
      }
+
      histos[INV_MASS0][sampleCategory]->Fill(invMass,xSecWeight);
      histos[INV_MASS1][sampleCategory]->Fill(invMass,xSecWeight*genWeight);
      histos[INV_MASS2][sampleCategory]->Fill(invMass,xSecWeight*pileupWeight*genWeight);
      histos[INV_MASS3][sampleCategory]->
        Fill(invMass,xSecWeight*pileupWeight*genWeight*sfWeight);
-
      histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
-
      if(invMass<invMassLow||invMass>invMassHigh) continue;
      histos[INV_MASS_LINEAR][sampleCategory]->Fill(invMass,totalWeight);
      histos[PT_LEAD][sampleCategory]->Fill(Electron_pT[leadEle],totalWeight);
