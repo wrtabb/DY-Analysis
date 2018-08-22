@@ -631,7 +631,8 @@ void dataVsMC()
        cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
        cout << "!Weight discrepancy!" << endl;
        cout << "totalWeight = " << totalWeight << endl;
-       cout << "xSecWeight*pileupWeight*genWeight*sfWeight = " << xSecWeight*pileupWeight*genWeight*sfWeight << endl;
+       cout << "xSecWeight*pileupWeight*genWeight*sfWeight = " << 
+         xSecWeight*pileupWeight*genWeight*sfWeight << endl;
        cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
        return;
      }
