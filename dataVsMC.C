@@ -442,7 +442,8 @@ void dataVsMC()
 
   cout << "Starting Event Loop" << endl;
   double varGenWeight, lumiEffective, nEffective, localEntry, sumGenWeight, sumRawGenWeight, 
-    totalWeight, sfWeight, weightNoPileup, xSecWeight, genWeight, pileupWeight;
+    totalWeight, sfWeight, weightNoPileup, xSecWeight, genWeight, pileupWeight, 
+    xSecWeightAlone;
   Long64_t nentries;
   Long64_t count = 0;
   int sampleCategory = -1;
@@ -529,7 +530,7 @@ void dataVsMC()
       xSecWeight = 1.0;
       genWeight = 1.0;
       pileupWeight = 1.0;
-      
+      xSecWeightAlone = 1.0; 
       //HLT cut
       trigNameSize = pHLT_trigName->size();
       bool passHLT = kFALSE;	  
@@ -601,7 +602,8 @@ void dataVsMC()
 
      //Determining weighting factors
      if(isMC){
-       xSecWeight=lumi*(xSec[iChain]/1.0);     
+       xSecWeight=lumi*(xSec[iChain]/1.0);//xSecWeight when used with genWeight 
+       xSecWeightAlone = lumi*(xSec[iChain]/nentries);//sSecWeight when used without genWeight
        pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
        genWeight = (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
 
@@ -635,7 +637,7 @@ void dataVsMC()
        cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
      }
 
-     histos[INV_MASS0][sampleCategory]->Fill(invMass,xSecWeight);
+     histos[INV_MASS0][sampleCategory]->Fill(invMass,xSecWeightAlone);
      histos[INV_MASS1][sampleCategory]->Fill(invMass,xSecWeight*genWeight);
      histos[INV_MASS2][sampleCategory]->Fill(invMass,xSecWeight*pileupWeight*genWeight);
      histos[INV_MASS3][sampleCategory]->
