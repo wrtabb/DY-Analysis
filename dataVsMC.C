@@ -626,7 +626,7 @@ void dataVsMC()
        }
      }//end if isMC
      
-     if(totalWeight-xSecWeight*pileupWeight*genWeight*sfWeight>0.0001){
+     if(fabs(totalWeight-xSecWeight*pileupWeight*genWeight*sfWeight)>0.0001){
        cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
        cout << "!Weight discrepancy!" << endl;
        cout << "totalWeight = " << totalWeight << endl;
