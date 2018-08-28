@@ -628,15 +628,6 @@ void dataVsMC()
        }
      }//end if isMC
      
-     if(fabs(totalWeight-xSecWeight*pileupWeight*genWeight*sfWeight)>0.0001){
-       cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-       cout << "!Weight discrepancy!" << endl;
-       cout << "totalWeight = " << totalWeight << endl;
-       cout << "xSecWeight*pileupWeight*genWeight*sfWeight = " << 
-         xSecWeight*pileupWeight*genWeight*sfWeight << endl;
-       cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-     }
-
      histos[INV_MASS0][sampleCategory]->Fill(invMass,xSecWeightAlone);
      histos[INV_MASS1][sampleCategory]->Fill(invMass,xSecWeight*genWeight);
      histos[INV_MASS2][sampleCategory]->Fill(invMass,xSecWeight*pileupWeight*genWeight);

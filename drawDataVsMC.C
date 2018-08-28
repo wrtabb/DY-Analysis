@@ -241,8 +241,8 @@ void drawDataVsMC()
   TLine*line[nHistoTypes];
   TVirtualPad*p1[nHistoTypes];
   TVirtualPad*p2[nHistoTypes];
-  float x1[nHistoTypes]={0,60,0,0,0,0,0,-2.5,-2.5,-2.5,-2.5};
-  float x2[nHistoTypes]={3000,120,50,50,500,500,500,2.5,2.5,2.5,2.5};
+  float x1[nHistoTypes]={0,60,0,0,0,0,0,-2.5,-2.5,-2.5,-2.5,0,0,0,0};
+  float x2[nHistoTypes]={3000,120,50,50,500,500,500,2.5,2.5,2.5,2.5,3000,3000,3000,3000};
   for(int i=0;i<nHistoTypes;i++){ 
     TString canvasName = "canvas_";
     canvasName+=i;

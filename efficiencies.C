@@ -79,9 +79,14 @@ const float ptLow = 17;
 const float eMass = 0.000511;
 const TString treeName = "recoTree/DYTree";
 const TString pileupRatioName = "./plots/pileup.root";
+const TString leg2SFName = "./data/Leg2_SF.root";
+const TString medIDSFName = "./data/MediumID_SF.root";
+const TString recoSFName = "./data/Reco_SF.root";
 const float dRMinCut = 0.3;
 const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
+const int ptBinHigh = 499;
+const int ptBinLow = 26;
 
 void efficiencies()
 {
@@ -184,14 +189,16 @@ void efficiencies()
       chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
       chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess, 
 				       &b_GENLepton_isHardProcess);
-      chains[iChain]->SetBranchAddress("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState, 
+      chains[iChain]->SetBranchAddress
+        ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState, 
 				       &b_GENLepton_fromHardProcessFinalState);
       chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
       chains[iChain]->SetBranchAddress("nPileUp", &nPileUp, &b_nPileUp);
       chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
       chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
       chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
-      chains[iChain]->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,&b_Electron_passMediumID);
+      chains[iChain]->SetBranchAddress
+        ("Electron_passMediumID",&Electron_passMediumID,&b_Electron_passMediumID);
       chains[iChain]->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
       chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
       chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
@@ -210,14 +217,16 @@ void efficiencies()
  hGenDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");
  hGenDielectronInvMass->GetXaxis()->SetMoreLogLabels();
  hGenDielectronInvMass->GetXaxis()->SetNoExponent();
- TH1F*hGenMatchedDielectronInvMass = new TH1F("hGenMatchedDielectronInvMass","",nLogBins,massbins);
+ TH1F*hGenMatchedDielectronInvMass = 
+   new TH1F("hGenMatchedDielectronInvMass","",nLogBins,massbins);
  hGenMatchedDielectronInvMass->Sumw2();
  hGenMatchedDielectronInvMass->SetLineColor(kBlue);
  hGenMatchedDielectronInvMass->SetTitle("Reco Gen Matched Dielectrons");
  hGenMatchedDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");  
  hGenMatchedDielectronInvMass->GetXaxis()->SetMoreLogLabels();
  hGenMatchedDielectronInvMass->GetXaxis()->SetNoExponent();
- TH1F*hGenPassIDdielectronInvMass = new TH1F("hGenPasIDDielectronInvMass","",nLogBins,massbins);
+ TH1F*hGenPassIDdielectronInvMass = 
+   new TH1F("hGenPasIDDielectronInvMass","",nLogBins,massbins);
  hGenPassIDdielectronInvMass->Sumw2();
  hGenPassIDdielectronInvMass->SetLineColor(kRed);
  hGenPassIDdielectronInvMass->SetTitle("Medium ID Cut Dielectrons");
@@ -253,26 +262,36 @@ void efficiencies()
  hpTvsMass->GetYaxis()->SetTitle("p_{T} [GeV]"); 
  hpTvsMass->GetXaxis()->SetTitle("m_{ee} [GeV]"); 
  
- TH2F*migMatrixGENisHardvsGENFS = new TH2F("migMatrixGENisHardvsGENFS","",nLogBins,massbins,nLogBins,massbins);
- migMatrixGENisHardvsGENFS->SetTitle("Migration Matrix: Gen-Level Final State vs. Gen-Level Hard Process");
- migMatrixGENisHardvsGENFS->GetYaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
- migMatrixGENisHardvsGENFS->GetXaxis()->SetTitle("Gen-Level Hard Process Dielecron Invariant mass [GeV]");
+ TH2F*migMatrixGENisHardvsGENFS = 
+   new TH2F("migMatrixGENisHardvsGENFS","",nLogBins,massbins,nLogBins,massbins);
+ migMatrixGENisHardvsGENFS->
+   SetTitle("Migration Matrix: Gen-Level Final State vs. Gen-Level Hard Process");
+ migMatrixGENisHardvsGENFS->GetYaxis()->
+   SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
+ migMatrixGENisHardvsGENFS->GetXaxis()->
+   SetTitle("Gen-Level Hard Process Dielecron Invariant mass [GeV]");
  migMatrixGENisHardvsGENFS->GetXaxis()->SetNoExponent();
  migMatrixGENisHardvsGENFS->GetXaxis()->SetMoreLogLabels();
  migMatrixGENisHardvsGENFS->GetYaxis()->SetNoExponent();
  migMatrixGENisHardvsGENFS->GetYaxis()->SetMoreLogLabels();
- TH2F*migMatrixGENFSvsReco = new TH2F("migMatrixGENFSvsReco","",nLogBins,massbins,nLogBins,massbins);
+ TH2F*migMatrixGENFSvsReco = 
+   new TH2F("migMatrixGENFSvsReco","",nLogBins,massbins,nLogBins,massbins);
  migMatrixGENFSvsReco->SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Final State");
- migMatrixGENFSvsReco->GetXaxis()->SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
+ migMatrixGENFSvsReco->GetXaxis()->
+   SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
  migMatrixGENFSvsReco->GetYaxis()->SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
  migMatrixGENFSvsReco->GetXaxis()->SetNoExponent();
  migMatrixGENFSvsReco->GetXaxis()->SetMoreLogLabels();
  migMatrixGENFSvsReco->GetYaxis()->SetNoExponent();
  migMatrixGENFSvsReco->GetYaxis()->SetMoreLogLabels();
- TH2F*migMatrixGENisHardvsReco = new TH2F("migMatrixGENisHardvsReco","",nLogBins,massbins,nLogBins,massbins);
- migMatrixGENisHardvsReco->SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Hard Process");
- migMatrixGENisHardvsReco->GetXaxis()->SetTitle("Gen-Level Hard Process Dielectron Invariant Mass [GeV]");
- migMatrixGENisHardvsReco->GetYaxis()->SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
+ TH2F*migMatrixGENisHardvsReco = 
+   new TH2F("migMatrixGENisHardvsReco","",nLogBins,massbins,nLogBins,massbins);
+ migMatrixGENisHardvsReco->
+   SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Hard Process");
+ migMatrixGENisHardvsReco->GetXaxis()->
+   SetTitle("Gen-Level Hard Process Dielectron Invariant Mass [GeV]");
+ migMatrixGENisHardvsReco->GetYaxis()->
+   SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
  migMatrixGENisHardvsReco->GetXaxis()->SetNoExponent();
  migMatrixGENisHardvsReco->GetXaxis()->SetMoreLogLabels();
  migMatrixGENisHardvsReco->GetYaxis()->SetNoExponent();
@@ -287,7 +306,8 @@ void efficiencies()
      histname+=jChain;
      hHardProcess[jChain] = new TH1F(histname,"",598,10,3000);
      hHardProcess[jChain]->SetFillColor(jChain+1);
-     hHardProcess[jChain]->GetXaxis()->SetTitle("Gen-Level Dielectron Mass (isHardProcess) [GeV]"); 
+     hHardProcess[jChain]->GetXaxis()->
+       SetTitle("Gen-Level Dielectron Mass (isHardProcess) [GeV]"); 
      hHardProcess[jChain]->GetYaxis()->SetRangeUser(0.000001,1000000000);
      hHardProcess[jChain]->GetXaxis()->SetNoExponent();
      hHardProcess[jChain]->GetXaxis()->SetMoreLogLabels();
@@ -306,9 +326,10 @@ void efficiencies()
  
  //Event Loop
  cout << "Starting Event Loop" << endl;
- double invMass, rapidity, dileptonPt, dileptonEta, xSecWeight, weightNoPileup, genWeight, varGenWeight, 
-   totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, sumRawGenWeight, pileupWeight;
- double invMassHardProcess;
+ double invMass, rapidity, dileptonPt, dileptonEta, xSecWeight, weightNoPileup, genWeight, 
+   varGenWeight, totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, 
+   sumRawGenWeight, pileupWeight, sfReco1, sfReco2, sfID1, sfID2, sfHLT;
+ double invMassHardProcess,sfWeight;
  Long64_t nentries;
  Long64_t count = 0;
  double nEvents = 250000;
@@ -318,9 +339,17 @@ void efficiencies()
  TString trigName;
  int trigNameSize;
  long int nTooManyDielectrons = 0;
- long int nTooManyDielectronsFS = 0;  
+ long int nTooManyDielectronsFS = 0; 
+ double eEta1, eEta2, ePt1, ePt2;
+ 
  TFile*pileupRatioFile  = new TFile(pileupRatioName);
  TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
+ TFile*fileLeg2SF = new TFile(leg2SFName);
+ TH2F*hLeg2SF = (TH2F*)fileLeg2SF->Get("EGamma_SF2D");
+ TFile*fileMedIDSF = new TFile(medIDSFName);
+ TH2F*hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
+ TFile*fileRecoSF = new TFile(recoSFName);
+ TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
 
  for(int iChain=0;iChain<numChains;iChain++)
    {
@@ -402,8 +431,8 @@ void efficiencies()
 	    {
 	      for(int jEle = iEle+1; jEle < Nelectrons; jEle++)
 		{	  
-		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
-					     Electron_eta[jEle])) continue; 	
+		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],
+                    Electron_eta[iEle],Electron_eta[jEle])) continue; 	
 		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
 		  if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
 		  nEle++;
@@ -417,9 +446,9 @@ void efficiencies()
 	    }//end reco loop
 
 	  if(idxRecoEle1>=0&&idxRecoEle2>=0)
-	    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],Electron_phi[idxRecoEle1],
-				    eMass,Electron_pT[idxRecoEle2],Electron_eta[idxRecoEle2],
-				    Electron_phi[idxRecoEle2],eMass);	  
+	    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
+              Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
+              Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
 	  if(nGenDielectrons==0) 
 	    continue; // must be DY->mumu or tautau event, skip it
 	  
@@ -442,13 +471,12 @@ void efficiencies()
 	    }	    
 	  
 	  invMassHardProcess = calcInvMass(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
-					   GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],
-					   GENLepton_eta[idxGenEle2],GENLepton_phi[idxGenEle2],eMass);		  
+	    GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],            GENLepton_phi[idxGenEle2],eMass);		  
 	  invMass = calcInvMass(GENLepton_pT[idxGenEleFS1],GENLepton_eta[idxGenEleFS1],
-				GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],
-				GENLepton_eta[idxGenEleFS2],GENLepton_phi[idxGenEleFS2],eMass);		  
+            GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],
+            GENLepton_eta[idxGenEleFS2],GENLepton_phi[idxGenEleFS2],eMass);		  
 
-	  hHardProcess[iChain]->Fill(invMassHardProcess,totalWeight);//Fill if hard process gen-electrons
+	  hHardProcess[iChain]->Fill(invMassHardProcess,totalWeight);
 	  
 	  //HLT cut
 	  trigNameSize = pHLT_trigName->size();
@@ -502,11 +530,31 @@ void efficiencies()
 	  
 	  // Apply HLT requirement
 	  if(!passHLT) continue;
+          
+          eEta1 = Electron_eta[idxRecoEle1];
+          eEta2 = Electron_eta[idxRecoEle2];
+          ePt1 = Electron_pT[idxRecoEle1];
+          ePt2 = Electron_pT[idxRecoEle2];
+
+          if(ePt1<ptBinLow) ePt1 = ptBinLow;//pull this information from the histograms
+          if(ePt2<ptBinLow) ePt2 = ptBinLow;//raise bin
+          if(ePt1>ptBinHigh) ePt1 = ptBinHigh;//lower bin
+          if(ePt2>ptBinHigh) ePt2 = ptBinHigh;//
+
+
 	  // Event passed HLT cut
+	  sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
+          sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta2,ePt2));
+          sfID1=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta1,ePt1));
+          sfID2=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta2,ePt2));
+          sfHLT=(hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta1,ePt1)))*
+            (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
+          sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
+
 	  hHLTGenDielectronInvMass->Fill(invMass,totalWeight);
 	  hRecoInvMass->Fill(invMassReco,totalWeight);
 	  migMatrixGENisHardvsGENFS->Fill(invMassHardProcess,invMass,totalWeight);
-	  migMatrixGENFSvsReco->Fill(invMass,invMassReco,totalWeight);
+	  migMatrixGENFSvsReco->Fill(invMass,invMassReco,totalWeight*sfWeight);
 	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight);
 	}//end event loop   
       
@@ -706,12 +754,12 @@ void efficiencies()
   Double_t TotalRunTime = totaltime.RealTime();
   TTimeStamp ts_end;
   cout << endl;
-  cout << "*****************************************************************************" << endl;
+  cout << "**************************************************************************" << endl;
   cout << "Total CPU RunTime: " << TotalCPURunTime/60 << " minutes" << endl;
   cout << "Total Real RunTime: " << TotalRunTime/60 << " minutes" << endl;
   cout << "[End Time(local time): " << ts_end.AsString("l") << "]" << endl;   
   cout << "Number of Events Processed: " << count << endl;
-  cout << "*****************************************************************************" << endl;
+  cout << "**************************************************************************" << endl;
   cout << endl;
   
 }//end main function

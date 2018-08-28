@@ -8,20 +8,37 @@
 #include "TH1F.h"
 #include "TH2F.h"
 
-const double massbins[44] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 91, 96, 101, 
-			     106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 185, 200, 220, 243, 273, 320, 
-			     380, 440, 510, 600, 700, 830, 1000, 1500, 3000};
+const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106, 
+  110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380, 440, 510, 600, 700, 830, 
+  1000, 1500, 3000};
 const int nMassBins = 43;
 const int nCanvas = 6;
-const TString dataFileName = "./plots/plotsDY.root";
-
+const TString matrixFileName = "./plots/plotsDY.root";
+const TString dataFileName = "./plots/dataVsMC.root";
 void unfolding()
 {
   gStyle->SetOptStat(0);
   gStyle->SetPalette(1);
+  //Getting Data and Backgrounds from root files
+  TFile*fData = new TFile(dataFileName); 
+  TH1F*hData = (TH1F*)fData->Get("hDataInvMass");
+  TH1F*hEW = (TH1F*)fData->Get("hEWInvMass");
+  TH1F*hFakes = (TH1F*)fData->Get("hFakesInvMass");
+  TH1F*hTops = (TH1F*)fData->Get("hTopsInvMass");
+  int maxBin = hFakes->GetMaximumBin();
+      double x = hFakes->GetXaxis()->GetBinCenter(maxBin);
+      for(int k=1;k<x+1;k++){
+        if(hFakes->GetBinContent(k) < 0) hFakes->SetBinContent(k,0);
+      }
+  TH1F*hBackground = (TH1F*)hEW->Clone("hBackground");
+  hBackground->Add(hFakes);
+  hBackground->Add(hTops);
+  hData->SetLineColor(kRed);
+  hData->Draw("hist");
+  hData->Add(hBackground,-1);
   
   //Getting histograms of migration matrices from files
-  TFile*fMigrationMatrix = new TFile(dataFileName);
+  TFile*fMigrationMatrix = new TFile(matrixFileName);
   TH2F*migMatrixGENisHardvsGENFS = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsGENFS");
   TH2F*migMatrixGENFSvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENFSvsReco");
   TH2F*migMatrixGENisHardvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsReco");
@@ -57,8 +74,7 @@ void unfolding()
   TVectorD yieldsTrue(nMassBins);
   for(int i=1; i<=nMassBins; i++)
     {
-      yieldsMeasured(i-1) = hReco->GetBinContent(i);
-      yieldsTrue(i-1) = hGenFS->GetBinContent(i);
+      yieldsMeasured(i-1) = hData->GetBinContent(i);
     }
   
   for(int i=0; i<nMassBins; i++)
