@@ -87,6 +87,17 @@ const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
 const int ptBinHigh = 499;
 const int ptBinLow = 26;
+const int nMatrixHistos = 3;
+const int nInvMassHistos = 6;
+const TString histMatrixNames[nMatrixHistos] = {"hGenHardvsGenFS","hGenFSvsReco",
+  "hGenHardvsReco"};
+const TString matrixYaxisTitles[nMatrixHistos] = {"Gen-Level Final State Invariant Mass [GeV]",
+  "Reco Invariant Mass [GeV]","Reco Invariant Mass [GeV]"};
+const TString matrixXaxisTitles[nMatrixHistos] = {"Gen-Level Hard Process Invariant Mass [GeV]"  ,"Gen-Level Final State Invariant Mass [GeV]","Gen-Level Hard Process Invariant Mass [GeV]"};
+const TString histInvMassNames[nInvMassHistos] = {"hGenInvMass","hGenMatchedInvMass",
+  "hGenPassIDInvMass","hGenAllInvMass","hHLTGenInvMass","hRecoInvMass"};
+const TString histInvMassTitles[nInvMassHistos] = {"Only Kinematic Cuts","Reco-Gen Matched",
+  "Medium ID Cuts","Final State: No cuts","HLT Cut","Reconstructed"};
 
 void efficiencies()
 {
@@ -208,7 +219,17 @@ void efficiencies()
    }//end loading ntuples
  cout << endl;
  cout << "Total Events Loaded: " << totalentries << endl;
- 
+
+ TH1F*histInvMass[nInvMassHistos];
+ for(int i=0;i<nInvMassHistos;i++){
+   histInvMass[i]=new TH1F(histInvMassNames[i],"",nLogBins,massbins);
+   histInvMass[i]->Sumw2();
+   histInvMass[i]->GetXaxis()->SetTitle("invariant mass [GeV]");
+   histInvMass[i]->GetXaxis()->SetMoreLogLabels();
+   histInvMass[i]->GetXaxis()->SetNoExponent();
+   histInvMass[i]->SetTitle(histInvMassTitles[i]);
+ }
+
  //Defining histograms
  TH1F*hGenDielectronInvMass = new TH1F("hDielectronInvMass","",nLogBins,massbins);
  hGenDielectronInvMass->Sumw2();
@@ -247,7 +268,6 @@ void efficiencies()
  hHLTGenDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)"); 
  hHLTGenDielectronInvMass->GetXaxis()->SetMoreLogLabels();
  hHLTGenDielectronInvMass->GetXaxis()->SetNoExponent();
- 
  TH1F*hRecoInvMass = new TH1F("hRecoInvMass","",nLogBins,massbins);
  hRecoInvMass->Sumw2();
  hRecoInvMass->SetTitle("Reconstructed Invariant Mass");
@@ -261,7 +281,19 @@ void efficiencies()
  hpTvsMass->GetXaxis()->SetNoExponent();
  hpTvsMass->GetYaxis()->SetTitle("p_{T} [GeV]"); 
  hpTvsMass->GetXaxis()->SetTitle("m_{ee} [GeV]"); 
- 
+
+
+ TH2F*hMatrix[nMatrixHistos];
+ for(int i=0;i<nMatrixHistos;i++){
+   hMatrix[i]=new TH2F(histMatrixNames[i],"",nLogBins,massbins,nLogBins,massbins);
+   hMatrix[i]->GetYaxis()->SetTitle(matrixYaxisTitles[i]);
+   hMatrix[i]->GetXaxis()->SetTitle(matrixXaxisTitles[i]);
+   hMatrix[i]->GetYaxis()->SetNoExponent();
+   hMatrix[i]->GetYaxis()->SetMoreLogLabels();
+   hMatrix[i]->GetXaxis()->SetNoExponent();
+   hMatrix[i]->GetXaxis()->SetMoreLogLabels();
+ } 
+
  TH2F*migMatrixGENisHardvsGENFS = 
    new TH2F("migMatrixGENisHardvsGENFS","",nLogBins,massbins,nLogBins,massbins);
  migMatrixGENisHardvsGENFS->
