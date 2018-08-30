@@ -12,33 +12,43 @@ const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,
   110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380, 440, 510, 600, 700, 830, 
   1000, 1500, 3000};
 const int nMassBins = 43;
-const int nCanvas = 6;
+const int nCanvas = 8;
 const TString matrixFileName = "./plots/plotsDY.root";
 const TString dataFileName = "./plots/dataVsMC.root";
 void unfolding()
 {
+  //gROOT->SetBatch(kTRUE);
   gStyle->SetOptStat(0);
   gStyle->SetPalette(1);
   //Getting Data and Backgrounds from root files
   TFile*fData = new TFile(dataFileName); 
-  TH1F*hData = (TH1F*)fData->Get("hDataInvMass");
+  TFile*fMigrationMatrix = new TFile(matrixFileName);
   TH1F*hEW = (TH1F*)fData->Get("hEWInvMass");
   TH1F*hFakes = (TH1F*)fData->Get("hFakesInvMass");
   TH1F*hTops = (TH1F*)fData->Get("hTopsInvMass");
+  TH1F*hMC = (TH1F*)fData->Get("hMCInvMass");
+  TH1F*hBackground = (TH1F*)hEW->Clone("hBackground");
+  hBackground->Add(hFakes);
+  hBackground->Add(hTops);
+  TH1F*hData = (TH1F*)fData->Get("hDataInvMass");
+  hData->SetLineColor(kBlack);
+  hData->SetMarkerColor(kBlack);
+  hData->SetMarkerStyle(20);
+  hData->Add(hBackground,-1);
+  hMC->SetLineColor(kRed+2);
+  hMC->SetMarkerStyle(21);
+  hMC->SetMarkerColor(kRed+2);
+  TH1F*hMCpostFSR = (TH1F*)fMigrationMatrix->Get("hHLTGenDielectronInvMass");
+  hMCpostFSR->SetLineColor(kBlue+2);
+  hMCpostFSR->SetMarkerColor(kBlue+2);
+  hMCpostFSR->SetMarkerStyle(21);
   int maxBin = hFakes->GetMaximumBin();
       double x = hFakes->GetXaxis()->GetBinCenter(maxBin);
       for(int k=1;k<x+1;k++){
         if(hFakes->GetBinContent(k) < 0) hFakes->SetBinContent(k,0);
       }
-  TH1F*hBackground = (TH1F*)hEW->Clone("hBackground");
-  hBackground->Add(hFakes);
-  hBackground->Add(hTops);
-  hData->SetLineColor(kRed);
-  hData->Draw("hist");
-  hData->Add(hBackground,-1);
-  
+   
   //Getting histograms of migration matrices from files
-  TFile*fMigrationMatrix = new TFile(matrixFileName);
   TH2F*migMatrixGENisHardvsGENFS = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsGENFS");
   TH2F*migMatrixGENFSvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENFSvsReco");
   TH2F*migMatrixGENisHardvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsReco");
@@ -119,21 +129,48 @@ void unfolding()
   unfoldingGENvsGEN.Invert(&det);
   unfoldingFSvsReco.Invert(&det);
   unfoldingHardvsReco.Invert(&det);
-
+  const float axisLabelOffset = 1.65;
+  const float axisLabelSize = 0.03;
+  const int nMatrices = 6;
   //Placing all matrices in histograms for plotting
   TH2F*hresponseGENvsGEN = (TH2F*)migMatrixGENisHardvsGENFS->Clone("hresponseGENvsGEN");
-  hresponseGENvsGEN->SetTitle("Gen-Level Final State vs. Gen-Level Hard Process Response Matrix");
+  hresponseGENvsGEN->
+    SetTitle("Gen-Level Final State vs. Gen-Level Hard Process Response Matrix");
+  hresponseGENvsGEN->GetYaxis()->SetTitleOffset(axisLabelOffset);
+  hresponseGENvsGEN->GetXaxis()->SetTitleOffset(axisLabelOffset);
+  hresponseGENvsGEN->GetYaxis()->SetTitleSize(axisLabelSize);
+  hresponseGENvsGEN->GetXaxis()->SetTitleSize(axisLabelSize);
   TH2F*hresponseFSvsReco = (TH2F*)migMatrixGENFSvsReco->Clone("hresponseFSvsReco");
   hresponseFSvsReco->SetTitle("Reconstructed vs. Gen-Level Final State Response Matrix");
+  hresponseFSvsReco->GetYaxis()->SetTitleOffset(axisLabelOffset);
+  hresponseFSvsReco->GetXaxis()->SetTitleOffset(axisLabelOffset);
+  hresponseFSvsReco->GetYaxis()->SetTitleSize(axisLabelSize);
+  hresponseFSvsReco->GetXaxis()->SetTitleSize(axisLabelSize);
   TH2F*hresponseHardvsReco = (TH2F*)migMatrixGENisHardvsReco->Clone("hresponseGENvsGEN");
   hresponseHardvsReco->SetTitle("Reconstructed vs. Gen-Level Hard Process Response Matrix");
-
+  hresponseHardvsReco->GetYaxis()->SetTitleOffset(axisLabelOffset);
+  hresponseHardvsReco->GetXaxis()->SetTitleOffset(axisLabelOffset);
+  hresponseHardvsReco->GetYaxis()->SetTitleSize(axisLabelSize);
+  hresponseHardvsReco->GetXaxis()->SetTitleSize(axisLabelSize);
   TH2F*hunfoldingGENvsGEN = (TH2F*)migMatrixGENisHardvsGENFS->Clone("hunfoldingGENvsGEN");
-  hunfoldingGENvsGEN->SetTitle("Gen-Level Final State vs. Gen-Level Hard Process Unfolding Matrix");
+  hunfoldingGENvsGEN->
+    SetTitle("Gen-Level Final State vs. Gen-Level Hard Process Unfolding Matrix");
+  hunfoldingGENvsGEN->GetYaxis()->SetTitleOffset(axisLabelOffset);
+  hunfoldingGENvsGEN->GetXaxis()->SetTitleOffset(axisLabelOffset);
+  hunfoldingGENvsGEN->GetYaxis()->SetTitleSize(axisLabelSize);
+  hunfoldingGENvsGEN->GetXaxis()->SetTitleSize(axisLabelSize);
   TH2F*hunfoldingFSvsReco = (TH2F*)migMatrixGENFSvsReco->Clone("hunfoldingFSvsReco");
   hunfoldingFSvsReco->SetTitle("Reconstructed vs. Gen-Level Final State Unfolding Matrix");
+  hunfoldingFSvsReco->GetYaxis()->SetTitleOffset(axisLabelOffset);
+  hunfoldingFSvsReco->GetXaxis()->SetTitleOffset(axisLabelOffset);
+  hunfoldingFSvsReco->GetYaxis()->SetTitleSize(axisLabelSize);
+  hunfoldingFSvsReco->GetXaxis()->SetTitleSize(axisLabelSize);
   TH2F*hunfoldingHardvsReco = (TH2F*)migMatrixGENisHardvsReco->Clone("hunfoldingHardvsReco");
   hunfoldingHardvsReco->SetTitle("Reconstructed vs. Gen-Level Hard Process Unfolding Matrix");
+  hunfoldingHardvsReco->GetYaxis()->SetTitleOffset(axisLabelOffset);
+  hunfoldingHardvsReco->GetXaxis()->SetTitleOffset(axisLabelOffset);
+  hunfoldingHardvsReco->GetYaxis()->SetTitleSize(axisLabelSize);
+  hunfoldingHardvsReco->GetXaxis()->SetTitleSize(axisLabelSize);
 
   for(int i=0; i<nMassBins; i++)
     {
@@ -142,7 +179,6 @@ void unfolding()
 	  hresponseGENvsGEN->SetBinContent(i+1,j+1,responseGENvsGEN(i,j));
 	  hresponseFSvsReco->SetBinContent(i+1,j+1,responseFSvsReco(i,j));
 	  hresponseHardvsReco->SetBinContent(i+1,j+1,responseHardvsReco(i,j));
-	  
 	  hunfoldingGENvsGEN->SetBinContent(i+1,j+1,unfoldingGENvsGEN(i,j));
 	  hunfoldingFSvsReco->SetBinContent(i+1,j+1,unfoldingFSvsReco(i,j));
 	  hunfoldingHardvsReco->SetBinContent(i+1,j+1,unfoldingHardvsReco(i,j));	  
@@ -153,8 +189,9 @@ void unfolding()
   TH1F *hMassUnfolded = new TH1F("hMassUnfolded","",nMassBins,massbins);
   hMassUnfolded->SetTitle("Gen-Level Final State vs. Unfolded");
   hMassUnfolded->GetXaxis()->SetTitle("m_{ee} [GeV]");
-  hMassUnfolded->SetLineColor(kRed);
-  hMassUnfolded->SetMarkerColor(kRed);
+  //hMassUnfolded->SetLineColor(kRed);
+  hMassUnfolded->SetMarkerColor(kRed+2);
+  hMassUnfolded->SetLineColor(kRed+2);
   hMassUnfolded->SetMarkerStyle(20);
   hMassUnfolded->GetXaxis()->SetNoExponent();
   hMassUnfolded->GetXaxis()->SetMoreLogLabels();
@@ -206,7 +243,7 @@ void unfolding()
   for(int i=0;i<nCanvas;i++)
     {
       canvasName+=i;
-      canvas[i] = new TCanvas(canvasName,"",10,10,900,700);
+      canvas[i] = new TCanvas(canvasName,"",10,10,1200,1200);
       canvas[i]->SetLogx();
       canvas[i]->SetLogy();
     }
@@ -223,8 +260,26 @@ void unfolding()
   hunfoldingFSvsReco->Draw("colz");
   canvas[5]->cd();
   hunfoldingHardvsReco->Draw("colz");
+  canvas[6]->cd();
+  canvas[6]->SetGrid();
+  hData->Draw("p");
+  hMC->Draw("p,same");
+  TLegend*legend1 = new TLegend(0.55,0.9,0.9,0.75);
+  legend1->SetTextSize(0.02);
+  legend1->AddEntry(hData,"Data with MC Background Subtracted");
+  legend1->AddEntry(hMC,"MC Signal Only");
+  legend1->Draw("same");
+  canvas[7]->cd();
+  canvas[7]->SetGrid();
+  hMassUnfolded->Draw("pe");
+  hMCpostFSR->Draw("pe,same");
+  TLegend*legend2 = new TLegend(0.65,0.9,0.9,0.75);
+  legend2->SetTextSize(0.02);
+  legend2->AddEntry(hMassUnfolded,"Unfolded data");
+  legend2->AddEntry(hMCpostFSR,"MC post-FSR");
+  legend2->Draw("same");
+    
   
-
   const TString canvasSaveName[nCanvas] = 
     {
       "./plots/unfolding/responseGENvsGEN.png",
@@ -233,6 +288,9 @@ void unfolding()
       "./plots/unfolding/unfoldingGENvsGEN.png",
       "./plots/unfolding/unfoldingFSvsReco.png",
       "./plots/unfolding/unfoldingHardvsReco.png",
+      "./plots/unfolding/signalDataVsMC.png",
+      "./plots/unfolding/unfoldedDataVsMC.png"
+      
     };
    
   TFile *rootFile = new TFile("./plots/unfoldingMatrices.root","RECREATE");

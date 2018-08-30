@@ -83,6 +83,8 @@ const TString leg2SFName = "./data/Leg2_SF.root";
 const TString medIDSFName = "./data/MediumID_SF.root";
 const TString recoSFName = "./data/Reco_SF.root";
 const float dRMinCut = 0.3;
+const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
+
 const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
 const int ptBinHigh = 499;
@@ -219,7 +221,7 @@ void efficiencies()
    }//end loading ntuples
  cout << endl;
  cout << "Total Events Loaded: " << totalentries << endl;
-
+/*
  TH1F*histInvMass[nInvMassHistos];
  for(int i=0;i<nInvMassHistos;i++){
    histInvMass[i]=new TH1F(histInvMassNames[i],"",nLogBins,massbins);
@@ -229,7 +231,7 @@ void efficiencies()
    histInvMass[i]->GetXaxis()->SetNoExponent();
    histInvMass[i]->SetTitle(histInvMassTitles[i]);
  }
-
+*/
  //Defining histograms
  TH1F*hGenDielectronInvMass = new TH1F("hDielectronInvMass","",nLogBins,massbins);
  hGenDielectronInvMass->Sumw2();
@@ -281,7 +283,6 @@ void efficiencies()
  hpTvsMass->GetXaxis()->SetNoExponent();
  hpTvsMass->GetYaxis()->SetTitle("p_{T} [GeV]"); 
  hpTvsMass->GetXaxis()->SetTitle("m_{ee} [GeV]"); 
-
 
  TH2F*hMatrix[nMatrixHistos];
  for(int i=0;i<nMatrixHistos;i++){
@@ -358,14 +359,14 @@ void efficiencies()
  
  //Event Loop
  cout << "Starting Event Loop" << endl;
- double invMass, rapidity, dileptonPt, dileptonEta, xSecWeight, weightNoPileup, genWeight, 
+ double invMassFSR, rapidity, dileptonPt, dileptonEta, xSecWeight, weightNoPileup, genWeight, 
    varGenWeight, totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, 
    sumRawGenWeight, pileupWeight, sfReco1, sfReco2, sfID1, sfID2, sfHLT;
  double invMassHardProcess,sfWeight;
  Long64_t nentries;
  Long64_t count = 0;
  double nEvents = 250000;
- double lumi = chains[MC50to100]->GetEntries()/xSec[MC50to100];//luminosity of 50to100
+ double lumi = dataLuminosity;
  //double lumi = nEvents/xSec[MC50to100];//luminosity of 50to100
  TString HLTname = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
  TString trigName;
@@ -504,7 +505,7 @@ void efficiencies()
 	  
 	  invMassHardProcess = calcInvMass(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
 	    GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],            GENLepton_phi[idxGenEle2],eMass);		  
-	  invMass = calcInvMass(GENLepton_pT[idxGenEleFS1],GENLepton_eta[idxGenEleFS1],
+	  invMassFSR = calcInvMass(GENLepton_pT[idxGenEleFS1],GENLepton_eta[idxGenEleFS1],
             GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],
             GENLepton_eta[idxGenEleFS2],GENLepton_phi[idxGenEleFS2],eMass);		  
 
@@ -532,16 +533,16 @@ void efficiencies()
 
 	  // Fill histograms for acceptance and efficiency
 	  // First, fill histogram for all dielectrons
-	  hGenAllDielectronInvMass->Fill(invMass,totalWeight);
+	  hGenAllDielectronInvMass->Fill(invMassFSR,totalWeight);
 
 	  // Apply kinematic acceptance criteria
 	  if(!passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
 				     GENLepton_eta[idxGenEleFS1], GENLepton_eta[idxGenEleFS2])) 
 	    continue;	      
 	  // Both electrons are in kinematic acceptance at gen level
-	  hGenDielectronInvMass->Fill(invMass,totalWeight);
-	  hpTvsMass->Fill(invMass,GENLepton_pT[idxGenEleFS1],totalWeight);
-	  hpTvsMass->Fill(invMass,GENLepton_pT[idxGenEleFS2],totalWeight);
+	  hGenDielectronInvMass->Fill(invMassFSR,totalWeight);
+	  hpTvsMass->Fill(invMassFSR,GENLepton_pT[idxGenEleFS1],totalWeight);
+	  hpTvsMass->Fill(invMassFSR,GENLepton_pT[idxGenEleFS2],totalWeight);
 
 	  // Apply matching to reconstructed electrons requirement
 	  int closestTrackLep1, closestTrackLep2;
@@ -551,14 +552,14 @@ void efficiencies()
 	  if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) continue;
 
 	  // Both electrons are reconstructed
-	  hGenMatchedDielectronInvMass->Fill(invMass,totalWeight);
+	  hGenMatchedDielectronInvMass->Fill(invMassFSR,totalWeight);
 	  
 	  // Apply ID criteria:
 	  // Dilepton pair at gen level matched to reco and passing ID at reco level
 	  if(!Electron_passMediumID[closestTrackLep1]) continue;
 	  if(!Electron_passMediumID[closestTrackLep2]) continue;
 	  // Both electrons pass ID
-	  hGenPassIDdielectronInvMass->Fill(invMass,totalWeight);
+	  hGenPassIDdielectronInvMass->Fill(invMassFSR,totalWeight);
 	  
 	  // Apply HLT requirement
 	  if(!passHLT) continue;
@@ -583,15 +584,15 @@ void efficiencies()
             (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
           sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
 
-	  hHLTGenDielectronInvMass->Fill(invMass,totalWeight);
+	  hHLTGenDielectronInvMass->Fill(invMassFSR,totalWeight);
 	  hRecoInvMass->Fill(invMassReco,totalWeight);
-	  migMatrixGENisHardvsGENFS->Fill(invMassHardProcess,invMass,totalWeight);
-	  migMatrixGENFSvsReco->Fill(invMass,invMassReco,totalWeight*sfWeight);
+	  migMatrixGENisHardvsGENFS->Fill(invMassHardProcess,invMassFSR,totalWeight);
+	  migMatrixGENFSvsReco->Fill(invMassFSR,invMassReco,totalWeight*sfWeight);
 	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight);
 	}//end event loop   
       
-      if(iChain==0) hHardProcess[iChain]->Draw("Bar");      
-      else hHardProcess[iChain]->Draw("Barsame");
+      if(iChain==0) hHardProcess[iChain]->Draw("hist");      
+      else hHardProcess[iChain]->Draw("hist,same");
       
     }//end chain loop 
   legend2->AddEntry(hHardProcess[0],"DYEE M10-50");
