@@ -24,9 +24,10 @@ void xSecCalc()
   TFile*fEff = new TFile(effFileName);
   
   //Defining Histograms From Files
-  TH1F*hData = (TH1F*)fData->Get("hMassUnfolded");
-  TEfficiency*hEff = (TEfficiency*)fEff->Get("Efficiency");
-  TEfficiency*hAcceptance = (TEfficiency*)fEff->Get("Acceptance");
+  TH1F*hData = (TH1F*)fData->Get("hMassUnfolded");//Unfolded data from unfolded.C
+  TEfficiency*hEff = (TEfficiency*)fEff->Get("Efficiency");//Total efficiency
+  TEfficiency*hAcceptance = (TEfficiency*)fEff->Get("Acceptance");//Acceptance
+
   //Cross Section Histogram
   TH1F*hXsec = new TH1F("hXsec","",nMassBins,massbins);
   hXsec->SetTitle("Drell-Yan Cross Section");  
@@ -38,6 +39,7 @@ void xSecCalc()
   hXsec->GetXaxis()->SetMoreLogLabels();
   hXsec->GetXaxis()->SetNoExponent();
   hXsec->SetMinimum(0.0000001);
+
   double acc, eff, sig, xSec;
   for(int i=1;i<=nMassBins;i++){
     acc = hAcceptance->GetEfficiency(i);
