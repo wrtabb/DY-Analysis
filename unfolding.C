@@ -17,7 +17,7 @@ const TString matrixFileName = "./plots/plotsDY.root";
 const TString dataFileName = "./plots/dataVsMC.root";
 void unfolding()
 {
-  //gROOT->SetBatch(kTRUE);
+  gROOT->SetBatch(kTRUE);
   gStyle->SetOptStat(0);
   gStyle->SetPalette(1);
   //Getting Data and Backgrounds from root files
@@ -28,6 +28,11 @@ void unfolding()
   TH1F*hTops = (TH1F*)fData->Get("hTopsInvMass");
   TH1F*hMC = (TH1F*)fData->Get("hMCInvMass");
   TH1F*hBackground = (TH1F*)hEW->Clone("hBackground");
+  int maxBin = hFakes->GetMaximumBin();
+      double x = hFakes->GetXaxis()->GetBinCenter(maxBin);
+      for(int k=1;k<x+1;k++){
+        if(hFakes->GetBinContent(k) < 0) hFakes->SetBinContent(k,0);
+      }
   hBackground->Add(hFakes);
   hBackground->Add(hTops);
   TH1F*hData = (TH1F*)fData->Get("hDataInvMass");
@@ -38,21 +43,16 @@ void unfolding()
   hMC->SetLineColor(kRed+2);
   hMC->SetMarkerStyle(21);
   hMC->SetMarkerColor(kRed+2);
-  TH1F*hMCpostFSR = (TH1F*)fMigrationMatrix->Get("hHLTGenDielectronInvMass");
+  TH1F*hMCpostFSR = (TH1F*)fMigrationMatrix->Get("hHLTGenInvMass");
   hMCpostFSR->SetLineColor(kBlue+2);
   hMCpostFSR->SetMarkerColor(kBlue+2);
   hMCpostFSR->SetMarkerStyle(21);
-  int maxBin = hFakes->GetMaximumBin();
-      double x = hFakes->GetXaxis()->GetBinCenter(maxBin);
-      for(int k=1;k<x+1;k++){
-        if(hFakes->GetBinContent(k) < 0) hFakes->SetBinContent(k,0);
-      }
    
   //Getting histograms of migration matrices from files
   TH2F*migMatrixGENisHardvsGENFS = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsGENFS");
   TH2F*migMatrixGENFSvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENFSvsReco");
   TH2F*migMatrixGENisHardvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsReco");
-  TH1F*hGenFS = (TH1F*)fMigrationMatrix->Get("hHLTGenDielectronInvMass");  
+  TH1F*hGenFS = (TH1F*)fMigrationMatrix->Get("hHLTGenInvMass");  
   hGenFS->SetLineColor(kBlack);
   TH1F*hReco = (TH1F*)fMigrationMatrix->Get("hRecoInvMass");
   hReco->SetTitle("Gen-Level Final State vs. Reconstructed");
@@ -187,7 +187,7 @@ void unfolding()
 
   TVectorD yieldsUnfolded = (unfoldingFSvsReco.T())*yieldsMeasured;
   TH1F *hMassUnfolded = new TH1F("hMassUnfolded","",nMassBins,massbins);
-  hMassUnfolded->SetTitle("Gen-Level Final State vs. Unfolded");
+  hMassUnfolded->Sumw2();
   hMassUnfolded->GetXaxis()->SetTitle("m_{ee} [GeV]");
   //hMassUnfolded->SetLineColor(kRed);
   hMassUnfolded->SetMarkerColor(kRed+2);
@@ -199,6 +199,15 @@ void unfolding()
     {
       hMassUnfolded->SetBinContent(i+1,yieldsUnfolded(i));
     }
+  float ratioLow = 0.7;
+  float ratioHigh = 1.3;
+  TH1F*dataMCRatio = (TH1F*)hData->Clone("dataMCRatio");
+  dataMCRatio->Divide(hMC);
+  dataMCRatio->GetYaxis()->SetRangeUser(ratioLow,ratioHigh);
+  TH1F*unfoldedFSRatio = (TH1F*)hMassUnfolded->Clone("unfoldedFSRatio");
+  unfoldedFSRatio->Divide(hMCpostFSR);
+  unfoldedFSRatio->GetYaxis()->SetRangeUser(ratioLow,ratioHigh);
+
   /* //plotting slices of a response matrix
   TCanvas*canvas2[nMassBins];  
   TCanvas*canvas3 = new TCanvas("canvas3","",10,10,900,700);
@@ -258,26 +267,98 @@ void unfolding()
   hunfoldingGENvsGEN->Draw("colz");
   canvas[4]->cd();
   hunfoldingFSvsReco->Draw("colz");
+
   canvas[5]->cd();
   hunfoldingHardvsReco->Draw("colz");
   canvas[6]->cd();
-  canvas[6]->SetGrid();
+  TLine*line = new TLine(0,1,3000,1);
+  line->SetLineColor(kRed);
+  TPad*pad1 = new TPad("","",0,0.3,1,1);
+  pad1->SetBottomMargin(0.03);
+  pad1->SetGrid();
+  pad1->SetLogy();
+  pad1->SetLogx();
+  pad1->SetTicks(1,1);
+  pad1->Draw();
+  pad1->cd();
+  hData->SetLabelSize(0);
+  hData->SetTitleSize(0);
   hData->Draw("p");
+  hMC->SetLabelSize(0);
+  hMC->SetTitleSize(0);
   hMC->Draw("p,same");
+  canvas[6]->Update();
   TLegend*legend1 = new TLegend(0.55,0.9,0.9,0.75);
   legend1->SetTextSize(0.02);
   legend1->AddEntry(hData,"Data with MC Background Subtracted");
   legend1->AddEntry(hMC,"MC Signal Only");
   legend1->Draw("same");
+  canvas[6]->cd();
+  TPad*pad2 = new TPad("","",0,0.05,1,0.3);
+  pad2->SetTopMargin(0.03);
+  pad2->SetBottomMargin(0.2);
+  pad2->SetGrid();
+  pad2->SetLogx();
+  pad2->SetTicks(1,1);
+  pad2->Draw();
+  pad2->cd();
+  dataMCRatio->SetMarkerColor(kBlack);
+  dataMCRatio->SetLineColor(kBlack);
+  dataMCRatio->GetYaxis()->SetLabelSize(0.06);
+  dataMCRatio->GetYaxis()->SetTitleSize(0.08);
+  dataMCRatio->GetYaxis()->SetTitleOffset(0.3);
+  dataMCRatio->GetYaxis()->SetTitle("Data/MC");
+  dataMCRatio->GetXaxis()->SetLabelSize(0.1);
+  dataMCRatio->GetXaxis()->SetTitleSize(0.1);
+  dataMCRatio->GetXaxis()->SetNoExponent();
+  dataMCRatio->GetXaxis()->SetMoreLogLabels();
+  dataMCRatio->Draw("PE");
+  line->Draw("same");
+  canvas[6]->Update();
+
   canvas[7]->cd();
-  canvas[7]->SetGrid();
-  hMassUnfolded->Draw("pe");
-  hMCpostFSR->Draw("pe,same");
+  TPad*pad3 = new TPad("","",0,0.3,1,1);
+  pad3->SetBottomMargin(0.03);
+  pad3->SetGrid();
+  pad3->SetLogy();
+  pad3->SetLogx();
+  pad3->SetTicks(1,1);
+  pad3->Draw();
+  pad3->cd();
+  hMassUnfolded->SetLabelSize(0);
+  hMassUnfolded->SetTitleSize(0);
+  hMassUnfolded->Draw("p");
+  hMCpostFSR->SetLabelSize(0);
+  hMCpostFSR->SetTitleSize(0);
+  hMCpostFSR->Draw("p,same");
+  canvas[7]->Update();
   TLegend*legend2 = new TLegend(0.65,0.9,0.9,0.75);
   legend2->SetTextSize(0.02);
   legend2->AddEntry(hMassUnfolded,"Unfolded data");
   legend2->AddEntry(hMCpostFSR,"MC post-FSR");
   legend2->Draw("same");
+  canvas[7]->cd();
+  TPad*pad4 = new TPad("","",0,0.05,1,0.3);
+  pad4->SetTopMargin(0.03);
+  pad4->SetBottomMargin(0.2);
+  pad4->SetGrid();
+  pad4->SetLogx();
+  pad4->SetTicks(1,1);
+  pad4->Draw();
+  pad4->cd();
+  unfoldedFSRatio->SetMarkerColor(kBlack);
+  unfoldedFSRatio->SetLineColor(kBlack);
+  unfoldedFSRatio->GetYaxis()->SetLabelSize(0.06);
+  unfoldedFSRatio->GetYaxis()->SetTitleSize(0.08);
+  unfoldedFSRatio->GetYaxis()->SetTitleOffset(0.3);
+  unfoldedFSRatio->GetYaxis()->SetTitle("Data/MC");
+  unfoldedFSRatio->GetXaxis()->SetLabelSize(0.1);
+  unfoldedFSRatio->GetXaxis()->SetTitleSize(0.1);
+  unfoldedFSRatio->GetXaxis()->SetNoExponent();
+  unfoldedFSRatio->GetXaxis()->SetMoreLogLabels();
+  unfoldedFSRatio->Draw("PE");
+  line->Draw("same");
+  canvas[7]->Update();
     
   
   const TString canvasSaveName[nCanvas] = 

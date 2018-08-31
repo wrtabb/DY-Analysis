@@ -60,6 +60,15 @@ enum chainNum
     MC1500to2000,
     MC2000to3000
   }; 
+enum InvMassHist 
+{
+  KINEMATIC_CUTS,
+  RECO_MATCHED,
+  ID_CUTS,
+  ALL_ELE,
+  HLT_CUTS,
+  RECO_ELE
+};
 std::vector<std::string> HLT_trigName;
 std::vector<std::string> *pHLT_trigName = &HLT_trigName;
 const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106, 
@@ -221,7 +230,7 @@ void efficiencies()
    }//end loading ntuples
  cout << endl;
  cout << "Total Events Loaded: " << totalentries << endl;
-/*
+
  TH1F*histInvMass[nInvMassHistos];
  for(int i=0;i<nInvMassHistos;i++){
    histInvMass[i]=new TH1F(histInvMassNames[i],"",nLogBins,massbins);
@@ -231,52 +240,6 @@ void efficiencies()
    histInvMass[i]->GetXaxis()->SetNoExponent();
    histInvMass[i]->SetTitle(histInvMassTitles[i]);
  }
-*/
- //Defining histograms
- TH1F*hGenDielectronInvMass = new TH1F("hDielectronInvMass","",nLogBins,massbins);
- hGenDielectronInvMass->Sumw2();
- hGenDielectronInvMass->SetLineColor(kRed);
- hGenDielectronInvMass->SetTitle("Only Kinematic Cut Dielectrons");
- hGenDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");
- hGenDielectronInvMass->GetXaxis()->SetMoreLogLabels();
- hGenDielectronInvMass->GetXaxis()->SetNoExponent();
- TH1F*hGenMatchedDielectronInvMass = 
-   new TH1F("hGenMatchedDielectronInvMass","",nLogBins,massbins);
- hGenMatchedDielectronInvMass->Sumw2();
- hGenMatchedDielectronInvMass->SetLineColor(kBlue);
- hGenMatchedDielectronInvMass->SetTitle("Reco Gen Matched Dielectrons");
- hGenMatchedDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");  
- hGenMatchedDielectronInvMass->GetXaxis()->SetMoreLogLabels();
- hGenMatchedDielectronInvMass->GetXaxis()->SetNoExponent();
- TH1F*hGenPassIDdielectronInvMass = 
-   new TH1F("hGenPasIDDielectronInvMass","",nLogBins,massbins);
- hGenPassIDdielectronInvMass->Sumw2();
- hGenPassIDdielectronInvMass->SetLineColor(kRed);
- hGenPassIDdielectronInvMass->SetTitle("Medium ID Cut Dielectrons");
- hGenPassIDdielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");  
- hGenPassIDdielectronInvMass->GetXaxis()->SetMoreLogLabels();
- hGenPassIDdielectronInvMass->GetXaxis()->SetNoExponent();
- TH1F*hGenAllDielectronInvMass = new TH1F("hGenAllDielectronInvMass","",nLogBins,massbins);
- hGenAllDielectronInvMass->Sumw2();
- hGenAllDielectronInvMass->SetTitle("Final State Dielectrons: No Other cuts");
- hGenAllDielectronInvMass->SetLineColor(kBlack);
- hGenAllDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)");  
- hGenAllDielectronInvMass->GetXaxis()->SetMoreLogLabels();
- hGenAllDielectronInvMass->GetXaxis()->SetNoExponent();
- TH1F*hHLTGenDielectronInvMass = new TH1F("hHLTGenDielectronInvMass","",nLogBins,massbins);
- hHLTGenDielectronInvMass->Sumw2();
- hHLTGenDielectronInvMass->SetTitle("HLT Cut");
- hHLTGenDielectronInvMass->SetLineColor(kBlack);
- hHLTGenDielectronInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)"); 
- hHLTGenDielectronInvMass->GetXaxis()->SetMoreLogLabels();
- hHLTGenDielectronInvMass->GetXaxis()->SetNoExponent();
- TH1F*hRecoInvMass = new TH1F("hRecoInvMass","",nLogBins,massbins);
- hRecoInvMass->Sumw2();
- hRecoInvMass->SetTitle("Reconstructed Invariant Mass");
- hRecoInvMass->SetLineColor(kRed);
- hRecoInvMass->GetXaxis()->SetTitle("m_{ee} (GeV)"); 
- hRecoInvMass->GetXaxis()->SetMoreLogLabels();
- hRecoInvMass->GetXaxis()->SetNoExponent();
  
  TH2F*hpTvsMass = new TH2F("hpTvsMass","",43,massbins,598,10,3000);
  hpTvsMass->GetXaxis()->SetMoreLogLabels();
@@ -533,14 +496,14 @@ void efficiencies()
 
 	  // Fill histograms for acceptance and efficiency
 	  // First, fill histogram for all dielectrons
-	  hGenAllDielectronInvMass->Fill(invMassFSR,totalWeight);
-
+	  histInvMass[ALL_ELE]->Fill(invMassFSR,totalWeight);
+            
 	  // Apply kinematic acceptance criteria
 	  if(!passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
 				     GENLepton_eta[idxGenEleFS1], GENLepton_eta[idxGenEleFS2])) 
 	    continue;	      
 	  // Both electrons are in kinematic acceptance at gen level
-	  hGenDielectronInvMass->Fill(invMassFSR,totalWeight);
+	  histInvMass[KINEMATIC_CUTS]->Fill(invMassFSR,totalWeight);
 	  hpTvsMass->Fill(invMassFSR,GENLepton_pT[idxGenEleFS1],totalWeight);
 	  hpTvsMass->Fill(invMassFSR,GENLepton_pT[idxGenEleFS2],totalWeight);
 
@@ -552,14 +515,14 @@ void efficiencies()
 	  if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) continue;
 
 	  // Both electrons are reconstructed
-	  hGenMatchedDielectronInvMass->Fill(invMassFSR,totalWeight);
+	  histInvMass[RECO_MATCHED]->Fill(invMassFSR,totalWeight);
 	  
 	  // Apply ID criteria:
 	  // Dilepton pair at gen level matched to reco and passing ID at reco level
 	  if(!Electron_passMediumID[closestTrackLep1]) continue;
 	  if(!Electron_passMediumID[closestTrackLep2]) continue;
 	  // Both electrons pass ID
-	  hGenPassIDdielectronInvMass->Fill(invMassFSR,totalWeight);
+	  histInvMass[ID_CUTS]->Fill(invMassFSR,totalWeight);
 	  
 	  // Apply HLT requirement
 	  if(!passHLT) continue;
@@ -584,8 +547,8 @@ void efficiencies()
             (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
           sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
 
-	  hHLTGenDielectronInvMass->Fill(invMassFSR,totalWeight);
-	  hRecoInvMass->Fill(invMassReco,totalWeight);
+	  histInvMass[HLT_CUTS]->Fill(invMassFSR,totalWeight);
+	  histInvMass[RECO_ELE]->Fill(invMassReco,totalWeight);
 	  migMatrixGENisHardvsGENFS->Fill(invMassHardProcess,invMassFSR,totalWeight);
 	  migMatrixGENFSvsReco->Fill(invMassFSR,invMassReco,totalWeight*sfWeight);
 	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight);
@@ -608,31 +571,36 @@ void efficiencies()
   legend2->AddEntry(hHardProcess[10],"DYEE M2000-3000");
   legend2->Draw("same");
   
-  TEfficiency* hMatchedEfficiency = new TEfficiency((*hGenMatchedDielectronInvMass),(*hGenDielectronInvMass));
+  TEfficiency*hMatchedEfficiency = 
+    new TEfficiency((*histInvMass[RECO_MATCHED]),(*histInvMass[KINEMATIC_CUTS]));
   hMatchedEfficiency->SetTitle("Reconstruction Efficiency");
   hMatchedEfficiency->SetMarkerStyle(20);
   hMatchedEfficiency->SetMarkerSize(0.5);
   hMatchedEfficiency->SetName("RecoEfficiency");
   hMatchedEfficiency->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hIDEfficiency = new TEfficiency((*hGenPassIDdielectronInvMass),(*hGenMatchedDielectronInvMass));
+  TEfficiency* hIDEfficiency = 
+    new TEfficiency((*histInvMass[ID_CUTS]),(*histInvMass[RECO_MATCHED]));
   hIDEfficiency->SetTitle("ID Efficiency");
   hIDEfficiency->SetMarkerStyle(20);
   hIDEfficiency->SetMarkerSize(0.5);
   hIDEfficiency->SetName("IDEfficiency");
   hIDEfficiency->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hAcceptance = new TEfficiency((*hGenDielectronInvMass),(*hGenAllDielectronInvMass));
+  TEfficiency* hAcceptance = 
+    new TEfficiency((*histInvMass[KINEMATIC_CUTS]),(*histInvMass[ALL_ELE]));
   hAcceptance->SetTitle("Acceptance");
   hAcceptance->SetMarkerStyle(20);
   hAcceptance->SetMarkerSize(0.5);
   hAcceptance->SetName("Acceptance");  
   hAcceptance->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hHLTEfficiency = new TEfficiency((*hHLTGenDielectronInvMass),(*hGenPassIDdielectronInvMass));
+  TEfficiency* hHLTEfficiency = 
+    new TEfficiency((*histInvMass[HLT_CUTS]),(*histInvMass[ID_CUTS]));
   hHLTEfficiency->SetTitle("HLT Efficiency");
   hHLTEfficiency->SetMarkerStyle(20);
   hHLTEfficiency->SetMarkerSize(0.5);
   hHLTEfficiency->SetName("HLTEfficiency");
   hHLTEfficiency->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hEfficiency = new TEfficiency((*hHLTGenDielectronInvMass),(*hGenDielectronInvMass));
+  TEfficiency* hEfficiency = 
+    new TEfficiency((*histInvMass[HLT_CUTS]),(*histInvMass[KINEMATIC_CUTS]));
   hEfficiency->SetTitle("Total Efficiency");
   hEfficiency->SetMarkerStyle(20);
   hEfficiency->SetMarkerSize(0.5);
@@ -736,14 +704,6 @@ void efficiencies()
   canvas8->SetLogx();
   migMatrixGENisHardvsReco->Draw("colz");
     
-  TCanvas*canvas9 = new TCanvas("cRecovsFS","",10,10,900,700);
-  canvas9->SetLogy();
-  canvas9->SetLogx();
-  legend->AddEntry(hHLTGenDielectronInvMass,"Gen-Level post-FSR");
-  legend->AddEntry(hRecoInvMass,"Reco-Level");
-  hHLTGenDielectronInvMass->Draw();
-  hRecoInvMass->Draw("same");
-
   canvas1->SaveAs("./plots/efficiency/hardProcessInvMass.png");
   canvas2->SaveAs("./plots/efficiency/hallEfficiencies.png");
   canvas3->SaveAs("./plots/efficiency/hefficiency.png");
@@ -754,19 +714,14 @@ void efficiencies()
   canvas8->SaveAs("./plots/unfolding/migMatrixGENisHardvsReco.png");
   
   rootFile->cd();
-  hIDEfficiency->Write();
-  hGenMatchedDielectronInvMass->Write();
-  hGenDielectronInvMass->Write();
-  hGenPassIDdielectronInvMass->Write();
-  hGenAllDielectronInvMass->Write();
-  hMatchedEfficiency->Write();
+  for(int i=0;i<nInvMassHistos;i++){
+    histInvMass[i]->Write();
+  } 
   hAcceptance->Write();
   hEfficiency->Write();
   hHLTEfficiency->Write();
   hpTvsMassProf->Write();
   hpTvsMass->Write();
-  hHLTGenDielectronInvMass->Write();
-  hRecoInvMass->Write();
   migMatrixGENisHardvsGENFS->Write();
   migMatrixGENFSvsReco->Write();
   migMatrixGENisHardvsReco->Write();
@@ -778,7 +733,6 @@ void efficiencies()
   canvas6->Write();
   canvas7->Write();
   canvas8->Write();
-  canvas9->Write();
   rootFile->Write();
   rootFile->Close();   
   
