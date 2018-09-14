@@ -7,6 +7,13 @@
 #include "TCanvas.h"
 #include "TH1F.h"
 #include "TH2F.h"
+#include "TUnfold.h"
+#include "TLegend.h"
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include "TROOT.h"
+#include "TLine.h"
 
 const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106, 
   110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380, 440, 510, 600, 700, 830, 
@@ -27,12 +34,22 @@ void unfolding()
   TH1F*hFakes = (TH1F*)fData->Get("hFakesInvMass");
   TH1F*hTops = (TH1F*)fData->Get("hTopsInvMass");
   TH1F*hMC = (TH1F*)fData->Get("hMCInvMass");
+  int maxBinEW = hEW->GetMaximumBin();
+  double x = hEW->GetXaxis()->GetBinCenter(maxBinEW);
+  for(int k=1;k<x+1;k++){
+    if(hEW->GetBinContent(k) < 0) hEW->SetBinContent(k,0);
+  }
+  int maxBinFakes = hFakes->GetMaximumBin();
+  double y = hFakes->GetXaxis()->GetBinCenter(maxBinFakes);
+  for(int k=1;k<y+1;k++){
+    if(hFakes->GetBinContent(k) < 0) hFakes->SetBinContent(k,0);
+  }
+  int maxBinTops = hTops->GetMaximumBin();
+  double z = hTops->GetXaxis()->GetBinCenter(maxBinFakes);
+  for(int k=1;k<z+1;k++){
+    if(hTops->GetBinContent(k) < 0) hTops->SetBinContent(k,0);
+  }
   TH1F*hBackground = (TH1F*)hEW->Clone("hBackground");
-  int maxBin = hFakes->GetMaximumBin();
-      double x = hFakes->GetXaxis()->GetBinCenter(maxBin);
-      for(int k=1;k<x+1;k++){
-        if(hFakes->GetBinContent(k) < 0) hFakes->SetBinContent(k,0);
-      }
   hBackground->Add(hFakes);
   hBackground->Add(hTops);
   TH1F*hData = (TH1F*)fData->Get("hDataInvMass");
@@ -43,7 +60,7 @@ void unfolding()
   hMC->SetLineColor(kRed+2);
   hMC->SetMarkerStyle(21);
   hMC->SetMarkerColor(kRed+2);
-  TH1F*hMCpostFSR = (TH1F*)fMigrationMatrix->Get("hHLTGenInvMass");
+  TH1F*hMCpostFSR = (TH1F*)fMigrationMatrix->Get("hHLTGenDielectronInvMass");
   hMCpostFSR->SetLineColor(kBlue+2);
   hMCpostFSR->SetMarkerColor(kBlue+2);
   hMCpostFSR->SetMarkerStyle(21);
@@ -52,8 +69,6 @@ void unfolding()
   TH2F*migMatrixGENisHardvsGENFS = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsGENFS");
   TH2F*migMatrixGENFSvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENFSvsReco");
   TH2F*migMatrixGENisHardvsReco = (TH2F*)fMigrationMatrix->Get("migMatrixGENisHardvsReco");
-  TH1F*hGenFS = (TH1F*)fMigrationMatrix->Get("hHLTGenInvMass");  
-  hGenFS->SetLineColor(kBlack);
   TH1F*hReco = (TH1F*)fMigrationMatrix->Get("hRecoInvMass");
   hReco->SetTitle("Gen-Level Final State vs. Reconstructed");
   hReco->SetMarkerStyle(20);
@@ -383,7 +398,6 @@ void unfolding()
   hunfoldingFSvsReco->Write();
   hunfoldingHardvsReco->Write();
   hMassUnfolded->Write();
-  hGenFS->Write();
   hReco->Write();
   for(int i=0;i<nCanvas;i++)
     {

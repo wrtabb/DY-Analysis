@@ -30,6 +30,7 @@ void xSecCalc()
 
   //Cross Section Histogram
   TH1F*hXsec = new TH1F("hXsec","",nMassBins,massbins);
+  hXsec->Sumw2();
   hXsec->SetTitle("Drell-Yan Cross Section");  
   hXsec->GetXaxis()->SetTitle("m [GeV]");
   hXsec->GetYaxis()->SetTitle("d#sigma/dm [pb/GeV]");
@@ -39,13 +40,14 @@ void xSecCalc()
   hXsec->GetXaxis()->SetMoreLogLabels();
   hXsec->GetXaxis()->SetNoExponent();
   hXsec->SetMinimum(0.0000001);
-
-  double acc, eff, sig, xSec;
+  hXsec->SetMaximum(1000);
+  double acc, eff, sig, xSec, binWidth;
   for(int i=1;i<=nMassBins;i++){
+    binWidth = hData->GetBinWidth(i);
     acc = hAcceptance->GetEfficiency(i);
     eff = hEff->GetEfficiency(i);
     sig = hData->GetBinContent(i);
-    xSec = sig/(acc*eff*luminosity);
+    xSec = sig/(acc*eff*luminosity*binWidth);
     hXsec->SetBinContent(i,xSec);    
   }
   TCanvas*canvas = new TCanvas("canvas","",10,10,1200,1200);
