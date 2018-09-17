@@ -448,7 +448,11 @@ void efficiencies()
 	  if(idxRecoEle1>=0&&idxRecoEle2>=0)
 	    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
               Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
-              Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
+              Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	 
+          if(invMass>3000||invMass<15){
+            cout << "InvMass = " << invMass << endl;
+            continue; 
+            }
 	  if(nGenDielectrons==0) 
 	    continue; // must be DY->mumu or tautau event, skip it
 	  
@@ -529,7 +533,7 @@ void efficiencies()
 	  hGenPassIDdielectronInvMass->Fill(invMass,totalWeight);
 	  
 	  // Apply HLT requirement
-	  if(!passHLT) continue;
+	  if(!passHLT) continue; 
           
           eEta1 = Electron_eta[idxRecoEle1];
           eEta2 = Electron_eta[idxRecoEle2];

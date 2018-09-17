@@ -355,13 +355,14 @@ void processMC()
  TFile*fileRecoSF = new TFile(recoSFName);
  TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
 
+ Long64_t nEvents = 1000;
  for(int iChain=0;iChain<numChains;iChain++)
    {
      cout << endl;
      cout << "Processing chain: " << dirNames[iChain] << endl;
      cout << endl;
-
-      nentries = chains[iChain]->GetEntries();
+      nentries = nEvents;
+      //nentries = chains[iChain]->GetEntries();
       xSecWeight=lumi*(xSec[iChain]/1.0);      
       sumGenWeight = 0;
       for(Long64_t i=0;i<nentries;i++){
@@ -382,7 +383,6 @@ void processMC()
 	{      
 	  chains[iChain]->GetEntry(i);
 	  counter(count,totalentries);
-	  //counter(count,11*nentries);
 	  count = count+1;
 	  
 	  pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
@@ -551,9 +551,9 @@ void processMC()
           ePt2 = Electron_pT[idxRecoEle2];
 
           if(ePt1<ptBinLow) ePt1 = ptBinLow;//pull this information from the histograms
-          if(ePt2<ptBinLow) ePt2 = ptBinLow;//raise bin
-          if(ePt1>ptBinHigh) ePt1 = ptBinHigh;//lower bin
-          if(ePt2>ptBinHigh) ePt2 = ptBinHigh;//
+          if(ePt2<ptBinLow) ePt2 = ptBinLow;
+          if(ePt1>ptBinHigh) ePt1 = ptBinHigh;
+          if(ePt2>ptBinHigh) ePt2 = ptBinHigh;
 
 	  // Event passed HLT cut
 	  sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
@@ -598,7 +598,7 @@ void processMC()
   hpTvsMass->Write();
   hInvMassVsRapidity->Write();
   for(int i=0;0<nMatrixHistos;i++){
-    hMatrixInvMass[i]->Write();
+    //hMatrixInvMass[i]->Write();
   }
   rootFile->Write();
   rootFile->Close();   
