@@ -66,17 +66,15 @@ void testTUnfold()
     }
   }
   //Begin TUnfold
+
   TUnfoldDensity unfold(hMatrixFlipped,TUnfold::kHistMapOutputHoriz);
-  Double_t tau=1.E-4;
+  Double_t tau=0.0;
   Double_t biasScale=0.0;
   unfold.DoUnfold(tau,hReco,biasScale);
   //The Unfolded Distribution
   TH1*hUnfolded = unfold.GetOutput("Unfolded");
   hUnfolded->SetMarkerStyle(22);
-  hUnfolded->SetMarkerColor(kBlue);
-
-  //A distribution showing the overall correlations
-  //TH2*hCorrelations = unfold.GetRhoIJ("Correlations");
+  hUnfolded->SetMarkerColor(kBlue+2);
 
   //Define canvases
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1200);
@@ -88,9 +86,11 @@ void testTUnfold()
   legend->AddEntry(hGen,"True Distribution");
   legend->AddEntry(hReco,"Measured Distribution");
   legend->AddEntry(hUnfolded,"Unfolded Distribution");
-
+  hGen->GetXaxis()->SetTitle("Invariant mass [GeV]");
   hGen->Draw("hist");
   hReco->Draw("PE,same");
   hUnfolded->Draw("PE,same");
   legend->Draw("same");
+
+  canvas1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfolding.jpg");
 }
