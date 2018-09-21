@@ -15,7 +15,7 @@ const int nSimEvents = 100000; // events mimicking MC used for unfolding procedu
 
 const Model model = MODEL1;
 const TString outDataFileName = "sampleMockData.root";
-const TString outSimFileName = "sampleSimulation.root";
+const TString outSimFileName = "sampleSimulation2.root";
 
 // Main function
 
@@ -74,10 +74,10 @@ void generateSamples(){
   treeSim->Branch("massTrue", &massTrue, "massTrue/F");
   treeSim->Branch("massMeasured", &massMeasured, "massMeasured/F");
   for(int i=0; i<nSimEvents; i++){
-    massTrue = funcSimModelShape->GetRandom();
+    massTrue = funcSimModelShape->GetRandom(20,200);
     // the "true mass" is smeared according to the resolutino function
     // that simulates mismeasurement with a real detector
-    massMeasured = massTrue + funcSimResolutionModel->GetRandom();
+    massMeasured = massTrue + funcSimResolutionModel->GetRandom(20,200);
     treeSim->Fill();
   }
   treeSim->Write();

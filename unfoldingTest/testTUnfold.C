@@ -8,37 +8,36 @@
 #include "TH2.h"
 #include "TMath.h"
 using namespace std;
+
+const int nBins = 20;
 const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,
                              110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,
                              380,440,510,600,700,830,1000,1500,3000};
-const int nBins = 43;
 //File Names
+//const TString fileName= "sampleHistos.root";
 const TString fileName= "unfoldingClosureTest.root";
-
 void testTUnfold()
 {
+  TH1::SetDefaultSumw2();
   //Load the files
   TFile*file= new TFile(fileName);
   gStyle->SetPalette(1);
   gStyle->SetOptStat(0);
 
   //Define hisograms
+  //TH1F*hReco = (TH1F*)file->Get("hMCMeasured");
+  //TH1F*hGen = (TH1F*)file->Get("hMCTrue");
+  //TH2F*hMatrix = (TH2F*)file->Get("hMigrationMatrix");
+  //TH2F*hMatrixSys = (TH2F*)file->Get("hMigrationMatrix2");
   TH1F*hReco = (TH1F*)file->Get("migMatrixGENFSvsReco_py");
   TH1F*hGen = (TH1F*)file->Get("migMatrixGENFSvsReco_px");
   TH2F*hMatrix = (TH2F*)file->Get("migMatrixGENFSvsReco");
-  hReco->GetXaxis()->SetNoExponent();
-  hReco->GetXaxis()->SetMoreLogLabels();
+  TH2F*hMatrixSys = (TH2F*)file->Get("migMatrixGENFSvsReco");
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
   hReco->SetLineColor(kBlack);
-  hGen->GetXaxis()->SetNoExponent();
-  hGen->GetXaxis()->SetMoreLogLabels();
   hGen->SetFillColor(kRed+2);
   hGen->SetLineColor(kRed+2);
-  hMatrix->GetXaxis()->SetNoExponent();
-  hMatrix->GetXaxis()->SetMoreLogLabels();
-  hMatrix->GetYaxis()->SetNoExponent();
-  hMatrix->GetYaxis()->SetMoreLogLabels();
 
   cout << endl;
   cout << "Migration Matrix Information:" << endl;
@@ -51,36 +50,76 @@ void testTUnfold()
   cout << "nbins = " << hReco->GetNbinsX() << endl;
   cout << endl;
 
-  double binContent;
-  int globalBin,globalBinFlipped;
-  TH2F*hMatrixFlipped=new TH2F("hMatrixFlipped","",nBins,massbins,nBins,massbins);
-  hMatrixFlipped->SetTitle("X and Y flipped");
-  hMatrixFlipped->GetXaxis()->SetTitle("Reco");
-  hMatrixFlipped->GetYaxis()->SetTitle("Gen");
-  for(int i=0;i<nBins;i++){
-    for(int j=0;j<nBins;j++){
-    globalBin = hMatrix->GetBin(i+1,j+1);
-    binContent = hMatrix->GetBinContent(globalBin);
-    globalBinFlipped = hMatrix->GetBin(j+1,i+1);
-    hMatrixFlipped->SetBinContent(globalBinFlipped,binContent);
-    }
-  }
-  //Begin TUnfold
+  ////////////////////////////
+  //  Regularization Modes  //
+  ////////////////////////////
+  //TUnfold::ERegMode regMode = TUnfold::kRegModeNone;
+  //TUnfold::ERegMode regMode = TUnfold::kRegModeSize;
+  //TUnfold::ERegMode regMode = TUnfold::kRegModeDerivative;
+  TUnfold::ERegMode regMode = TUnfold::kRegModeCurvature;
+  //TUnfold::ERegMode regMode = TUnfold::kRegModeMixed;
 
-  TUnfoldDensity unfold(hMatrixFlipped,TUnfold::kHistMapOutputHoriz);
-  Double_t tau=0.0;
-  Double_t biasScale=0.0;
-  unfold.DoUnfold(tau,hReco,biasScale);
+  ///////////////////////////
+  //  Types of Constraint  //
+  ///////////////////////////
+  TUnfold::EConstraint constraintMode = TUnfold::kEConstraintNone;
+  //TUnfold::EConstraint constraintMode = TUnfold::kEConstraintArea;
+  
+  /////////////////////
+  //  Density Modes  //
+  /////////////////////
+  //TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeNone;
+  TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeBinWidth;
+  //TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeUser;
+  //TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeBinWidthAndUser;
+ 
+  /////////////////////////////////////
+  //  Horizontal vs Vertical Output  //
+  /////////////////////////////////////
+  //TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputVert;
+  TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputHoriz;
+
+  //////////////////////////////////////
+  //  Constructor for TUnfoldDensity  //
+  //////////////////////////////////////
+  TUnfoldDensity unfold(hMatrix,outputMap,regMode,constraintMode,densityFlags);
+  unfold.SetInput(hReco);//the measured distribution
+
+  ////////////////////////////
+  //  Add Systematic Error  //
+  ////////////////////////////
+  unfold.AddSysError(hMatrixSys,"signalshape_SYS",
+                     outputMap,TUnfoldSys::kSysErrModeMatrix);
+
+  ////////////////////////////
+  //  Begin Regularization  //
+  ////////////////////////////
+  Int_t nScan=30;
+  Double_t tauMin = 0.0;
+  Double_t tauMax = 1.0;
+  Int_t iBest;
+  TSpline *logTauX,*logTauY;
+  TGraph *lCurve;
+  iBest=unfold.ScanLcurve(nScan,tauMin,tauMax,&lCurve,&logTauX,&logTauY);
+  cout<< "tau=" << unfold.GetTau() << endl;
+  cout<<"chi**2="<<unfold.GetChi2A()<<"+"<<unfold.GetChi2L()<<" / "<<unfold.GetNdf()<<"\n";
+  Double_t t[1],x[1],y[1];
+  logTauX->GetKnot(iBest,t[0],x[0]);
+  logTauY->GetKnot(iBest,t[0],y[0]);
+  TGraph *bestLcurve=new TGraph(1,x,y);
+  TGraph *bestLogTauLogChi2=new TGraph(1,t,x);
   //The Unfolded Distribution
   TH1*hUnfolded = unfold.GetOutput("Unfolded");
-  hUnfolded->SetMarkerStyle(22);
+  hUnfolded->SetMarkerStyle(25);
   hUnfolded->SetMarkerColor(kBlue+2);
-
-  //Define canvases
+  hUnfolded->SetMarkerSize(2);
+  TH2 *histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
+  TH2 *histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
+  //TH1 *histGlobalCorr=unfold.GetRhoItotal("histGlobalCorr",0,0,0,kFALSE);
+  //TH2 *histCorrCoeff=unfold.GetRhoIJtotal("histCorrCoeff",0,0,0,kFALSE);
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1200);
   canvas1->SetLogy();
   canvas1->SetLogx();
-
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
   legend->SetTextSize(0.02);
   legend->AddEntry(hGen,"True Distribution");
@@ -92,5 +131,25 @@ void testTUnfold()
   hUnfolded->Draw("PE,same");
   legend->Draw("same");
 
-  canvas1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfolding.jpg");
+  TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1200,1200);
+  canvas2->SetLogy();
+  canvas2->SetLogx();
+  hMatrix->GetXaxis()->SetTitle("Measured");
+  hMatrix->GetYaxis()->SetTitle("True");
+  hMatrix->Draw("colz");
+
+  TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1200,1200);
+  canvas3->Divide(2);
+  canvas3->cd(1);
+  lCurve->Draw("AL");
+  bestLcurve->SetMarkerColor(kRed);
+  bestLcurve->SetMarkerSize(2);
+  bestLcurve->Draw("*");
+  canvas3->cd(2);
+  logTauX->Draw();
+  bestLogTauLogChi2->SetMarkerColor(kRed);
+  bestLogTauLogChi2->SetMarkerSize(2);
+  bestLogTauLogChi2->Draw("*");
+  canvas1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldDist.png");
+  canvas2->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldMatrix.png");
 }
