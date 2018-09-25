@@ -14,8 +14,10 @@ const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,
                              110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,
                              380,440,510,600,700,830,1000,1500,3000};
 //File Names
-//const TString fileName= "sampleHistos.root";
-const TString fileName= "unfoldingClosureTest.root";
+//const TString fileName= "sampleHistos.root";         //Toy model
+//const TString fileName= "unfoldingClosureTest.root"; //MC InvMass projections
+const TString fileName= "dataUnfoldTest.root"; //Data
+
 void testTUnfold()
 {
   TH1::SetDefaultSumw2();
@@ -25,49 +27,41 @@ void testTUnfold()
   gStyle->SetOptStat(0);
 
   //Define hisograms
-  //TH1F*hReco = (TH1F*)file->Get("hMCMeasured");
+  //TH1F*hReco = (TH1F*)file->Get("hMCMeasured");//Toy Model
   //TH1F*hGen = (TH1F*)file->Get("hMCTrue");
   //TH2F*hMatrix = (TH2F*)file->Get("hMigrationMatrix");
   //TH2F*hMatrixSys = (TH2F*)file->Get("hMigrationMatrix2");
-  TH1F*hReco = (TH1F*)file->Get("migMatrixGENFSvsReco_py");
-  TH1F*hGen = (TH1F*)file->Get("migMatrixGENFSvsReco_px");
-  TH2F*hMatrix = (TH2F*)file->Get("migMatrixGENFSvsReco");
-  TH2F*hMatrixSys = (TH2F*)file->Get("migMatrixGENFSvsReco");
+  //TH1F*hReco = (TH1F*)file->Get("migMatrixGENFSvsReco_py");//MC InvMass
+  //TH1F*hGen = (TH1F*)file->Get("migMatrixGENFSvsReco_px");
+  //TH2F*hMatrix = (TH2F*)file->Get("migMatrixGENFSvsReco");
+  //TH2F*hMatrixSys = (TH2F*)file->Get("migMatrixGENFSvsReco");
+  TH1F*hBackground = (TH1F*)file->Get("hMCBackground");//Data
+  TH1F*hReco = (TH1F*)file->Get("hData");
+  TH2F*hMatrix = (TH2F*)file->Get("hMatrix");
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
   hReco->SetLineColor(kBlack);
-  hGen->SetFillColor(kRed+2);
-  hGen->SetLineColor(kRed+2);
-
-  cout << endl;
-  cout << "Migration Matrix Information:" << endl;
-  cout << "-----------------------------" << endl;
-  cout << "nx Bins = " << hMatrix->GetNbinsX() << endl;
-  cout << "ny Bins = " << hMatrix->GetNbinsY() << endl;
-  cout << endl;
-  cout << "Observed Matrix Information:" << endl;
-  cout << "----------------------------" << endl;
-  cout << "nbins = " << hReco->GetNbinsX() << endl;
-  cout << endl;
-
+  //hGen->SetFillColor(kRed+2);
+  //hGen->SetLineColor(kRed+2);
   ////////////////////////////
   //  Regularization Modes  //
   ////////////////////////////
-  //TUnfold::ERegMode regMode = TUnfold::kRegModeNone;
+  //TUnfold::ERegMode regMode = TUnfold::kRegModeNone; //!!!!!Breaks if option selected
   //TUnfold::ERegMode regMode = TUnfold::kRegModeSize;
   //TUnfold::ERegMode regMode = TUnfold::kRegModeDerivative;
   TUnfold::ERegMode regMode = TUnfold::kRegModeCurvature;
-  //TUnfold::ERegMode regMode = TUnfold::kRegModeMixed;
+  //TUnfold::ERegMode regMode = TUnfold::kRegModeMixed;  //!!!!!Breaks if option selected
 
   ///////////////////////////
   //  Types of Constraint  //
   ///////////////////////////
   TUnfold::EConstraint constraintMode = TUnfold::kEConstraintNone;
-  //TUnfold::EConstraint constraintMode = TUnfold::kEConstraintArea;
+  //TUnfold::EConstraint constraintMode = TUnfold::kEConstraintArea; //!!!!!Breaks if option selected
   
   /////////////////////
   //  Density Modes  //
   /////////////////////
+  //!!!!!All of these options seem to work
   //TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeNone;
   TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeBinWidth;
   //TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeUser;
@@ -76,6 +70,7 @@ void testTUnfold()
   /////////////////////////////////////
   //  Horizontal vs Vertical Output  //
   /////////////////////////////////////
+  //!!!!!Either of these works depending on the matrix being used
   //TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputVert;
   TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputHoriz;
 
@@ -85,18 +80,24 @@ void testTUnfold()
   TUnfoldDensity unfold(hMatrix,outputMap,regMode,constraintMode,densityFlags);
   unfold.SetInput(hReco);//the measured distribution
 
+  //////////////////////////////
+  //  Background Subtraction  //
+  //////////////////////////////
+  unfold.SubtractBackground(hBackground,"background",1.0,0);
+
   ////////////////////////////
   //  Add Systematic Error  //
   ////////////////////////////
-  unfold.AddSysError(hMatrixSys,"signalshape_SYS",
-                     outputMap,TUnfoldSys::kSysErrModeMatrix);
+  //For this part, you need a migration matrix calculated using a different MC generator
+  //unfold.AddSysError(hMatrixSys,"signalshape_SYS",
+  //                   outputMap,TUnfoldSys::kSysErrModeMatrix);
 
   ////////////////////////////
   //  Begin Regularization  //
   ////////////////////////////
   Int_t nScan=30;
   Double_t tauMin = 0.0;
-  Double_t tauMax = 1.0;
+  Double_t tauMax = 0.0;
   Int_t iBest;
   TSpline *logTauX,*logTauY;
   TGraph *lCurve;
@@ -108,6 +109,7 @@ void testTUnfold()
   logTauY->GetKnot(iBest,t[0],y[0]);
   TGraph *bestLcurve=new TGraph(1,x,y);
   TGraph *bestLogTauLogChi2=new TGraph(1,t,x);
+
   //The Unfolded Distribution
   TH1*hUnfolded = unfold.GetOutput("Unfolded");
   hUnfolded->SetMarkerStyle(25);
@@ -122,11 +124,11 @@ void testTUnfold()
   canvas1->SetLogx();
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
   legend->SetTextSize(0.02);
-  legend->AddEntry(hGen,"True Distribution");
+  //legend->AddEntry(hGen,"True Distribution");
   legend->AddEntry(hReco,"Measured Distribution");
   legend->AddEntry(hUnfolded,"Unfolded Distribution");
-  hGen->GetXaxis()->SetTitle("Invariant mass [GeV]");
-  hGen->Draw("hist");
+  //hGen->GetXaxis()->SetTitle("Invariant mass [GeV]");
+  //hGen->Draw("hist");
   hReco->Draw("PE,same");
   hUnfolded->Draw("PE,same");
   legend->Draw("same");
@@ -150,6 +152,7 @@ void testTUnfold()
   bestLogTauLogChi2->SetMarkerColor(kRed);
   bestLogTauLogChi2->SetMarkerSize(2);
   bestLogTauLogChi2->Draw("*");
-  canvas1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldDist.png");
-  canvas2->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldMatrix.png");
+  canvas1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldData.png");
+  canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldDataCurves.png");
+  
 }

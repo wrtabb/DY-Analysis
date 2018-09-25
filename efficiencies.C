@@ -33,8 +33,6 @@ bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 bool passPromptGenElectron(int ID, int fromfinalstate);
 bool passHardProcess(int ID, int hardProces);
 bool findGenToRecoMatch(int genIndex,int &recoIndex);
-TLorentzVector getDielectronP4(double pt1,double eta1,double phi1,double m1,double pt2,
-  double eta2,double phi2,double m2);
 
 //Defining variables and arrays
 const int MPSIZE = 2000;
@@ -62,7 +60,7 @@ enum chainNum
     MC1500to2000,
     MC2000to3000
   }; 
-enum HistCuts
+enum InvMassHist 
 {
   KINEMATIC_CUTS,
   RECO_MATCHED,
@@ -71,7 +69,6 @@ enum HistCuts
   HLT_CUTS,
   RECO_ELE
 };
-enum MatrixNames {HARD_VS_FS,FS_VS_RECO,HARD_VS_RECO};
 std::vector<std::string> HLT_trigName;
 std::vector<std::string> *pHLT_trigName = &HLT_trigName;
 const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106, 
@@ -83,9 +80,6 @@ const int nLogBins = 43;
 //Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
 const float xSec[numChains] = {6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
                                0.01042,0.00552772,0.000741613,0.000178737};
-const float rapLow = -2.5;
-const float rapHigh = 2.5;
-const float nRapBins = 50;
 const float etaHigh = 2.4;
 const float etaGapHigh = 1.566; 
 const float etaGapLow = 1.4442;
@@ -105,23 +99,17 @@ const int nSubSamples100to200 = 2;
 const int ptBinHigh = 499;
 const int ptBinLow = 26;
 const int nMatrixHistos = 3;
-const int nHistos = 6;
-const TString matrixInvMassNames[nMatrixHistos] = 
-  {"hGenHardvsGenFSInvMass","hGenFSvsRecoInvMass","hGenHardvsRecoInvMass"};
-const TString matrixYaxisTitlesInvMass[nMatrixHistos] = 
-  {"Gen-Level Final State Invariant Mass [GeV]","Reco Invariant Mass [GeV]",
-   "Reco Invariant Mass [GeV]"};
-const TString matrixXaxisTitlesInvMass[nMatrixHistos] = 
-  {"Gen-Level Hard Process Invariant Mass [GeV]" ,"Gen-Level Final State Invariant Mass [GeV]",
-   "Gen-Level Hard Process Invariant Mass [GeV]"};
-
-const TString histInvMassNames[nHistos] = {"hGenInvMass","hGenMatchedInvMass",
+const int nInvMassHistos = 6;
+const TString histMatrixNames[nMatrixHistos] = {"hGenHardvsGenFS","hGenFSvsReco",
+  "hGenHardvsReco"};
+const TString matrixYaxisTitles[nMatrixHistos] = {"Gen-Level Final State Invariant Mass [GeV]",
+  "Reco Invariant Mass [GeV]","Reco Invariant Mass [GeV]"};
+const TString matrixXaxisTitles[nMatrixHistos] = {"Gen-Level Hard Process Invariant Mass [GeV]"  ,"Gen-Level Final State Invariant Mass [GeV]","Gen-Level Hard Process Invariant Mass [GeV]"};
+const TString histInvMassNames[nInvMassHistos] = {"hGenInvMass","hGenMatchedInvMass",
   "hGenPassIDInvMass","hGenAllInvMass","hHLTGenInvMass","hRecoInvMass"};
-const TString histTitles[nHistos] = {"Only Kinematic Cuts","Reco-Gen Matched",
+const TString histInvMassTitles[nInvMassHistos] = {"Only Kinematic Cuts","Reco-Gen Matched",
   "Medium ID Cuts","Final State: No cuts","HLT Cut","Reconstructed"};
 
-const TString histRapidityNames[nHistos] = {"hGenRapidity","hGenMatchedRapidity",
-  "hGenPassIDRapidity","hGenAllRapidity","hHLTGenRapidity","hRecoRapidity"};
 void efficiencies()
 {
   TTimeStamp ts_start;
@@ -243,21 +231,14 @@ void efficiencies()
  cout << endl;
  cout << "Total Events Loaded: " << totalentries << endl;
 
- TH1F*histInvMass[nHistos];
- for(int i=0;i<nHistos;i++){
+ TH1F*histInvMass[nInvMassHistos];
+ for(int i=0;i<nInvMassHistos;i++){
    histInvMass[i]=new TH1F(histInvMassNames[i],"",nLogBins,massbins);
    histInvMass[i]->Sumw2();
    histInvMass[i]->GetXaxis()->SetTitle("invariant mass [GeV]");
    histInvMass[i]->GetXaxis()->SetMoreLogLabels();
    histInvMass[i]->GetXaxis()->SetNoExponent();
-   histInvMass[i]->SetTitle(histTitles[i]);
- }
- TH1F*histRapidity[nHistos];
- for(int i=0;i<nHistos;i++){
-   histRapidity[i]=new TH1F(histRapidityNames[i],"",nRapBins,rapLow,rapHigh);
-   histRapidity[i]->Sumw2();
-   histRapidity[i]->GetXaxis()->SetTitle("rapidity");
-   histRapidity[i]->SetTitle(histTitles[i]);
+   histInvMass[i]->SetTitle(histInvMassTitles[i]);
  }
  
  TH2F*hpTvsMass = new TH2F("hpTvsMass","",43,massbins,598,10,3000);
@@ -266,16 +247,51 @@ void efficiencies()
  hpTvsMass->GetYaxis()->SetTitle("p_{T} [GeV]"); 
  hpTvsMass->GetXaxis()->SetTitle("m_{ee} [GeV]"); 
 
- TH2F*hMatrixInvMass[nMatrixHistos];
+ TH2F*hMatrix[nMatrixHistos];
  for(int i=0;i<nMatrixHistos;i++){
-   hMatrixInvMass[i]=new TH2F(matrixInvMassNames[i],"",nLogBins,massbins,nLogBins,massbins);
-   hMatrixInvMass[i]->GetYaxis()->SetTitle(matrixYaxisTitlesInvMass[i]);
-   hMatrixInvMass[i]->GetXaxis()->SetTitle(matrixXaxisTitlesInvMass[i]);
-   hMatrixInvMass[i]->GetYaxis()->SetNoExponent();
-   hMatrixInvMass[i]->GetYaxis()->SetMoreLogLabels();
-   hMatrixInvMass[i]->GetXaxis()->SetNoExponent();
-   hMatrixInvMass[i]->GetXaxis()->SetMoreLogLabels();
+   hMatrix[i]=new TH2F(histMatrixNames[i],"",nLogBins,massbins,nLogBins,massbins);
+   hMatrix[i]->GetYaxis()->SetTitle(matrixYaxisTitles[i]);
+   hMatrix[i]->GetXaxis()->SetTitle(matrixXaxisTitles[i]);
+   hMatrix[i]->GetYaxis()->SetNoExponent();
+   hMatrix[i]->GetYaxis()->SetMoreLogLabels();
+   hMatrix[i]->GetXaxis()->SetNoExponent();
+   hMatrix[i]->GetXaxis()->SetMoreLogLabels();
  } 
+
+ TH2F*migMatrixGENisHardvsGENFS = 
+   new TH2F("migMatrixGENisHardvsGENFS","",nLogBins,massbins,nLogBins,massbins);
+ migMatrixGENisHardvsGENFS->
+   SetTitle("Migration Matrix: Gen-Level Final State vs. Gen-Level Hard Process");
+ migMatrixGENisHardvsGENFS->GetYaxis()->
+   SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
+ migMatrixGENisHardvsGENFS->GetXaxis()->
+   SetTitle("Gen-Level Hard Process Dielecron Invariant mass [GeV]");
+ migMatrixGENisHardvsGENFS->GetXaxis()->SetNoExponent();
+ migMatrixGENisHardvsGENFS->GetXaxis()->SetMoreLogLabels();
+ migMatrixGENisHardvsGENFS->GetYaxis()->SetNoExponent();
+ migMatrixGENisHardvsGENFS->GetYaxis()->SetMoreLogLabels();
+ TH2F*migMatrixGENFSvsReco = 
+   new TH2F("migMatrixGENFSvsReco","",nLogBins,massbins,nLogBins,massbins);
+ migMatrixGENFSvsReco->SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Final State");
+ migMatrixGENFSvsReco->GetXaxis()->
+   SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
+ migMatrixGENFSvsReco->GetYaxis()->SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
+ migMatrixGENFSvsReco->GetXaxis()->SetNoExponent();
+ migMatrixGENFSvsReco->GetXaxis()->SetMoreLogLabels();
+ migMatrixGENFSvsReco->GetYaxis()->SetNoExponent();
+ migMatrixGENFSvsReco->GetYaxis()->SetMoreLogLabels();
+ TH2F*migMatrixGENisHardvsReco = 
+   new TH2F("migMatrixGENisHardvsReco","",nLogBins,massbins,nLogBins,massbins);
+ migMatrixGENisHardvsReco->
+   SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Hard Process");
+ migMatrixGENisHardvsReco->GetXaxis()->
+   SetTitle("Gen-Level Hard Process Dielectron Invariant Mass [GeV]");
+ migMatrixGENisHardvsReco->GetYaxis()->
+   SetTitle("Reconstructed Dielecron Invariant mass [GeV]");
+ migMatrixGENisHardvsReco->GetXaxis()->SetNoExponent();
+ migMatrixGENisHardvsReco->GetXaxis()->SetMoreLogLabels();
+ migMatrixGENisHardvsReco->GetYaxis()->SetNoExponent();
+ migMatrixGENisHardvsReco->GetYaxis()->SetMoreLogLabels();
  
  TH1F*hHardProcess[numChains];
  TString histbasename = "hHardProcess";
@@ -293,23 +309,13 @@ void efficiencies()
      hHardProcess[jChain]->GetXaxis()->SetMoreLogLabels();
    }
  
- TLegend*legend = new TLegend(0.65,0.9,0.9,0.7);
- legend->SetTextSize(0.02);
- TLegend*legend2 = new TLegend(0.65,0.9,0.9,0.7);
- legend2->SetTextSize(0.02);
- 
  TFile *rootFile = new TFile("./plots/plotsDY.root","RECREATE");
- TCanvas*canvas1 = new TCanvas("cInvMassHardProcess","",10,10,1000,1000);
- canvas1->SetLogx();
- canvas1->SetLogy();
- canvas1->cd();
  
  //Event Loop
  cout << "Starting Event Loop" << endl;
  double invMassFSR, rapidity, dileptonPt, dileptonEta, xSecWeight, weightNoPileup, genWeight, 
    varGenWeight, totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, 
    sumRawGenWeight, pileupWeight, sfReco1, sfReco2, sfID1, sfID2, sfHLT;
- double rapidityReco, rapidityHardProcess, rapidityFSR;
  double invMassHardProcess,sfWeight;
  Long64_t nentries;
  Long64_t count = 0;
@@ -322,9 +328,7 @@ void efficiencies()
  long int nTooManyDielectrons = 0;
  long int nTooManyDielectronsFS = 0; 
  double eEta1, eEta2, ePt1, ePt2;
- TLorentzVector vElectron1;
- TLorentzVector vElectron2; 
- TLorentzVector dielectron;
+ 
  TFile*pileupRatioFile  = new TFile(pileupRatioName);
  TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
  TFile*fileLeg2SF = new TFile(leg2SFName);
@@ -362,7 +366,6 @@ void efficiencies()
 	{      
 	  chains[iChain]->GetEntry(i);
 	  counter(count,totalentries);
-	  //counter(count,11*nentries);
 	  count = count+1;
 	  
 	  pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
@@ -429,11 +432,9 @@ void efficiencies()
 	    }//end reco loop
 
 	  if(idxRecoEle1>=0&&idxRecoEle2>=0)
-            dielectron = getDielectronP4(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
+	    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
               Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
-              Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass); 
-	    invMassReco = dielectron.M();
-            rapidityReco = dielectron.Rapidity();
+              Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
 	  if(nGenDielectrons==0) 
 	    continue; // must be DY->mumu or tautau event, skip it
 	  
@@ -455,16 +456,11 @@ void efficiencies()
 	      continue;
 	    }	    
 	  
-          dielectron = getDielectronP4(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
-	    GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],            GENLepton_phi[idxGenEle2],eMass);
-	  invMassHardProcess = dielectron.M();
-          rapidityHardProcess = dielectron.Rapidity(); 
-           
-          dielectron = getDielectronP4(GENLepton_pT[idxGenEleFS1],GENLepton_eta[idxGenEleFS1],
+	  invMassHardProcess = calcInvMass(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
+	    GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],            GENLepton_phi[idxGenEle2],eMass);		  
+	  invMassFSR = calcInvMass(GENLepton_pT[idxGenEleFS1],GENLepton_eta[idxGenEleFS1],
             GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],
-            GENLepton_eta[idxGenEleFS2],GENLepton_phi[idxGenEleFS2],eMass);
-	  invMassFSR = dielectron.M();
-          rapidityFSR = dielectron.Rapidity(); 
+            GENLepton_eta[idxGenEleFS2],GENLepton_phi[idxGenEleFS2],eMass);		  
 
 	  hHardProcess[iChain]->Fill(invMassHardProcess,totalWeight);
 	  
@@ -543,301 +539,60 @@ void efficiencies()
 
 	  histInvMass[HLT_CUTS]->Fill(invMassFSR,totalWeight);
 	  histInvMass[RECO_ELE]->Fill(invMassReco,totalWeight);
-          hMatrixInvMass[HARD_VS_FS]->Fill(invMassHardProcess,invMassFSR,totalWeight);  
-          hMatrixInvMass[FS_VS_RECO]->Fill(invMassFSR,invMassReco,totalWeight*sfWeight);
-          hMatrixInvMass[HARD_VS_RECO]->Fill(invMassHardProcess,invMassReco,totalWeight);
+	  migMatrixGENisHardvsGENFS->Fill(invMassHardProcess,invMassFSR,totalWeight);
+	  migMatrixGENFSvsReco->Fill(invMassFSR,invMassReco,totalWeight*sfWeight);
+	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight);
 	}//end event loop   
       
-      if(iChain==0) hHardProcess[iChain]->Draw("hist");      
-      else hHardProcess[iChain]->Draw("hist,same");
-      
     }//end chain loop 
-  legend2->AddEntry(hHardProcess[0],"DYEE M10-50");
-  legend2->AddEntry(hHardProcess[1],"DYEE M50-100");
-  legend2->AddEntry(hHardProcess[2],"DYEE M100-200");
-  legend2->AddEntry(hHardProcess[3],"DYEE M200-400");
-  legend2->AddEntry(hHardProcess[4],"DYEE M400-500");
-  legend2->AddEntry(hHardProcess[5],"DYEE M500-700");
-  legend2->AddEntry(hHardProcess[6],"DYEE M700-800");
-  legend2->AddEntry(hHardProcess[7],"DYEE M800-1000");
-  legend2->AddEntry(hHardProcess[8],"DYEE M1000-1500");
-  legend2->AddEntry(hHardProcess[9],"DYEE M1500-2000");
-  legend2->AddEntry(hHardProcess[10],"DYEE M2000-3000");
-  legend2->Draw("same");
-
-  TEfficiency*hMatchedEfficiencyInvMass = 
+  
+  TEfficiency*hMatchedEfficiency = 
     new TEfficiency((*histInvMass[RECO_MATCHED]),(*histInvMass[KINEMATIC_CUTS]));
-  hMatchedEfficiencyInvMass->SetTitle("Reconstruction Efficiency");
-  hMatchedEfficiencyInvMass->SetMarkerStyle(20);
-  hMatchedEfficiencyInvMass->SetMarkerSize(0.5);
-  hMatchedEfficiencyInvMass->SetName("RecoEfficiency");
-  hMatchedEfficiencyInvMass->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hIDEfficiencyInvMass = 
+  hMatchedEfficiency->SetTitle("Reconstruction Efficiency");
+  hMatchedEfficiency->SetMarkerStyle(20);
+  hMatchedEfficiency->SetMarkerSize(0.5);
+  hMatchedEfficiency->SetName("RecoEfficiency");
+  hMatchedEfficiency->SetStatisticOption(TEfficiency::kFNormal);
+  TEfficiency* hIDEfficiency = 
     new TEfficiency((*histInvMass[ID_CUTS]),(*histInvMass[RECO_MATCHED]));
-  hIDEfficiencyInvMass->SetTitle("ID Efficiency");
-  hIDEfficiencyInvMass->SetMarkerStyle(20);
-  hIDEfficiencyInvMass->SetMarkerSize(0.5);
-  hIDEfficiencyInvMass->SetName("IDEfficiency");
-  hIDEfficiencyInvMass->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hAcceptanceInvMass = 
+  hIDEfficiency->SetTitle("ID Efficiency");
+  hIDEfficiency->SetMarkerStyle(20);
+  hIDEfficiency->SetMarkerSize(0.5);
+  hIDEfficiency->SetName("IDEfficiency");
+  hIDEfficiency->SetStatisticOption(TEfficiency::kFNormal);
+  TEfficiency* hAcceptance = 
     new TEfficiency((*histInvMass[KINEMATIC_CUTS]),(*histInvMass[ALL_ELE]));
-  hAcceptanceInvMass->SetTitle("Acceptance");
-  hAcceptanceInvMass->SetMarkerStyle(20);
-  hAcceptanceInvMass->SetMarkerSize(0.5);
-  hAcceptanceInvMass->SetName("Acceptance");  
-  hAcceptanceInvMass->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hHLTEfficiencyInvMass = 
+  hAcceptance->SetTitle("Acceptance");
+  hAcceptance->SetMarkerStyle(20);
+  hAcceptance->SetMarkerSize(0.5);
+  hAcceptance->SetName("Acceptance");  
+  hAcceptance->SetStatisticOption(TEfficiency::kFNormal);
+  TEfficiency* hHLTEfficiency = 
     new TEfficiency((*histInvMass[HLT_CUTS]),(*histInvMass[ID_CUTS]));
-  hHLTEfficiencyInvMass->SetTitle("HLT Efficiency");
-  hHLTEfficiencyInvMass->SetMarkerStyle(20);
-  hHLTEfficiencyInvMass->SetMarkerSize(0.5);
-  hHLTEfficiencyInvMass->SetName("HLTEfficiency");
-  hHLTEfficiencyInvMass->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hEfficiencyInvMass = 
+  hHLTEfficiency->SetTitle("HLT Efficiency");
+  hHLTEfficiency->SetMarkerStyle(20);
+  hHLTEfficiency->SetMarkerSize(0.5);
+  hHLTEfficiency->SetName("HLTEfficiency");
+  hHLTEfficiency->SetStatisticOption(TEfficiency::kFNormal);
+  TEfficiency* hEfficiency = 
     new TEfficiency((*histInvMass[HLT_CUTS]),(*histInvMass[KINEMATIC_CUTS]));
-  hEfficiencyInvMass->SetTitle("Total Efficiency");
-  hEfficiencyInvMass->SetMarkerStyle(20);
-  hEfficiencyInvMass->SetMarkerSize(0.5);
-  hEfficiencyInvMass->SetName("Efficiency");
-  hEfficiencyInvMass->SetStatisticOption(TEfficiency::kFNormal);
+  hEfficiency->SetTitle("Total Efficiency");
+  hEfficiency->SetMarkerStyle(20);
+  hEfficiency->SetMarkerSize(0.5);
+  hEfficiency->SetName("Efficiency");
+  hEfficiency->SetStatisticOption(TEfficiency::kFNormal);
   
-  TEfficiency*hMatchedEfficiencyRapidity = 
-    new TEfficiency((*histRapidity[RECO_MATCHED]),(*histRapidity[KINEMATIC_CUTS]));
-  hMatchedEfficiencyRapidity->SetTitle("Reconstruction Efficiency");
-  hMatchedEfficiencyRapidity->SetMarkerStyle(20);
-  hMatchedEfficiencyRapidity->SetMarkerSize(0.5);
-  hMatchedEfficiencyRapidity->SetName("RecoEfficiency");
-  hMatchedEfficiencyRapidity->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hIDEfficiencyRapidity= 
-    new TEfficiency((*histRapidity[ID_CUTS]),(*histRapidity[RECO_MATCHED]));
-  hIDEfficiencyRapidity->SetTitle("ID Efficiency");
-  hIDEfficiencyRapidity->SetMarkerStyle(20);
-  hIDEfficiencyRapidity->SetMarkerSize(0.5);
-  hIDEfficiencyRapidity->SetName("IDEfficiency");
-  hIDEfficiencyRapidity->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hAcceptanceRapidity= 
-    new TEfficiency((*histRapidity[KINEMATIC_CUTS]),(*histRapidity[ALL_ELE]));
-  hAcceptanceRapidity->SetTitle("Acceptance");
-  hAcceptanceRapidity->SetMarkerStyle(20);
-  hAcceptanceRapidity->SetMarkerSize(0.5);
-  hAcceptanceRapidity->SetName("Acceptance");  
-  hAcceptanceRapidity->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hHLTEfficiencyRapidity= 
-    new TEfficiency((*histRapidity[HLT_CUTS]),(*histRapidity[ID_CUTS]));
-  hHLTEfficiencyRapidity->SetTitle("HLT Efficiency");
-  hHLTEfficiencyRapidity->SetMarkerStyle(20);
-  hHLTEfficiencyRapidity->SetMarkerSize(0.5);
-  hHLTEfficiencyRapidity->SetName("HLTEfficiency");
-  hHLTEfficiencyRapidity->SetStatisticOption(TEfficiency::kFNormal);
-  TEfficiency* hEfficiencyRapidity= 
-    new TEfficiency((*histRapidity[HLT_CUTS]),(*histRapidity[KINEMATIC_CUTS]));
-  hEfficiencyRapidity->SetTitle("Total Efficiency");
-  hEfficiencyRapidity->SetMarkerStyle(20);
-  hEfficiencyRapidity->SetMarkerSize(0.5);
-  hEfficiencyRapidity->SetName("Efficiency");
-  hEfficiencyRapidity->SetStatisticOption(TEfficiency::kFNormal);
-
-  //Drawing on canvases
-  TCanvas*canvas2 = new TCanvas("cAllEfficiencies","",10,10,1400,700);
-  canvas2->Divide(3);
-  canvas2->cd(1);
-  TVirtualPad*p1 = canvas2->cd(1);
-  p1->SetLogx();
-  hMatchedEfficiencyInvMass->Draw();
-  gPad->Update();
-  auto graph1 = hMatchedEfficiencyInvMass->GetPaintedGraph();
-  graph1->SetMinimum(0);
-  graph1->SetMaximum(1);
-  graph1->GetXaxis()->SetMoreLogLabels();
-  graph1->GetXaxis()->SetNoExponent();
-  graph1->Draw("PE");
-  gPad->Update();
-
-  canvas2->cd(2);
-  TVirtualPad*p2 = canvas2->cd(2);
-  p2->SetLogx();
-  hIDEfficiencyInvMass->Draw();
-  gPad->Update();
-  auto graph2 = hIDEfficiencyInvMass->GetPaintedGraph();
-  graph2->SetMinimum(0);
-  graph2->SetMaximum(1);
-  graph2->GetXaxis()->SetMoreLogLabels();
-  graph2->GetXaxis()->SetNoExponent();
-  graph2->Draw("PE");
-  gPad->Update();
-
-  canvas2->cd(3);
-  TVirtualPad*p3 = canvas2->cd(3);
-  p3->SetLogx();
-  hHLTEfficiencyInvMass->Draw();
-  gPad->Update();
-  auto graph3 = hHLTEfficiencyInvMass->GetPaintedGraph();
-  graph3->SetMinimum(0);
-  graph3->SetMaximum(1);
-  graph3->GetXaxis()->SetMoreLogLabels();
-  graph3->GetXaxis()->SetNoExponent();
-  graph3->Draw("PE");
-  gPad->Update();
-  
-  TCanvas*canvas3 = new TCanvas("cEfficiency","",10,10,900,700);
-  canvas3->cd();
-  TVirtualPad*p4 = canvas3->cd();
-  p4->SetLogx();
-  hEfficiencyInvMass->Draw();
-  gPad->Update();
-  auto graph4 = hEfficiencyInvMass->GetPaintedGraph();
-  graph4->SetMinimum(0);
-  graph4->SetMaximum(1);
-  graph4->GetXaxis()->SetMoreLogLabels();
-  graph4->GetXaxis()->SetNoExponent();
-  graph4->Draw("PE");
-  gPad->Update();
-
-  TCanvas*canvas4 = new TCanvas("cAcceptance","",10,10,900,700);
-  canvas4->cd();
-  TVirtualPad*p5 = canvas4->cd();
-  p5->SetLogx();
-  hAcceptanceInvMass->Draw();
-  gPad->Update();
-  auto graph5 = hAcceptanceInvMass->GetPaintedGraph();
-  graph5->SetMinimum(0);
-  graph5->SetMaximum(1);
-  graph5->GetXaxis()->SetMoreLogLabels();
-  graph5->GetXaxis()->SetNoExponent();
-  graph5->Draw("PE");
-  gPad->Update();
-  
-  TCanvas*canvas5 = new TCanvas("cPtvsMassProfile","",10,10,900,700);
-  canvas5->SetLogx();
-  canvas5->SetLogy();
-  canvas5->SetGrid();
-  TProfile*hpTvsMassProf = hpTvsMass->ProfileX();
-  hpTvsMassProf->GetYaxis()->SetMoreLogLabels();
-  hpTvsMassProf->GetYaxis()->SetNoExponent();
-  hpTvsMassProf->GetYaxis()->SetTitleOffset(1.25);
-  hpTvsMassProf->SetTitle("#LTp_{T}#GT vs.Invariant Mass");
-  hpTvsMassProf->GetYaxis()->SetTitle("#LTp_{T}#GT  [GeV]");
-  hpTvsMassProf->Draw();
-
-  TCanvas*canvas6 = new TCanvas("cMigMatrixGENFSvsGENisHard","",10,10,900,700);
-  canvas6->SetLogy();
-  canvas6->SetLogx();
-  hMatrixInvMass[HARD_VS_FS]->Draw("colz");
-
-  TCanvas*canvas7 = new TCanvas("cmigMatrixGENFSvsReco","",10,10,900,700);
-  canvas7->SetLogy();
-  canvas7->SetLogx();
-  hMatrixInvMass[FS_VS_RECO]->Draw("colz");
-
-  TCanvas*canvas8 = new TCanvas("cmigMatrixGENisHardvsReco","",10,10,900,700);
-  canvas8->SetLogy();
-  canvas8->SetLogx();
-  hMatrixInvMass[HARD_VS_RECO]->Draw("colz");
-
-  TCanvas*canvas9 = new TCanvas("cAllEfficienciesRapidity","",10,10,1400,700);
-  canvas9->Divide(3);
-  canvas9->cd(1);
-  TVirtualPad*p6 = canvas9->cd(1);
-  p6->SetLogx();
-  hMatchedEfficiencyInvMass->Draw();
-  gPad->Update();
-  auto graph6 = hMatchedEfficiencyRapidity->GetPaintedGraph();
-  graph6->SetMinimum(0);
-  graph6->SetMaximum(1);
-  graph6->GetXaxis()->SetMoreLogLabels();
-  graph6->GetXaxis()->SetNoExponent();
-  graph6->Draw("PE");
-  gPad->Update();
-
-  canvas9->cd(2);
-  TVirtualPad*p7 = canvas9->cd(2);
-  p7->SetLogx();
-  hIDEfficiencyInvMass->Draw();
-  gPad->Update();
-  auto graph7 = hIDEfficiencyRapidity->GetPaintedGraph();
-  graph7->SetMinimum(0);
-  graph7->SetMaximum(1);
-  graph7->GetXaxis()->SetMoreLogLabels();
-  graph7->GetXaxis()->SetNoExponent();
-  graph7->Draw("PE");
-  gPad->Update();
-
-  canvas9->cd(3);
-  TVirtualPad*p8 = canvas9->cd(3);
-  p8->SetLogx();
-  hHLTEfficiencyInvMass->Draw();
-  gPad->Update();
-  auto graph8 = hHLTEfficiencyRapidity->GetPaintedGraph();
-  graph8->SetMinimum(0);
-  graph8->SetMaximum(1);
-  graph8->GetXaxis()->SetMoreLogLabels();
-  graph8->GetXaxis()->SetNoExponent();
-  graph8->Draw("PE");
-  gPad->Update();
-  
-  TCanvas*canvas10 = new TCanvas("cEfficiencyRapidity","",10,10,900,700);
-  canvas10->cd();
-  TVirtualPad*p9 = canvas10->cd();
-  p9->SetLogx();
-  hEfficiencyInvMass->Draw();
-  gPad->Update();
-  auto graph9 = hEfficiencyInvMass->GetPaintedGraph();
-  graph9->SetMinimum(0);
-  graph9->SetMaximum(1);
-  graph9->GetXaxis()->SetMoreLogLabels();
-  graph9->GetXaxis()->SetNoExponent();
-  graph9->Draw("PE");
-  gPad->Update();
-
-  TCanvas*canvas11 = new TCanvas("cAcceptanceRapidity","",10,10,900,700);
-  canvas11->cd();
-  TVirtualPad*p10 = canvas11->cd();
-  p10->SetLogx();
-  hAcceptanceInvMass->Draw();
-  gPad->Update();
-  auto graph10 = hAcceptanceInvMass->GetPaintedGraph();
-  graph10->SetMinimum(0);
-  graph10->SetMaximum(1);
-  graph10->GetXaxis()->SetMoreLogLabels();
-  graph10->GetXaxis()->SetNoExponent();
-  graph10->Draw("PE");
-  gPad->Update();
-    
-  canvas1->SaveAs("./plots/efficiency/hardProcessInvMass.png");
-  canvas2->SaveAs("./plots/efficiency/hallEfficiencies.png");
-  canvas3->SaveAs("./plots/efficiency/hefficiency.png");
-  canvas4->SaveAs("./plots/efficiency/hacceptance.png");
-  canvas5->SaveAs("./plots/efficiency/pTvsMassProf.png");
-  canvas6->SaveAs("./plots/unfolding/migMatrixGENFSvsGENisHard.png");
-  canvas7->SaveAs("./plots/unfolding/migMatrixGENFSvsGReco.png");
-  canvas8->SaveAs("./plots/unfolding/migMatrixGENisHardvsReco.png");
-  canvas9->SaveAs("./plots/efficiency/hRapidityAllEfficiency.png");
-  canvas10->SaveAs("./plots/efficiency/hRapidityEfficiency.png");
-  canvas11->SaveAs("./plots/efficiency/hRapidityAcceptance.png");
-
-
   rootFile->cd();
-  for(int i=0;i<nHistos;i++){
+  for(int i=0;i<nInvMassHistos;i++){
     histInvMass[i]->Write();
-    histRapidity[i]->Write();
   } 
-  hAcceptanceInvMass->Write();
-  hEfficiencyInvMass->Write();
-  hAcceptanceRapidity->Write();
-  hEfficiencyRapidity->Write();
-  hpTvsMassProf->Write();
+  hAcceptance->Write();
+  hEfficiency->Write();
+  hHLTEfficiency->Write();
   hpTvsMass->Write();
-  for(int i=0;0<nMatrixHistos;i++){
-    hMatrixInvMass[i]->Write();
-  }
-  canvas1->Write();
-  canvas2->Write();
-  canvas3->Write();
-  canvas4->Write();
-  canvas5->Write();
-  canvas6->Write();
-  canvas7->Write();
-  canvas8->Write();
+  migMatrixGENisHardvsGENFS->Write();
+  migMatrixGENFSvsReco->Write();
+  migMatrixGENisHardvsReco->Write();
   rootFile->Write();
   rootFile->Close();   
   
@@ -934,12 +689,3 @@ double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,doubl
   double invMass = (vGenElectron1+vGenElectron2).M();
   return invMass;
 }//end calcInvMass
-TLorentzVector getDielectronP4(double pt1,double eta1,double phi1,double m1,double pt2,
-  double eta2,double phi2,double m2)
-{
-  TLorentzVector vElectron1;
-  TLorentzVector vElectron2;
-  vElectron1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
-  vElectron2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
-  return vElectron1+vElectron2;
-}
