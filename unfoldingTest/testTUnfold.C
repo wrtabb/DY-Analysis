@@ -95,9 +95,9 @@ void testTUnfold()
   ////////////////////////////
   //  Begin Regularization  //
   ////////////////////////////
-  Int_t nScan=30;
-  Double_t tauMin = 0.0;
-  Double_t tauMax = 0.0;
+  Int_t nScan=30;//This number chosen only because it was given in the tutorial
+  Double_t tauMin = 0.0;//If tauMin=tauMax, TUnfold automatically chooses a range
+  Double_t tauMax = 0.0;//Not certain how they choose the range
   Int_t iBest;
   TSpline *logTauX,*logTauY;
   TGraph *lCurve;
