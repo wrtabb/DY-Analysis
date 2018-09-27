@@ -15,7 +15,7 @@ const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,
                              380,440,510,600,700,830,1000,1500,3000};
 //File Names
 //const TString fileName= "sampleHistos.root";         //Toy model
-//const TString fileName= "unfoldingClosureTest.root"; //MC InvMass projections
+const TString fileName2= "closureFinerDataBinning.root"; //MC InvMass projections
 const TString fileName= "dataUnfoldTest.root"; //Data
 
 void testTUnfold()
@@ -23,6 +23,7 @@ void testTUnfold()
   TH1::SetDefaultSumw2();
   //Load the files
   TFile*file= new TFile(fileName);
+  TFile*file2= new TFile(fileName2);
   gStyle->SetPalette(1);
   gStyle->SetOptStat(0);
 
@@ -37,6 +38,7 @@ void testTUnfold()
   //TH2F*hMatrixSys = (TH2F*)file->Get("migMatrixGENFSvsReco");
   TH1F*hBackground = (TH1F*)file->Get("hMCBackground");//Data
   TH1F*hReco = (TH1F*)file->Get("hData");
+  TH1F*hGen = (TH1F*)file2->Get("hTrue");
   TH2F*hMatrix = (TH2F*)file->Get("hMatrix");
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
@@ -55,8 +57,8 @@ void testTUnfold()
   ///////////////////////////
   //  Types of Constraint  //
   ///////////////////////////
-  TUnfold::EConstraint constraintMode = TUnfold::kEConstraintNone;
-  //TUnfold::EConstraint constraintMode = TUnfold::kEConstraintArea; //!!!!!Breaks if option selected
+  //TUnfold::EConstraint constraintMode = TUnfold::kEConstraintNone;
+  TUnfold::EConstraint constraintMode = TUnfold::kEConstraintArea; //!!!!!Breaks if option selected
   
   /////////////////////
   //  Density Modes  //
@@ -71,8 +73,8 @@ void testTUnfold()
   //  Horizontal vs Vertical Output  //
   /////////////////////////////////////
   //!!!!!Either of these works depending on the matrix being used
-  //TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputVert;
-  TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputHoriz;
+  TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputVert;
+  //TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputHoriz;
 
   //////////////////////////////////////
   //  Constructor for TUnfoldDensity  //
@@ -124,21 +126,21 @@ void testTUnfold()
   canvas1->SetLogx();
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
   legend->SetTextSize(0.02);
-  //legend->AddEntry(hGen,"True Distribution");
+  legend->AddEntry(hGen,"Gen Distribution");
   legend->AddEntry(hReco,"Measured Distribution");
   legend->AddEntry(hUnfolded,"Unfolded Distribution");
-  //hGen->GetXaxis()->SetTitle("Invariant mass [GeV]");
-  //hGen->Draw("hist");
+  hGen->GetXaxis()->SetTitle("Invariant mass [GeV]");
+  hGen->Draw("hist");
   hReco->Draw("PE,same");
   hUnfolded->Draw("PE,same");
   legend->Draw("same");
 
-  TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1200,1200);
-  canvas2->SetLogy();
-  canvas2->SetLogx();
-  hMatrix->GetXaxis()->SetTitle("Measured");
-  hMatrix->GetYaxis()->SetTitle("True");
-  hMatrix->Draw("colz");
+  //TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1200,1200);
+  //canvas2->SetLogy();
+  //canvas2->SetLogx();
+  //hMatrix->GetXaxis()->SetTitle("Measured");
+  //hMatrix->GetYaxis()->SetTitle("True");
+  //hMatrix->Draw("colz");
 
   TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1200,1200);
   canvas3->Divide(2);
@@ -152,7 +154,7 @@ void testTUnfold()
   bestLogTauLogChi2->SetMarkerColor(kRed);
   bestLogTauLogChi2->SetMarkerSize(2);
   bestLogTauLogChi2->Draw("*");
-  canvas1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldData.png");
-  canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldDataCurves.png");
+  //canvas1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldData.png");
+  //canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldDataCurves.png");
   
 }
