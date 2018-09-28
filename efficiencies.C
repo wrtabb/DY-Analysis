@@ -237,32 +237,11 @@ void efficiencies()
  cout << endl;
  cout << "Total Events Loaded: " << totalentries << endl;
 
- TH1F*histInvMass[nInvMassHistos];
- for(int i=0;i<nInvMassHistos;i++){
-   histInvMass[i]=new TH1F(histInvMassNames[i],"",nLogBins,massbins);
-   histInvMass[i]->Sumw2();
-   histInvMass[i]->GetXaxis()->SetTitle("invariant mass [GeV]");
-   histInvMass[i]->GetXaxis()->SetMoreLogLabels();
-   histInvMass[i]->GetXaxis()->SetNoExponent();
-   histInvMass[i]->SetTitle(histInvMassTitles[i]);
- }
- 
  TH2F*hpTvsMass = new TH2F("hpTvsMass","",43,massbins,598,10,3000);
  hpTvsMass->GetXaxis()->SetMoreLogLabels();
  hpTvsMass->GetXaxis()->SetNoExponent();
  hpTvsMass->GetYaxis()->SetTitle("p_{T} [GeV]"); 
  hpTvsMass->GetXaxis()->SetTitle("m_{ee} [GeV]"); 
-
- TH2F*hMatrix[nMatrixHistos];
- for(int i=0;i<nMatrixHistos;i++){
-   hMatrix[i]=new TH2F(histMatrixNames[i],"",nLogBins,massbins,nLogBins,massbins);
-   hMatrix[i]->GetYaxis()->SetTitle(matrixYaxisTitles[i]);
-   hMatrix[i]->GetXaxis()->SetTitle(matrixXaxisTitles[i]);
-   hMatrix[i]->GetYaxis()->SetNoExponent();
-   hMatrix[i]->GetYaxis()->SetMoreLogLabels();
-   hMatrix[i]->GetXaxis()->SetNoExponent();
-   hMatrix[i]->GetXaxis()->SetMoreLogLabels();
- } 
 
  TH2F*migMatrixGENisHardvsGENFS = 
    new TH2F("migMatrixGENisHardvsGENFS","",nLogBins,massbins,nLogBins,massbins);
@@ -277,7 +256,7 @@ void efficiencies()
  migMatrixGENisHardvsGENFS->GetYaxis()->SetNoExponent();
  migMatrixGENisHardvsGENFS->GetYaxis()->SetMoreLogLabels();
  TH2F*migMatrixGENFSvsReco = 
-   new TH2F("migMatrixGENFSvsReco","",2*nLogBins,massbins2,nLogBins,massbins);
+   new TH2F("migMatrixGENFSvsReco","",nLogBins,massbins,2*nLogBins,massbins2);
  migMatrixGENFSvsReco->SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Final State");
  migMatrixGENFSvsReco->GetXaxis()->
    SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
@@ -334,6 +313,16 @@ void efficiencies()
  long int nTooManyDielectrons = 0;
  long int nTooManyDielectronsFS = 0; 
  double eEta1, eEta2, ePt1, ePt2;
+ 
+ TH1F*histInvMass[nInvMassHistos];
+ for(int i=0;i<nInvMassHistos;i++){
+   histInvMass[i]=new TH1F(histInvMassNames[i],"",nLogBins,massbins);
+   histInvMass[i]->Sumw2();
+   histInvMass[i]->GetXaxis()->SetTitle("invariant mass [GeV]");
+   histInvMass[i]->GetXaxis()->SetMoreLogLabels();
+   histInvMass[i]->GetXaxis()->SetNoExponent();
+   histInvMass[i]->SetTitle(histInvMassTitles[i]);
+ }
  
  TFile*pileupRatioFile  = new TFile(pileupRatioName);
  TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
@@ -595,7 +584,6 @@ void efficiencies()
   hAcceptance->Write();
   hEfficiency->Write();
   hHLTEfficiency->Write();
-  hpTvsMass->Write();
   migMatrixGENisHardvsGENFS->Write();
   migMatrixGENFSvsReco->Write();
   migMatrixGENisHardvsReco->Write();

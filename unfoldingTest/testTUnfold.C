@@ -49,32 +49,30 @@ void testTUnfold()
   //  Regularization Modes  //
   ////////////////////////////
   //TUnfold::ERegMode regMode = TUnfold::kRegModeNone; //!!!!!Breaks if option selected
-  //TUnfold::ERegMode regMode = TUnfold::kRegModeSize;
+  TUnfold::ERegMode regMode = TUnfold::kRegModeSize;
   //TUnfold::ERegMode regMode = TUnfold::kRegModeDerivative;
-  TUnfold::ERegMode regMode = TUnfold::kRegModeCurvature;
+  //TUnfold::ERegMode regMode = TUnfold::kRegModeCurvature;
   //TUnfold::ERegMode regMode = TUnfold::kRegModeMixed;  //!!!!!Breaks if option selected
 
   ///////////////////////////
   //  Types of Constraint  //
   ///////////////////////////
-  //TUnfold::EConstraint constraintMode = TUnfold::kEConstraintNone;
-  TUnfold::EConstraint constraintMode = TUnfold::kEConstraintArea; //!!!!!Breaks if option selected
+  TUnfold::EConstraint constraintMode = TUnfold::kEConstraintNone;
+  //TUnfold::EConstraint constraintMode = TUnfold::kEConstraintArea;
   
   /////////////////////
   //  Density Modes  //
   /////////////////////
-  //!!!!!All of these options seem to work
-  //TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeNone;
-  TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeBinWidth;
+  TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeNone;
+  //TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeBinWidth;
   //TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeUser;
   //TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeBinWidthAndUser;
  
   /////////////////////////////////////
   //  Horizontal vs Vertical Output  //
   /////////////////////////////////////
-  //!!!!!Either of these works depending on the matrix being used
-  TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputVert;
-  //TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputHoriz;
+  //TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputVert;
+  TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputHoriz;
 
   //////////////////////////////////////
   //  Constructor for TUnfoldDensity  //

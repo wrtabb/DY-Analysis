@@ -112,7 +112,7 @@ enum HistTypes {
 void drawDataVsMC()
 {
   gStyle->SetOptStat(0);
-  gROOT->SetBatch(kTRUE);
+  //gROOT->SetBatch(kTRUE);
   TFile*file = new TFile(dataFileName);
   if(!file){
     cout << endl;
