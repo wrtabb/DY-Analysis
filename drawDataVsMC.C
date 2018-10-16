@@ -293,7 +293,7 @@ void drawDataVsMC()
     hDataMCRatio[i]->Draw("PE");
     line[i]->Draw("same"); 
     canvas[i]->Update();  
-    TString saveName = "./plots/dataVsMC/dataVsMC_";
+    TString saveName = "./plots/dataVsMC/dataVsMC_moreBins_";
     saveName+=histTypeName[i];
     saveName+=".png";
     canvas[i]->SaveAs(saveName);     

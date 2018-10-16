@@ -114,32 +114,62 @@ void testTUnfold()
   TH1*hUnfolded = unfold.GetOutput("Unfolded");
   hUnfolded->SetMarkerStyle(25);
   hUnfolded->SetMarkerColor(kBlue+2);
-  hUnfolded->SetMarkerSize(2);
-  TH2 *histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
-  TH2 *histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
+  hUnfolded->SetMarkerSize(1);
+  //TH2 *histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
+  //TH2 *histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
   //TH1 *histGlobalCorr=unfold.GetRhoItotal("histGlobalCorr",0,0,0,kFALSE);
   //TH2 *histCorrCoeff=unfold.GetRhoIJtotal("histCorrCoeff",0,0,0,kFALSE);
+
+  TH1F*ratio = (TH1F*)hUnfolded->Clone("ratio");
+  ratio->Divide(hGen);
+  const float padmargins = 0.03;
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1200);
-  canvas1->SetLogy();
-  canvas1->SetLogx();
+  TPad*pad1 = new TPad("","",0,0.3,1.0,1.0);
+  pad1->SetBottomMargin(padmargins);
+  pad1->SetGrid();
+  pad1->SetLogy();
+  pad1->SetLogx();
+  pad1->SetTicks(1,1);
+  pad1->Draw();
+  pad1->cd();
+  TLine*line = new TLine(15,1,3000,1);
+  line->SetLineColor(kRed);
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
   legend->SetTextSize(0.02);
   legend->AddEntry(hGen,"Gen Distribution");
   legend->AddEntry(hReco,"Measured Distribution");
   legend->AddEntry(hUnfolded,"Unfolded Distribution");
-  hGen->GetXaxis()->SetTitle("Invariant mass [GeV]");
+  hGen->SetLabelSize(0);
+  hGen->SetTitleSize(0);
   hGen->Draw("hist");
   hReco->Draw("PE,same");
   hUnfolded->Draw("PE,same");
   legend->Draw("same");
+  canvas1->Update();
 
-  //TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1200,1200);
-  //canvas2->SetLogy();
-  //canvas2->SetLogx();
-  //hMatrix->GetXaxis()->SetTitle("Measured");
-  //hMatrix->GetYaxis()->SetTitle("True");
-  //hMatrix->Draw("colz");
-
+  canvas1->cd();
+  TPad*pad2 = new TPad("","",0,0.05,1,0.3);
+  pad2->SetLogx();
+  pad2->SetTopMargin(padmargins);
+  pad2->SetBottomMargin(0.2);
+  pad2->SetGrid();
+  pad2->SetTicks(1,1);
+  pad2->Draw();
+  pad2->cd();  
+  ratio->GetYaxis()->SetLabelSize(0.06);
+  ratio->GetYaxis()->SetTitleSize(0.08);
+  ratio->GetYaxis()->SetTitleOffset(0.3);
+  ratio->GetYaxis()->SetTitle("Unfolded/Gen");
+  ratio->GetXaxis()->SetLabelSize(0.1);
+  ratio->GetXaxis()->SetTitleSize(0.1);
+  ratio->GetXaxis()->SetNoExponent();
+  ratio->GetXaxis()->SetMoreLogLabels();
+  ratio->SetMarkerStyle(20);
+  ratio->SetMarkerColor(kBlack);
+  ratio->Draw("PE");
+  line->Draw("same");
+  canvas1->Update();
+/*
   TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1200,1200);
   canvas3->Divide(2);
   canvas3->cd(1);
@@ -152,6 +182,7 @@ void testTUnfold()
   bestLogTauLogChi2->SetMarkerColor(kRed);
   bestLogTauLogChi2->SetMarkerSize(2);
   bestLogTauLogChi2->Draw("*");
+*/
   //canvas1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldData.png");
   //canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldDataCurves.png");
   
