@@ -33,39 +33,26 @@ bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 
 //Defining variables and arrays
 const int MPSIZE = 2000;
-int Nelectrons, HLT_ntrig, nVertices, nPileUp;
+int GENnPair, Nelectrons, HLT_ntrig, nPileUp;
 double GENEvt_weight;
+double GENLepton_phi[MPSIZE],GENLepton_eta[MPSIZE],GENLepton_pT[MPSIZE],GENLepton_Px[MPSIZE],GENLepton_Py[MPSIZE];
+double GENLepton_Pz[MPSIZE],GENLepton_E[MPSIZE];
+int GENLepton_ID[MPSIZE],GENLepton_isHardProcess[MPSIZE],GENLepton_fromHardProcessFinalState[MPSIZE];
 double Electron_pT[MPSIZE], Electron_eta[MPSIZE], Electron_phi[MPSIZE];
 double Electron_Energy[MPSIZE], Electron_Px[MPSIZE];
 double Electron_Py[MPSIZE], Electron_Pz[MPSIZE], Electron_charge[MPSIZE];
 bool Electron_passMediumID[MPSIZE];
-int HLT_trigType[MPSIZE],HLT_trigFired[MPSIZE];
-std::vector<std::string> HLT_trigName;
-std::vector<std::string> *pHLT_trigName = &HLT_trigName;
 
-const int nHistos = 5;
-enum Histos {
-  XSEC_WEIGHTS,
-  SF_WEIGHTS,
-  GEN_WEIGHTS,
-  PU_WEIGHTS,
-  TOTAL_WEIGHTS
+const int nHistos = 3;
+enum histoTypes {
+  GENFS,
+  GENHARD,
+  RECO
 };
+const TString histTitle[nHistos] = {"Gen-Level Final State","Gen-Level Hard Process",
+  "Reco-Level"};
 
-TString histNames[]= {
-  "hXsecWeight",
-  "hSFweight",
-  "hGenWeight",
-  "hPUWeight",
-  "hTotWeight"
-};
-const TString histTitles[] = {
-  "Cross Section Weights Only",
-  "Scale Factors Only",
-  "Gen Weights Only",
-  "Pileup Weights Only",
-  "All Weights Applied"
-};
+const TString histSave[nHistos] = {"_GENFS","_GENHARD","_RECO"};
 //cutting parameters
 const float etaHigh = 2.4;
 const float etaGapHigh = 1.566; 
@@ -96,7 +83,8 @@ const int nBins = 2*46;
 //const double massbins[] = {100,105,107.5,108.5,109,109.5,110,110.5,111,112,115,120};
 const double massbins[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47.5,50,52.5,55,
                             57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,
-                            98.5,101,103.5,106,108.25,108.5,108.75,109,109.25,109.5,109.75,110,112.5,115,117.5,120,123,126,129.5,133,
+                            98.5,101,103.5,106,108.25,108.5,108.75,109,109.25,109.5,109.75,
+                            110,112.5,115,117.5,120,123,126,129.5,133,
                             137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,210,220,
                             231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
                             700,765,830,915,1000,1250,1500,2250,3000};
@@ -125,7 +113,7 @@ const float binHighY = 2.5;
 
 const float xSec = 1921.8*3;
 
-void signalMCSample()
+void signalMCSample2()
 {
   TTimeStamp ts_start;
   cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
@@ -134,17 +122,17 @@ void signalMCSample()
   gStyle->SetOptStat(0);
 
   //Defining branches
+  TBranch*b_GENnPair;
+  TBranch*b_GENLepton_eta;
+  TBranch*b_GENLepton_phi;
+  TBranch*b_GENLepton_pT;
+  TBranch*b_GENLepton_ID;
+  TBranch*b_GENLepton_isHardProcess;
+  TBranch*b_GENLepton_fromHardProcessFinalState;
   TBranch*b_Nelectrons;
   TBranch*b_Electron_pT;
   TBranch*b_Electron_eta;
   TBranch*b_Electron_phi;
-  TBranch*b_Electron_passMediumID;
-  TBranch*b_HLT_ntrig;
-  TBranch*b_HLT_trigType;
-  TBranch*b_HLT_trigFired;
-  TBranch*b_GENEvt_weight;
-  TBranch*b_nVertices;
-  TBranch*b_nPileUp;
   
   //Loading ntuples
   cout << "Loading ntuples" << endl;
@@ -165,7 +153,8 @@ void signalMCSample()
       if(nFiles>=maxFiles) break;
       files = baseDir;      
       files += dirName;
-      files += "/skims_0002/ntuple_skim_";
+      //files += "/skims_0002/ntuple_skim_";
+      files += "/ntuple_skim_";
       files += k;
       files += ".root";
       std::ifstream testFileStream(files);
@@ -188,196 +177,125 @@ void signalMCSample()
     nentries = chains->GetEntries(); 
 
     //Setting addresses for branches
+    chains->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
+    chains->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
+    chains->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
+    chains->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
+    chains->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
+    chains->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess,
+                                     &b_GENLepton_isHardProcess);
+    chains->SetBranchAddress
+      ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState,
+                                     &b_GENLepton_fromHardProcessFinalState);
     chains->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
-    chains->SetBranchAddress("nVertices", &nVertices, &b_nVertices);
-    chains->SetBranchAddress("nPileUp", &nPileUp, &b_nPileUp);
     chains->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
     chains->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
     chains->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
-    chains->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,
-      &b_Electron_passMediumID);
-    chains->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
-    chains->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
-    chains->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
-    chains->SetBranchAddress("HLT_trigName",&pHLT_trigName);   
-    chains->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
   
   cout << "Total Events Loaded: " << nentries << endl;
   cout << endl;
-
-  TFile*pileupRatioFile  = new TFile(pileupRatioName);
-  TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
-  TFile*fileLeg2SF = new TFile(leg2SFName);
-  TH2F*hLeg2SF = (TH2F*)fileLeg2SF->Get("EGamma_SF2D");
-  TFile*fileMedIDSF = new TFile(medIDSFName);
-  TH2F*hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
-  TFile*fileRecoSF = new TFile(recoSFName); 
-  TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
- 
-
   TH1F*hSignalMC[nHistos];
   for(int i=0;i<nHistos;i++){
-    hSignalMC[i] = new TH1F(histNames[i],"",nBins,massbins); 
+    TString histname = "hSignalMC";
+    histname += i;
+    hSignalMC[i] = new TH1F(histname,"",nBins,massbins);
     hSignalMC[i]->Sumw2();
     hSignalMC[i]->SetFillColor(kBlue+2);
-    hSignalMC[i]->GetXaxis()->SetNoExponent();
-    hSignalMC[i]->GetXaxis()->SetMoreLogLabels();
-    hSignalMC[i]->SetTitle(histTitles[i]);
+    hSignalMC[i]->SetTitle(histTitle[i]);
     hSignalMC[i]->GetXaxis()->SetTitle("Dielectron invariant mass [GeV]");
+    hSignalMC[i]->GetXaxis()->SetRangeUser(100,125);
   }
-
-  double varGenWeight, lumiEffective, nEffective, sumGenWeight, sumRawGenWeight, 
-    totalWeight, sfWeight, weightNoPileup, xSecWeightGen, genWeight, pileupWeight, 
-    xSecWeightAlone;
-  TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
-  TString trigName;
-  int trigNameSize;
-  double lumi = dataLuminosity;//luminosity for xsec weighting
-  double sfReco1,sfReco2,sfID1,sfID2,sfHLT;//efficiency scale factors
-  double eEta1, eEta2, ePt1, ePt2;
-  Long64_t localEntry;
-  cout << endl;
-  cout << "Starting to Normalize Gen Weights" << endl;
-  //Finding normalized genWeights,sums,variances
-  sumGenWeight = 0.0;
-  sumRawGenWeight = 0.0;
-  varGenWeight = 0.0;
-  for(Long64_t i=0;i<nentries;i++){
-    counter(i,nentries);
-    localEntry = chains->LoadTree(i);
-    if(localEntry<0){
-      cout << "Tree failed to load" << endl;   
-      break;
-    }
-    b_GENEvt_weight->GetEntry(localEntry);
-    genWeight = GENEvt_weight/fabs(GENEvt_weight);	//normalized genweight
-    sumGenWeight += genWeight;
-    varGenWeight += GENEvt_weight*GENEvt_weight; //variance of genweights
-    sumRawGenWeight += GENEvt_weight; 
-  }          
-  nEffective = (sumRawGenWeight*sumRawGenWeight)/varGenWeight;
-  lumiEffective = nEffective/xSec;
   //Event loop
+  double invMass;
+  int leadEle,subEle;
   cout << endl;
   cout << "Starting Event Loop" << endl;
   for(Long64_t i=0;i<nentries;i++) {      
     counter(i,nentries);
-    //localEntry = chains->LoadTree(i);
-    //if(localEntry<0){
-      //cout << "Tree failed to load" << endl;   
-      //break;
-    //}
     chains->GetEntry(i);
-    if(Nelectrons<2) continue;   	  
-    //HLT cut
-    trigNameSize = pHLT_trigName->size();
-    bool passHLT = kFALSE;	  
+    TLorentzVector DielectronP4;
 
-    for(int iHLT=0;iHLT<trigNameSize;iHLT++) {
-      trigName = pHLT_trigName->at(iHLT);	  
-      if(trigName.CompareTo(compareHLT)==0) {
-        if(HLT_trigFired[iHLT]==1) {
-          passHLT = kTRUE;	
+    // Loop over gen leptons and find the electron pair at the isHardProcess
+    // and isHardProcessFinalState level.
+    int idxGenEle1, idxGenEle2, idxGenEleFS1, idxGenEleFS2;
+    idxGenEle1 = idxGenEle2 = idxGenEleFS1 = idxGenEleFS2 = -1;
+    int nGenDielectrons = 0;
+    int nGenDielectronsFS = 0;
+    for(int kLep=0;kLep<GENnPair;kLep++){
+      for(int lLep=kLep+1;lLep<GENnPair;lLep++){
+        // Require a dielectron
+        if(!(abs(GENLepton_ID[kLep])==11 && abs(GENLepton_ID[lLep])==11)) continue;
+        // Require opposite signs
+        if(GENLepton_ID[kLep]*GENLepton_ID[lLep]>0) continue;
+
+        if(GENLepton_isHardProcess[kLep]==1 && GENLepton_isHardProcess[lLep]==1){
+          // Found a dielectron from hard process
+          idxGenEle1 = kLep;
+          idxGenEle2 = lLep;
+          nGenDielectrons++;
         }
-        else {
-          passHLT = kFALSE;
-        }		     
-        break; 
-      }
-    } 
-    if(!passHLT) continue;
-   
-    bool passNumEle = kFALSE;
-    bool passKinematics = kFALSE;
+        if(GENLepton_fromHardProcessFinalState[kLep]==1 &&
+          GENLepton_fromHardProcessFinalState[lLep]==1){
+          // Found a dielectron from final state
+          idxGenEleFS1 = kLep;
+          idxGenEleFS2 = lLep;
+          nGenDielectronsFS++;
+        }
+      }// end inner loop
+    }// end outer loop
+
+    // Calculate and fill Gen-Level Final State
+    DielectronP4 = getDielectronP4(GENLepton_pT[idxGenEleFS1],GENLepton_eta[idxGenEleFS1],
+    GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],GENLepton_eta[idxGenEleFS2],
+    GENLepton_phi[idxGenEleFS2],eMass);
+    invMass=DielectronP4.M();
+    hSignalMC[GENFS]->Fill(invMass);
+    
+    // Calculate and fill Gen-Level from hard process
+    DielectronP4 = getDielectronP4(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
+    GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],
+    GENLepton_phi[idxGenEle2],eMass);
+    invMass=DielectronP4.M();
+    hSignalMC[GENHARD]->Fill(invMass);
+
+    //Reco loop
+    if(Nelectrons<2) continue;   	  
     int numDielectrons = 0;
     int subEle = -1;
     int leadEle = -1;
-    double invMassGen = -5000;
-    double invMassReco = -5000;
-    TLorentzVector recoDielectronP4;
-    TLorentzVector genDielectronP4;
-
-    //Electron loop
     for(int iEle = 0; iEle < Nelectrons; iEle++) {
-      if(!Electron_passMediumID[iEle]) continue;
       for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
-        if(!Electron_passMediumID[jEle]) continue;
-        if(passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],
-          Electron_eta[iEle],Electron_eta[jEle])){
-          numDielectrons++;
-          if(Electron_pT[iEle]>Electron_pT[jEle]){
-            leadEle = iEle; subEle = jEle;
-          }
-          else {
-            leadEle = jEle; subEle = iEle;
-          }	  
+        if(Electron_pT[iEle]>Electron_pT[jEle]){
+          leadEle = iEle; subEle = jEle;
         }
+        else {
+          leadEle = jEle; subEle = iEle;
+        }	  
+        
       }//end jEle loop
     }//end iEle loop
      
-   if(numDielectrons==1){
-      passNumEle = kTRUE;
-   }
-   if(!passNumEle) continue;
-   if(leadEle<0||subEle<0) continue;
-   recoDielectronP4 = getDielectronP4(Electron_pT[leadEle],Electron_eta[leadEle],
-     Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
-     Electron_phi[subEle],eMass);
-   genDielectronP4 = getDielectronP4(Electron_pT[leadEle],Electron_eta[leadEle],
-     Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
-     Electron_phi[subEle],eMass);
-   
-   invMassReco=recoDielectronP4.M();
-   invMassGen=genDielectronP4.M();
-   if(invMassReco<-1000) continue;
-   
-   eEta1 = Electron_eta[leadEle];
-   eEta2 = Electron_eta[subEle];
-   ePt1 = Electron_pT[leadEle];
-   ePt2 = Electron_pT[subEle];
-   
-   if(ePt1<ptBinLow) ePt1 = ptBinLow;//pull this information from the histograms
-   if(ePt2<ptBinLow) ePt2 = ptBinLow;//raise bin
-   if(ePt1>ptBinHigh) ePt1 = ptBinHigh;//lower bin
-   if(ePt2>ptBinHigh) ePt2 = ptBinHigh;//
+    if(leadEle<0||subEle<0) continue;
 
-   //Determining weighting factors
-   xSecWeightAlone=lumi*(xSec/nentries);//xSecWeight when used alone
-   xSecWeightGen = lumi*(xSec/1.0);//xSecWeight when used with Gen weight 
-   pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
-   genWeight = (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
+    // Calculate and fill Reco-level
+    DielectronP4 = getDielectronP4(Electron_pT[leadEle],Electron_eta[leadEle],
+      Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
+      Electron_phi[subEle],eMass);
+    invMass=DielectronP4.M();
+    hSignalMC[RECO]->Fill(invMass);
+  }//end event loop   
 
-   sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
-   sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta2,ePt2));
-   sfID1=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta1,ePt1));
-   sfID2=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta2,ePt2));
-   sfHLT=(hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta1,ePt1)))*
-     (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
-   sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
-   totalWeight = sfWeight*genWeight*xSecWeightGen*pileupWeight;
-
-     hSignalMC[XSEC_WEIGHTS]->Fill(invMassReco,xSecWeightAlone);
-     hSignalMC[GEN_WEIGHTS]->Fill(invMassReco,genWeight);
-     hSignalMC[SF_WEIGHTS]->Fill(invMassReco,sfWeight);
-     hSignalMC[PU_WEIGHTS]->Fill(invMassReco,pileupWeight);
-     hSignalMC[TOTAL_WEIGHTS]->Fill(invMassReco,totalWeight);
-   }//end event loop   
-
-  TCanvas*canvas[nHistos];  
-  TString canvasName;
-  TString saveName;
+  // Draw to canvases and save
+  TCanvas*canvas[nHistos];
   for(int i=0;i<nHistos;i++){
-    canvasName = "canvas";
-    canvasName += i;
-    canvas[i] = new TCanvas(canvasName,"",10,10,1000,1000);
+    canvas[i] = new TCanvas("canvas","",10,10,1000,1000);
     canvas[i]->SetGrid();
     canvas[i]->SetLogy();
-    //canvas[i]->SetLogx();
-    hSignalMC[i]->GetXaxis()->SetRangeUser(100,125);
     hSignalMC[i]->Draw("hist");
-    saveName = canvasName;
+    TString saveName = "noSkim_noCuts_noWeights";
+    saveName += histSave[i];
     saveName += ".png";
-    //canvas[i]->SaveAs(saveName);
+    canvas[i]->SaveAs(saveName);
   }
 
   totaltime.Stop();
