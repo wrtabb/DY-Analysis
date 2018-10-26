@@ -88,18 +88,18 @@ const TString recoSFName = "/home/hep/wrtabb/git/DY-Analysis/data/Reco_SF.root";
 const int numChains = 48; const double pi=TMath::Pi(); const float axisLow = 0.0001;
 
 //InvMass
-const int nBins = 2*46;
+const int nBins = 2*43;
 //const double massbins[] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 
 //                             91,96, 101, 106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 
 //                             185,200, 220, 243, 273, 320, 380, 440, 510, 600, 700, 830, 1000, 
 //                             1500,3000};
 //const double massbins[] = {100,105,107.5,108.5,109,109.5,110,110.5,111,112,115,120};
 const double massbins[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47.5,50,52.5,55,
-                            57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,
-                            98.5,101,103.5,106,108.25,108.5,108.75,109,109.25,109.5,109.75,110,112.5,115,117.5,120,123,126,129.5,133,
-                            137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,210,220,
-                            231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
-                            700,765,830,915,1000,1250,1500,2250,3000};
+                           57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,
+                           98.5,101,103.5,106,108,110,112.5,115,117.5,120,123,126,129.5,133,
+                           137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,210,220,
+                           231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
+                           700,765,830,915,1000,1250,1500,2250,3000};
 const float binLowInvMass = 0;
 const float binHighInvMass = 3000;
 //InvMass Linear Plot
@@ -149,16 +149,17 @@ void signalMCSample()
   //Loading ntuples
   cout << "Loading ntuples" << endl;
   //The names of every directory being loaded
-  TString dirName = 
-    "/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8";
-
+  //TString dirName = 
+  //  "/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8";
+  TString dirName =
+    "/DYJetsToLL_allMasses_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100/EE";
   TString baseDir =
     "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3";
   TString files;  
   Long64_t nentries = 0;
   TChain*chains = new TChain(treeName);
   int nFiles = 0;
-  int maxFiles = 100;//maximum number of files to load
+  int maxFiles = 100000;//maximum number of files to load
   cout << "****************************************************" << endl;
   cout << "Loading ntuples" << endl;
     for(int k=0;k<1000;k++) {	  	      
@@ -262,11 +263,6 @@ void signalMCSample()
   cout << "Starting Event Loop" << endl;
   for(Long64_t i=0;i<nentries;i++) {      
     counter(i,nentries);
-    //localEntry = chains->LoadTree(i);
-    //if(localEntry<0){
-      //cout << "Tree failed to load" << endl;   
-      //break;
-    //}
     chains->GetEntry(i);
     if(Nelectrons<2) continue;   	  
     //HLT cut
@@ -286,7 +282,9 @@ void signalMCSample()
       }
     } 
     if(!passHLT) continue;
-   
+    double binWidth; 
+    int binx;
+    TAxis*xAxis;
     bool passNumEle = kFALSE;
     bool passKinematics = kFALSE;
     int numDielectrons = 0;
@@ -356,11 +354,15 @@ void signalMCSample()
    sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
    totalWeight = sfWeight*genWeight*xSecWeightGen*pileupWeight;
 
-     hSignalMC[XSEC_WEIGHTS]->Fill(invMassReco,xSecWeightAlone);
-     hSignalMC[GEN_WEIGHTS]->Fill(invMassReco,genWeight);
-     hSignalMC[SF_WEIGHTS]->Fill(invMassReco,sfWeight);
-     hSignalMC[PU_WEIGHTS]->Fill(invMassReco,pileupWeight);
-     hSignalMC[TOTAL_WEIGHTS]->Fill(invMassReco,totalWeight);
+  xAxis = hSignalMC[TOTAL_WEIGHTS]->GetXaxis();
+  binx = xAxis->FindBin(invMassReco);
+
+   binWidth = hSignalMC[TOTAL_WEIGHTS]->GetXaxis()->GetBinWidth(binx); 
+   hSignalMC[XSEC_WEIGHTS]->Fill(invMassReco,xSecWeightAlone);
+   hSignalMC[GEN_WEIGHTS]->Fill(invMassReco,genWeight);
+   hSignalMC[SF_WEIGHTS]->Fill(invMassReco,sfWeight);
+   hSignalMC[PU_WEIGHTS]->Fill(invMassReco,pileupWeight);
+   hSignalMC[TOTAL_WEIGHTS]->Fill(invMassReco,totalWeight/binWidth);
    }//end event loop   
 
   TCanvas*canvas[nHistos];  
@@ -372,8 +374,8 @@ void signalMCSample()
     canvas[i] = new TCanvas(canvasName,"",10,10,1000,1000);
     canvas[i]->SetGrid();
     canvas[i]->SetLogy();
-    //canvas[i]->SetLogx();
-    hSignalMC[i]->GetXaxis()->SetRangeUser(100,125);
+    canvas[i]->SetLogx();
+    //hSignalMC[i]->GetXaxis()->SetRangeUser(100,125);
     hSignalMC[i]->Draw("hist");
     saveName = canvasName;
     saveName += ".png";

@@ -7,7 +7,7 @@
 #include "TRatioPlot.h"
 
 //Histogram parameters
-const int nHistoTypes = 15; 
+const int nHistoTypes = 16; 
 const int nHistos = 5;
 const float axisLow = 0.1;
 const float axisHigh = 100000000;
@@ -21,7 +21,7 @@ const TString histName[nHistos] = {
 };
 const TString histTypeName[nHistoTypes] = {
   "InvMass", "InvMassLinear", "Vert", "VertWeighted", "pTLead", "pTSub", "pTDi", "EtaLead", 
-  "EtaSub", "EtaDi","Rapidity","InvMass0","InvMass1","InvMass2","InvMass3"
+  "EtaSub", "EtaDi","Rapidity","InvMass0","InvMass1","InvMass2","InvMass3","InvMassScaled"
 };
 const Color_t histFillColors[nHistos] = {
   kViolet+5, kRed+2, kBlue+2, kOrange-2, kWhite
@@ -41,6 +41,7 @@ const TString xAxisLabels[nHistoTypes] = {
   "#eta",
   "#eta",
   "Y",
+  "mass [GeV]",
   "mass [GeV]",
   "mass [GeV]",
   "mass [GeV]",
@@ -82,7 +83,8 @@ const TString plotTitle[nHistoTypes] = {
   "Invariant Mass: Cross-section weights",
   "Invariant Mass: Cross-section and gen weights",
   "Invariant Mass: Cross-section, gen, and pileup weights",
-  "Invariant Mass: Cross-section, gen, pileup, and SF weights"
+  "Invariant Mass: Cross-section, gen, pileup, and SF weights",
+  "Invariant Mass Scaled by Bin Width"
 };
 enum HistBins {
   FAKES,
@@ -106,7 +108,8 @@ enum HistTypes {
   INV_MASS0,
   INV_MASS1,
   INV_MASS2,
-  INV_MASS3
+  INV_MASS3,
+  INV_MASS_SCALED
 };
 
 void drawDataVsMC()
@@ -241,8 +244,8 @@ void drawDataVsMC()
   TLine*line[nHistoTypes];
   TVirtualPad*p1[nHistoTypes];
   TVirtualPad*p2[nHistoTypes];
-  float x1[nHistoTypes]={0,60,0,0,0,0,0,-2.5,-2.5,-2.5,-2.5,0,0,0,0};
-  float x2[nHistoTypes]={3000,120,50,50,500,500,500,2.5,2.5,2.5,2.5,3000,3000,3000,3000};
+  float x1[nHistoTypes]={0,60,0,0,0,0,0,-2.5,-2.5,-2.5,-2.5,0,0,0,0,0};
+  float x2[nHistoTypes]={3000,120,50,50,500,500,500,2.5,2.5,2.5,2.5,3000,3000,3000,3000,3000};
   for(int i=0;i<nHistoTypes;i++){ 
     TString canvasName = "canvas_";
     canvasName+=i;
@@ -256,7 +259,7 @@ void drawDataVsMC()
     pad1[i]->SetTicks(1,1);
     pad1[i]->Draw(); 
     pad1[i]->cd(); 
-    if(i==INV_MASS||i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3) 
+    if(i==INV_MASS||i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3||i==INV_MASS_SCALED)
       pad1[i]->SetLogx();
     hStack[i]->Draw("hist");
     hStack[i]->GetXaxis()->SetTitle(xAxisLabels[i]);
@@ -265,7 +268,8 @@ void drawDataVsMC()
     hStack[i]->SetMinimum(axisLow);
     hStack[i]->GetXaxis()->SetLabelSize(0);
     hStack[i]->GetXaxis()->SetTitleSize(0);
-    hStack[i]->GetYaxis()->SetTitle("Events");
+    if(i==INV_MASS_SCALED) hStack[i]->GetYaxis()->SetTitle("Events/mass [GeV]^{-1}");
+    else hStack[i]->GetYaxis()->SetTitle("Events");
     canvas[i]->Update();
     if(i==VERTICES_WEIGHTED) histos[i-1][DATA]->Draw("same,PE");
     else histos[i][DATA]->Draw("same,PE");
@@ -274,7 +278,7 @@ void drawDataVsMC()
     canvas[i]->cd();
     pad2[i] = new TPad("","",0,0.05,1,0.3);
     p2[i] = pad2[i];
-    if(i==INV_MASS||i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3) 
+    if(i==INV_MASS||i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3||i==INV_MASS_SCALED) 
       pad2[i]->SetLogx();
     pad2[i]->SetTopMargin(padmargins);
     pad2[i]->SetBottomMargin(0.2);

@@ -76,7 +76,7 @@ const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,
 			     380,440,510,600,700,830,1000,1500,3000};
 const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47.5,50,52.5,55,
                             57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,
-                            98.5,101,103.5,106,108.5,110,112.5,115,117.5,120,123,126,129.5,133,
+                            98.5,101,103.5,106,108,110,112.5,115,117.5,120,123,126,129.5,133,
                             137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,210,220,
                             231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
                             700,765,830,915,1000,1250,1500,2250,3000};
@@ -473,7 +473,7 @@ void efficiencies()
           sfHLT=(hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta1,ePt1)))*
             (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
           sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
-	  totalWeight = genWeight*xSecWeight*pileupWeight*sfWeight;
+	  totalWeight = genWeight*xSecWeight*pileupWeight;
 	  hHardProcess[iChain]->Fill(invMassHardProcess,totalWeight);
 	  
 	  //HLT cut
@@ -528,7 +528,6 @@ void efficiencies()
 	  
 	  // Apply HLT requirement
 	  if(!passHLT) continue;
-          
 
 	  histInvMass[HLT_CUTS]->Fill(invMassFSR,totalWeight);
 	  histInvMass[RECO_ELE]->Fill(invMassReco,totalWeight);

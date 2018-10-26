@@ -121,14 +121,14 @@ enum ChainNum {
 }; 
 
 //Histogram parameters
-const int nHistoTypes = 15; 
+const int nHistoTypes = 16; 
 const int nHistos = 5;
 const TString histName[nHistos] = {
   "hFakes", "hEW", "hTops", "hMC", "hData"
 };
 const TString histTypeName[nHistoTypes] = {
   "InvMass", "InvMassLinear", "Vert", "VertWeighted", "pTLead", "pTSub", "pTDi", "EtaLead", 
-    "EtaSub", "EtaDi", "Rapidity", "InvMass0","InvMass1","InvMass2","InvMass3"
+    "EtaSub", "EtaDi", "Rapidity", "InvMass0","InvMass1","InvMass2","InvMass3","InvMassScaled"
 };
 const Color_t histFillColors[nHistos] = {
   kViolet+5, kRed+2, kBlue+2, kOrange-2, kWhite
@@ -151,7 +151,8 @@ const TString xAxisLabels[nHistoTypes] = {
   "Dielectron invariant mass [GeV]",
   "Dielectron invariant mass [GeV]",
   "Dielectron invariant mass [GeV]",
-  "Dielectron invariant mass [GeV]"
+  "Dielectron invariant mass [GeV]",
+  "Dielectron invariatn mass [GeV]"
 };
 enum HistBins {
   FAKES,
@@ -176,7 +177,8 @@ enum HistTypes {
   INV_MASS0,
   INV_MASS1,
   INV_MASS2,
-  INV_MASS3
+  INV_MASS3,
+  INV_MASS_SCALED
 };
 //InvMass
 const int nBinsInvMass = 2*43;
@@ -186,7 +188,7 @@ const int nBinsInvMass = 2*43;
 //                             1500,3000};
 const double massbins[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47.5,50,52.5,55,
                             57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,
-                            98.5,101,103.5,106,108.5,110,112.5,115,117.5,120,123,126,129.5,133,
+                            98.5,101,103.5,106,108,110,112.5,115,117.5,120,123,126,129.5,133,
                             137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,210,220,
                             231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
                             700,765,830,915,1000,1250,1500,2250,3000};
@@ -215,15 +217,15 @@ const float binHighY = 2.5;
 
 const int nBins[nHistoTypes] = {nBinsInvMass,nBinsInvMassLinear,nBinsVert,nBinsVert,npTBins,
                                 npTBins,npTBins,nEtaBins,nEtaBins,nEtaBins,nYBins,
-                                nBinsInvMass,nBinsInvMass,nBinsInvMass,nBinsInvMass};
+                                nBinsInvMass,nBinsInvMass,nBinsInvMass,nBinsInvMass,nBinsInvMass};
 const float binLow[nHistoTypes] = {binLowInvMass,binLowInvMassLinear,binLowVert,binLowVert,
                                    binLowpT,binLowpT,binLowpT,binLowEta,binLowEta,binLowEta,
                                    binLowY,binLowInvMass,binLowInvMass,binLowInvMass,
-                                   binLowInvMass};
+                                   binLowInvMass,binLowInvMass};
 const float binHigh[nHistoTypes] = {binHighInvMass,binHighInvMassLinear,binHighVert,
                                     binHighVert,binHighpT,binHighpT,binHighpT,binHighEta,
                                     binHighEta,binHighEta,binHighY,binHighInvMass,
-                                    binHighInvMass,binHighInvMass,binHighInvMass};
+                                    binHighInvMass,binHighInvMass,binHighInvMass,binHighInvMass};
 
 //Cross sections calculated by Kyeongpil Lee
 const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,//QCD
@@ -414,7 +416,7 @@ void dataVsMC()
   for(int i=0;i<nHistoTypes;i++){//type of histogram
     for(int j=0;j<nHistos;j++){//histogram within type
       if(i==VERTICES_WEIGHTED&&j==DATA) continue; //data doesn't get weighted
-      if(i==INV_MASS||i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3) 
+      if(i==INV_MASS||i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3||i==INV_MASS_SCALED) 
         histos[i][j]=new TH1F(histName[j]+histTypeName[i],"",nBinsInvMass,massbins);   
       else histos[i][j]=new TH1F(histName[j]+histTypeName[i],"",nBins[i],binLow[i],binHigh[i]);      
       if(j==DATA) {
@@ -463,6 +465,8 @@ void dataVsMC()
   double sfReco1,sfReco2,sfID1,sfID2,sfHLT;//efficiency scale factors
   double eEta1, eEta2, ePt1, ePt2;
 
+  TAxis*xAxis;
+  double binx,binWidth;   
   //Loop over samples
   for(int iChain=0;iChain<numChains;iChain++) {
     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;
@@ -633,13 +637,18 @@ void dataVsMC()
          hSFvsInvMassReco->Fill(invMass,sfReco1*sfReco2);
        }
      }//end if isMC
-     
+    
+     xAxis = histos[INV_MASS_SCALED][sampleCategory]->GetXaxis();
+     binx = xAxis->FindBin(invMass);
+     binWidth = histos[INV_MASS_SCALED][sampleCategory]->GetXaxis()->GetBinWidth(binx);
+ 
      histos[INV_MASS0][sampleCategory]->Fill(invMass,xSecWeightAlone);
      histos[INV_MASS1][sampleCategory]->Fill(invMass,xSecWeight*genWeight);
      histos[INV_MASS2][sampleCategory]->Fill(invMass,xSecWeight*pileupWeight*genWeight);
      histos[INV_MASS3][sampleCategory]->
        Fill(invMass,xSecWeight*pileupWeight*genWeight*sfWeight);
      histos[INV_MASS][sampleCategory]->Fill(invMass,totalWeight);
+     histos[INV_MASS_SCALED][sampleCategory]->Fill(invMass,totalWeight/binWidth);
      if(invMass<invMassLow||invMass>invMassHigh) continue;
      histos[INV_MASS_LINEAR][sampleCategory]->Fill(invMass,totalWeight);
      histos[PT_LEAD][sampleCategory]->Fill(Electron_pT[leadEle],totalWeight);
