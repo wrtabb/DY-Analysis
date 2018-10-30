@@ -12,7 +12,7 @@ const TString toyTreeName = "toyData";
 
 void plotsToyModel()
 {
-  gStyle->SetOptStat(0);
+  //gStyle->SetOptStat(0);
   gStyle->SetPalette(1);
   float massTrue,massMeasured;
   TBranch*b_massTrue;
@@ -32,9 +32,12 @@ void plotsToyModel()
   
   TH2F*hMatrix = new TH2F("hMatrix","",nBins,massbins,nBins,massbins);
   Long64_t nEntries = tree->GetEntries();
+  Long64_t localEntry = -100;
   for(Long64_t i=0;i<nEntries;i++){
     counter(i,nEntries);
-    tree->GetEntry(i);
+    localEntry = tree->LoadTree(i);
+    if(localEntry<0) continue;
+    tree->GetEntry(localEntry);
     hMassTrue->Fill(massTrue);
     hMassMeasured->Fill(massMeasured);
     hMatrix->Fill(massTrue,massMeasured);
@@ -53,8 +56,8 @@ void plotsToyModel()
   hMassMeasured->GetXaxis()->SetMoreLogLabels();
   hMassMeasured->GetXaxis()->SetNoExponent();
   hMassTrue->Draw("hist");
-  hMassMeasured->Draw("hist,same");
-  legend->Draw("same");
+  //hMassMeasured->Draw("hist,same");
+  //legend->Draw("same");
 
   TCanvas*cMatrix = new TCanvas("cMatrix","",10,10,1000,1000);
   cMatrix->SetLogy();
