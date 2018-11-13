@@ -11,10 +11,10 @@ const float massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47
                             137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,210,220,
                             231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
                             700,765,830,915,1000,1250,1500,2250,3000};
-const int nBins = 50;
-const int nBins2 = 100;
-const float binLow = 15;
-const float binHigh = 3000;
+const int nBins = 40;
+const int nBins2 = 80;
+const float binLow = 20;
+const float binHigh = 200;
 
 const double pi = TMath::Pi();
 const TString toyModelName = "toyData.root";
@@ -39,16 +39,16 @@ void plotsToyModel()
   tree->SetBranchAddress("massMeasured",&massMeasured,&b_massMeasured);
 
   //Define histograms
-  TH1D*hMassTrue = new TH1D("hMassTrue","",nBins,60,120);
+  TH1D*hMassTrue = new TH1D("hMassTrue","",nBins,binLow,binHigh);
   hMassTrue->SetLineColor(kBlue+2);
   hMassTrue->SetLineWidth(2);
-  TH1D*hMassMeasured = new TH1D("hMassMeasured","",nBins2,60,120);
+  TH1D*hMassMeasured = new TH1D("hMassMeasured","",nBins2,binLow,binHigh);
   hMassMeasured->SetMarkerColor(kRed+2);
   hMassMeasured->SetMarkerStyle(21);
   hMassMeasured->SetMarkerSize(1);
   hMassMeasured->SetLineColor(kRed+2);
   hMassMeasured->SetLineWidth(2);
-  TH2D*hMatrix = new TH2D("hMatrix","",nBins2,60,120,nBins,60,120);
+  TH2D*hMatrix = new TH2D("hMatrix","",nBins2,binLow,binHigh,nBins,binLow,binHigh);
 
   //Begin event loop
   Long64_t nEntries = tree->GetEntries();
@@ -69,8 +69,8 @@ void plotsToyModel()
   legend->SetTextSize(0.02);
   legend->AddEntry(hMassTrue,"True Mass");
   legend->AddEntry(hMassMeasuredRebin,"Measured Mass");
-  hMassTrue->GetXaxis()->SetMoreLogLabels();
-  hMassTrue->GetXaxis()->SetNoExponent();
+  //hMassTrue->GetXaxis()->SetMoreLogLabels();
+  //hMassTrue->GetXaxis()->SetNoExponent();
   hMassTrue->GetXaxis()->SetTitle("mass [GeV]");
   //hMassMeasured->GetXaxis()->SetMoreLogLabels();
   //hMassMeasured->GetXaxis()->SetNoExponent();

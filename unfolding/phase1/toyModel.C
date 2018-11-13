@@ -31,20 +31,20 @@ void toyModel()
   TFile*file = new TFile(mcDist);
   //Defining mass distribution model
   //and resolution model
-  TF1*fToyModel = new TF1("fToyModel","gaus(0)",60,120);
-  fToyModel->SetParameters(1,91,30);
-  TF1*fResolutionModel = new TF1("fPhiResolutionModel","gaus(0)",-10,10);
-  fResolutionModel->SetParameters(1,0,1);
+  TF1*fToyModel = new TF1("fToyModel","([0]/x)+gaus(1)",10,200);
+  fToyModel->SetParameters(10,1,90,7);
+  TF1*fResolutionModel = new TF1("fPhiResolutionModel","gaus(0)",-20,20);
+  fResolutionModel->SetParameters(1,0,3);
   TH1D*hMassDist = (TH1D*)file->Get("hGenAllInvMass"); 
   //Filling variables
   Long64_t nentries = 0;
   for(Long64_t i=0;i<nEvents;i++){
     counter(i,nEvents);
-    massTrue = fToyModel->GetRandom(60,120);
-    smear = fResolutionModel->GetRandom(-2,2);
+    massTrue = fToyModel->GetRandom();
+    smear = fResolutionModel->GetRandom();
     massMeasured = massTrue+smear;
     if(modelType == IN_MASS_RANGE){
-      if(massMeasured<120&&massMeasured>60){
+      if(massMeasured<200&&massMeasured>10){
         tree->Fill();
         nentries++;
       }
