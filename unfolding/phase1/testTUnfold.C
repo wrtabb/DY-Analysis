@@ -16,8 +16,8 @@ enum Reglarization {//Strength of regularization
 };
 
 const int nBins = 40;
-const int binLow = 20;
-const int binHigh = 200;
+const int binLow = 15;
+const int binHigh = 3000;
 const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,
                              110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,
                              380,440,510,600,700,830,1000,1500,3000};
@@ -44,8 +44,8 @@ void testTUnfold()
   gStyle->SetOptStat(0);
 
   //Define hisograms
-  TH1F*hReco = (TH1F*)file->Get("hMassMeasured");
-  TH1F*hGen = (TH1F*)file->Get("hMassTrue");
+  TH1F*hReco = (TH1F*)file->Get("hReco");
+  TH1F*hGen = (TH1F*)file->Get("hTrue");
   TH2F*hMatrix = (TH2F*)file->Get("hMatrix");
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
@@ -79,8 +79,8 @@ void testTUnfold()
   /////////////////////////////////////
   //  Horizontal vs Vertical Output  //
   /////////////////////////////////////
-  TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputVert;
-  //TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputHoriz;
+  //TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputVert;
+  TUnfold::EHistMap outputMap = TUnfold::kHistMapOutputHoriz;
 
   //////////////////////////////////////
   //  Constructor for TUnfoldDensity  //
@@ -140,10 +140,10 @@ void testTUnfold()
   //TH1 *histGlobalCorr=unfold.GetRhoItotal("histGlobalCorr",0,0,0,kFALSE);
   //TH2 *histCorrCoeff=unfold.GetRhoIJtotal("histCorrCoeff",0,0,0,kFALSE);
   TH1F*hUnfoldedE = new TH1F("Unfolded with errors",";(gen)",nBins,binLow,binHigh);
-  for(int i=0;i<nBins+1;i++){
-    double c = hUnfolded->GetBinContent(i);
-    hUnfoldedE->SetBinContent(i,c);
-    hUnfoldedE->SetBinError(i,TMath::Sqrt(histEmatTotal->GetBinContent(i,i)));
+  for(int i=0;i<nBins;i++){
+    double c = hUnfolded->GetBinContent(i+1);
+    hUnfoldedE->SetBinContent(i+1,c);
+    hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
   }
   TH1F*hRecoRebin=(TH1F*)hReco->Clone("hRecoRebin");
   hRecoRebin->Rebin(2);
@@ -154,12 +154,12 @@ void testTUnfold()
   TPad*pad1 = new TPad("","",0,0.3,1.0,1.0);
   pad1->SetBottomMargin(padmargins);
   pad1->SetGrid();
-  //pad1->SetLogy();
-  //pad1->SetLogx();
+  pad1->SetLogy();
+  pad1->SetLogx();
   pad1->SetTicks(1,1);
   pad1->Draw();
   pad1->cd();
-  TLine*line = new TLine(15,1,3000,1);
+  TLine*line = new TLine(binLow,1,binHigh,1);
   line->SetLineColor(kRed);
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
   legend->SetTextSize(0.02);
@@ -176,7 +176,7 @@ void testTUnfold()
 
   canvas1->cd();
   TPad*pad2 = new TPad("","",0,0.05,1,0.3);
-  //pad2->SetLogx();
+  pad2->SetLogx();
   pad2->SetTopMargin(padmargins);
   pad2->SetBottomMargin(0.2);
   pad2->SetGrid();
@@ -189,8 +189,8 @@ void testTUnfold()
   ratio->GetYaxis()->SetTitle("Unfolded/Gen");
   ratio->GetXaxis()->SetLabelSize(0.1);
   ratio->GetXaxis()->SetTitleSize(0.1);
-  //ratio->GetXaxis()->SetNoExponent();
-  //ratio->GetXaxis()->SetMoreLogLabels();
+  ratio->GetXaxis()->SetNoExponent();
+  ratio->GetXaxis()->SetMoreLogLabels();
   ratio->SetMarkerStyle(20);
   ratio->SetMarkerColor(kBlack);
   ratio->Draw("PE");
@@ -209,7 +209,7 @@ void testTUnfold()
     bestLogTauLogChi2->SetMarkerColor(kRed);
     bestLogTauLogChi2->SetMarkerSize(2);
     bestLogTauLogChi2->Draw("*");
-    canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testUnfoldDataCurves_RecoInMassRange.png");
+    canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves_RecoInMassRange.png");
   }
   TString plotName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataRecoInMassRange";
   if(regType==NO_REG) plotName += "_NoReg.png";
