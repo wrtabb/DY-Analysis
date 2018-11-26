@@ -15,7 +15,7 @@ enum Reglarization {//Strength of regularization
   VAR_REG           //TUnfoldDensity determines best choice of regularization strength
 };
 
-const int nBins = 40;
+const int nBins = 43;
 const int binLow = 15;
 const int binHigh = 3000;
 const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,
@@ -32,7 +32,8 @@ void testTUnfold()
   //  VAR_REG for TUnfold Picks Tau    //
   //  CONST_REG to choose your own tau //
   ///////////////////////////////////////
-
+  
+  //gROOT->SetBatch(kTRUE);
   //int regType = NO_REG;
   int regType = VAR_REG;
   //int regType = CONST_REG;
@@ -44,9 +45,10 @@ void testTUnfold()
   gStyle->SetOptStat(0);
 
   //Define hisograms
-  TH1F*hReco = (TH1F*)file->Get("hReco");
-  TH1F*hGen = (TH1F*)file->Get("hTrue");
-  TH2F*hMatrix = (TH2F*)file->Get("hMatrix");
+  TH1F*hReco = (TH1F*)file->Get("hReco");//reconstructed mass
+  TH1F*hGen = (TH1F*)file->Get("hTrue");//true mass
+  TH2F*hMatrix = (TH2F*)file->Get("hMatrix");//migration matrix
+  TH2F*hAltMatrix = (TH2F*)file->Get("hAltMatrix");//alternative migration matrix
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
   hReco->SetLineColor(kBlack);
@@ -97,8 +99,10 @@ void testTUnfold()
   //  Add Systematic Error  //
   ////////////////////////////
   //For this part, you need a migration matrix calculated using a different MC generator
-  //unfold.AddSysError(hMatrixSys,"signalshape_SYS",
-  //                   outputMap,TUnfoldSys::kSysErrModeMatrix);
+  TUnfoldSys::ESysErrMode sysErrorType = TUnfoldSys::kSysErrModeMatrix;
+  //TUnfoldSys::ESysErrMode sysErrorType = TUnfoldSys::kSysErrModeShift;
+  //TUnfoldSys::ESysErrMode sysErrorType = TUnfoldSys::kSysErrModeRelative;
+  unfold.AddSysError(hAltMatrix,"systematic error",outputMap,sysErrorType);
 
   ////////////////////////////
   //  Begin Regularization  //
@@ -139,7 +143,10 @@ void testTUnfold()
   TH2 *histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
   //TH1 *histGlobalCorr=unfold.GetRhoItotal("histGlobalCorr",0,0,0,kFALSE);
   //TH2 *histCorrCoeff=unfold.GetRhoIJtotal("histCorrCoeff",0,0,0,kFALSE);
-  TH1F*hUnfoldedE = new TH1F("Unfolded with errors",";(gen)",nBins,binLow,binHigh);
+  TH1F*hUnfoldedE = new TH1F("Unfolded with errors",";(gen)",nBins,massbins);
+  hUnfoldedE->SetMarkerStyle(25);
+  hUnfoldedE->SetMarkerColor(kBlue+2);
+  hUnfoldedE->SetMarkerSize(1);
   for(int i=0;i<nBins;i++){
     double c = hUnfolded->GetBinContent(i+1);
     hUnfoldedE->SetBinContent(i+1,c);
@@ -147,7 +154,7 @@ void testTUnfold()
   }
   TH1F*hRecoRebin=(TH1F*)hReco->Clone("hRecoRebin");
   hRecoRebin->Rebin(2);
-  TH1F*ratio = (TH1F*)hUnfolded->Clone("ratio");
+  TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
   ratio->Divide(hGen);
   const float padmargins = 0.03;
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1200);
@@ -170,7 +177,7 @@ void testTUnfold()
   hGen->SetTitleSize(0);
   hGen->Draw("hist");
   hRecoRebin->Draw("PE,same");
-  hUnfolded->Draw("PE,same");
+  hUnfoldedE->Draw("PE,same");
   legend->Draw("same");
   canvas1->Update();
 
@@ -209,13 +216,13 @@ void testTUnfold()
     bestLogTauLogChi2->SetMarkerColor(kRed);
     bestLogTauLogChi2->SetMarkerSize(2);
     bestLogTauLogChi2->Draw("*");
-    canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves_RecoInMassRange.png");
+    //canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves_RecoOutMassRange_NoClosure.png");
   }
-  TString plotName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataRecoInMassRange";
+  TString plotName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataRecoOutMassRange_NoClosure";
   if(regType==NO_REG) plotName += "_NoReg.png";
   if(regType==CONST_REG) plotName += "_ConstReg.png";
   if(regType==VAR_REG) plotName += "_VarReg.png";
 
-  canvas1->SaveAs(plotName);
+  //canvas1->SaveAs(plotName);
   
 }

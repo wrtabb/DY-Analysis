@@ -27,61 +27,110 @@ const int nBins = 40;
 const int nBins2 = 80;
 const double binLow = 20;
 const double binHigh = 200;
+const double massMax = 3000;
+const double massMin = 15;
 const int nEvents = 1e7;
-enum ModelType{
-  IN_MASS_RANGE,//events not allowed to migrate into/out of mass range 
-  OUT_MASS_RANGE//events are allowed to migrate into/out of mass range 
-};
+
+const bool exactClosure = kFALSE;//set exact closure
+const bool inMassRange = kFALSE;//define if bin migration can move into/out of mass range
+const bool effInc = kTRUE; //include efficiency
 
 void toyModel()
 {
   TH1::SetDefaultSumw2();
   gStyle->SetPalette(1);
   gStyle->SetOptStat(0); 
+  //gROOT->SetBatch(kTRUE);
   //Data to store
   float massTrue,massMeasured,smear;
-  int modelType = IN_MASS_RANGE;//define if bin migration can move into/out of mass range
   
   //Setting up root file and tree for storing data
   TFile fToyData(toyModelName,"recreate");
   TTree*tree = new TTree("toyData","");
   tree->Branch("massTrue",&massTrue,"massTrue/f");
   tree->Branch("massMeasured",&massMeasured,"massMeasured/f");
-  
   TFile*file = new TFile(mcDist);
+
   //Defining mass distribution model
   //and resolution model
   TF1*fToyModel = new TF1("fToyModel","([0]/x)+gaus(1)",10,200);
   fToyModel->SetParameters(10,1,90,7);
   TF1*fResolutionModel = new TF1("fPhiResolutionModel","gaus(0)",-20,20);
   fResolutionModel->SetParameters(1,0,3);
-  TH1D*hMassDist = (TH1D*)file->Get("hGenAllInvMass"); 
 
+  //MC sim models  
+  TF1*fToyModelSim = (TF1*)fToyModel->Clone("fToyModelSim");
+  TF1*fResolutionModelSim = (TF1*)fResolutionModel->Clone("fResolutionModelSim");
+
+  //Efficiency Plot
+  TEfficiency*efficiency = (TEfficiency*)file->Get("Efficiency");
+  //MC Mass Distribution for filling toy model
+  TH1D*hMassDist = (TH1D*)file->Get("hGenAllInvMass"); 
+  //Toy Models true and reconstructed
   TH1D*hTrue = new TH1D("hTrue","",nLogBins,massbins);
   TH1D*hReco = new TH1D("hReco","",nLogBins2,massbins2);
+  //Migration matrix
   TH2D*hMatrix = new TH2D("hMatrix","",nLogBins,massbins,nLogBins2,massbins2);
+  //Migration matrix for error calculation
+  TH2D*hAltMatrix = new TH2D("hAltMatrix","",nLogBins,massbins,nLogBins2,massbins2);
+  //Simulated
+  TH1D*hMCTrue = new TH1D("hMCTrue","",nLogBins,massbins);
+  TH1D*hMCReco = new TH1D("hMCReco","",nLogBins2,massbins2);
+  double eff[nLogBins2];
+  TRandom3*random = new TRandom3();
+  double rand;
+
   //Filling variables
+  if(exactClosure) gRandom->SetSeed(1);
   Long64_t nentries = 0;
   for(Long64_t i=0;i<nEvents;i++){
     counter(i,nEvents);
     massTrue = hMassDist->GetRandom();
     smear = fResolutionModel->GetRandom();
     massMeasured = massTrue+smear;
-    if(modelType == IN_MASS_RANGE){
-      if(massMeasured<3000&&massMeasured>15){
-        tree->Fill();
+    eff[i] = efficiency->GetEfficiency(hMassDist->GetBin(massTrue));
+    rand = random->Rndm(); 
+    if(inMassRange){
+      if(massMeasured<=massMax&&massMeasured>=massMin){
         nentries++;
         hTrue->Fill(massTrue);
         hReco->Fill(massMeasured);
+      }
+    }//end inMassRange
+    else{
+      nentries++;
+      hTrue->Fill(massTrue);
+      hReco->Fill(massMeasured);
+    }//end !inMassRange
+  }//end for loop
+
+  gRandom->SetSeed(1);
+  for(Long64_t i=0;i<nEvents;i++){
+    counter(i,nEvents);
+    rand = random->Rndm(); 
+    massTrue = hMassDist->GetRandom();
+    smear = fResolutionModel->GetRandom();
+    massMeasured = massTrue+smear;
+    if(inMassRange){
+      if(massMeasured<=massMax&&massMeasured>=massMin){
+        hMCTrue->Fill(massTrue);
+        hMCReco->Fill(massMeasured);
         hMatrix->Fill(massTrue,massMeasured);
       }
-    }//end modelType IN_MASS_RANGE
+    }//end inMassRange
     else{
-      tree->Fill();
-      nentries++;
-    }//end modelType OUT_MASS_RANGE
+      hMCTrue->Fill(massTrue);
+      hMCReco->Fill(massMeasured);
+      hMatrix->Fill(massTrue,massMeasured);
+    }//end !inMassRange
   }//end for loop
+
   fToyData.Close();
+  TString saveName;
+  if(inMassRange)
+    saveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/step1MigrationMatrix_RecoInMassRange.png";
+  else 
+    saveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/step1MigrationMatrix_RecoOutMassRange.png";
   TCanvas*canvas=new TCanvas("canvas","",10,10,1000,1000);
   canvas->SetLogy();
   canvas->SetLogx();
@@ -92,10 +141,11 @@ void toyModel()
   hMatrix->GetXaxis()->SetTitle("true mass [GeV]");
   hMatrix->GetYaxis()->SetTitle("reco mass [GeV]");
   hMatrix->Draw("colz");
-  canvas->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/step1MigrationMatrix_RecoInMassRange.png");
+  canvas->SaveAs(saveName);
   TFile*file2 = new TFile(histSaveName,"recreate");
   file2->cd();
   hMatrix->Write();
+  hAltMatrix->Write();
   hReco->Write();
   hTrue->Write();
   file2->Write();
