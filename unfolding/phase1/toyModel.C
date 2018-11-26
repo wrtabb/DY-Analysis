@@ -66,6 +66,7 @@ void toyModel()
   TEfficiency*efficiency = (TEfficiency*)file->Get("Efficiency");
   //MC Mass Distribution for filling toy model
   TH1D*hMassDist = (TH1D*)file->Get("hGenAllInvMass"); 
+/*
   //Toy Models true and reconstructed
   TH1D*hTrue = new TH1D("hTrue","",nLogBins,massbins);
   TH1D*hReco = new TH1D("hReco","",nLogBins2,massbins2);
@@ -76,10 +77,50 @@ void toyModel()
   //Simulated
   TH1D*hMCTrue = new TH1D("hMCTrue","",nLogBins,massbins);
   TH1D*hMCReco = new TH1D("hMCReco","",nLogBins2,massbins2);
-  double eff[nLogBins2];
+*/
+  double eff;
   TRandom3*random = new TRandom3();
   double rand;
 
+  const int nHists = 3;
+  TH1D*hRecoA[nHists];
+  TH1D*hTrueA[nHists];
+  TH2D*hMatrixA[nHists];
+  const TString recoName[] = {"hReco","hMCReco","hAltReco"};
+  const TString trueName[] = {"hTrue","hMCTrue","hAltTrue"};
+  const TString matrixName[] = {"hMatrixDontUse","hMatrix","hAltMatrix"};
+  Long64_t N = 0;
+  for(int j=0;j<nHists;j++){
+    gRandom->SetSeed(j);
+    if(exactClosure) gRandom->SetSeed(0);
+    hRecoA[j] = new TH1D(recoName[j],"",nLogBins2,massbins2);
+    hTrueA[j] = new TH1D(trueName[j],"",nLogBins,massbins);
+    hMatrixA[j] = new TH2D(matrixName[j],"",nLogBins,massbins,nLogBins2,massbins2);
+    for(Long64_t i=0;i<nEvents;i++){
+      //counter(N,nHists*nEvents);
+      N++;
+      massTrue = hMassDist->GetRandom();
+      smear = fResolutionModel->GetRandom();
+      massMeasured = massTrue+smear;
+      eff = efficiency->GetEfficiency(hMassDist->FindBin(massTrue));
+      if(massTrue>1000)
+      cout << "mass = " << massTrue << ", efficiency = " << eff << endl;
+      rand = random->Rndm(); 
+      if(inMassRange){
+        if(massMeasured<=massMax&&massMeasured>=massMin){
+          hTrueA[j]->Fill(massTrue);
+          hRecoA[j]->Fill(massMeasured);
+          hMatrixA[j]->Fill(massTrue,massMeasured); 
+        }
+      }//end inMassRange
+      else{
+        hTrueA[j]->Fill(massTrue);
+        hRecoA[j]->Fill(massMeasured);
+        hMatrixA[j]->Fill(massTrue,massMeasured);
+      }//end !inMassRange
+    }
+  }//end j loop
+/*
   //Filling variables
   if(exactClosure) gRandom->SetSeed(1);
   Long64_t nentries = 0;
@@ -104,6 +145,7 @@ void toyModel()
     }//end !inMassRange
   }//end for loop
 
+  //Produce "sim" data to make migration matrix
   gRandom->SetSeed(1);
   for(Long64_t i=0;i<nEvents;i++){
     counter(i,nEvents);
@@ -124,7 +166,8 @@ void toyModel()
       hMatrix->Fill(massTrue,massMeasured);
     }//end !inMassRange
   }//end for loop
-
+*/
+  
   fToyData.Close();
   TString saveName;
   if(inMassRange)
@@ -134,24 +177,26 @@ void toyModel()
   TCanvas*canvas=new TCanvas("canvas","",10,10,1000,1000);
   canvas->SetLogy();
   canvas->SetLogx();
-  hMatrix->GetXaxis()->SetMoreLogLabels();
-  hMatrix->GetXaxis()->SetNoExponent();
-  hMatrix->GetYaxis()->SetMoreLogLabels();
-  hMatrix->GetYaxis()->SetNoExponent();
-  hMatrix->GetXaxis()->SetTitle("true mass [GeV]");
-  hMatrix->GetYaxis()->SetTitle("reco mass [GeV]");
-  hMatrix->Draw("colz");
+  hMatrixA[1]->GetXaxis()->SetMoreLogLabels();
+  hMatrixA[1]->GetXaxis()->SetNoExponent();
+  hMatrixA[1]->GetYaxis()->SetMoreLogLabels();
+  hMatrixA[1]->GetYaxis()->SetNoExponent();
+  hMatrixA[1]->GetXaxis()->SetTitle("true mass [GeV]");
+  hMatrixA[1]->GetYaxis()->SetTitle("reco mass [GeV]");
+  hMatrixA[1]->GetYaxis()->SetTitleOffset(1.5);
+  hMatrixA[1]->Draw("colz");
+
   canvas->SaveAs(saveName);
   TFile*file2 = new TFile(histSaveName,"recreate");
   file2->cd();
-  hMatrix->Write();
-  hAltMatrix->Write();
-  hReco->Write();
-  hTrue->Write();
+  for(int i=0;i<nHists;i++){
+    hMatrixA[i]->Write();
+    hRecoA[i]->Write();
+    hTrueA[i]->Write();
+  }
   file2->Write();
   file2->Close();
 
-  cout << "Number of events processed: " << nentries << endl;
 }//end toyModel()
 
 //Counter for tracking program progress

@@ -179,7 +179,7 @@ void testTUnfold()
   hRecoRebin->Draw("PE,same");
   hUnfoldedE->Draw("PE,same");
   legend->Draw("same");
-  canvas1->Update();
+  //canvas1->Update();
 
   canvas1->cd();
   TPad*pad2 = new TPad("","",0,0.05,1,0.3);
@@ -194,6 +194,7 @@ void testTUnfold()
   ratio->GetYaxis()->SetTitleSize(0.08);
   ratio->GetYaxis()->SetTitleOffset(0.3);
   ratio->GetYaxis()->SetTitle("Unfolded/Gen");
+  ratio->GetXaxis()->SetTitle("mass [GeV]");
   ratio->GetXaxis()->SetLabelSize(0.1);
   ratio->GetXaxis()->SetTitleSize(0.1);
   ratio->GetXaxis()->SetNoExponent();
@@ -202,27 +203,28 @@ void testTUnfold()
   ratio->SetMarkerColor(kBlack);
   ratio->Draw("PE");
   line->Draw("same");
-  canvas1->Update();
+  //canvas1->Update();
   if(regType == VAR_REG){
-    TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1200,1200);
-    canvas3->Divide(2);
-    canvas3->cd(1);
+    TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1000,1000);
+    canvas3->SetGrid();
+    //canvas3->Divide(2);
+    canvas3->cd();
     lCurve->Draw("AL");
     bestLcurve->SetMarkerColor(kRed);
     bestLcurve->SetMarkerSize(2);
     bestLcurve->Draw("*");
-    canvas3->cd(2);
-    logTauX->Draw();
+    //canvas3->cd(2);
+    //logTauX->Draw();
     bestLogTauLogChi2->SetMarkerColor(kRed);
     bestLogTauLogChi2->SetMarkerSize(2);
-    bestLogTauLogChi2->Draw("*");
-    //canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves_RecoOutMassRange_NoClosure.png");
+    //bestLogTauLogChi2->Draw("*");
+    canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves_RecoOutMassRangeNoClosure.png");
   }
   TString plotName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataRecoOutMassRange_NoClosure";
   if(regType==NO_REG) plotName += "_NoReg.png";
   if(regType==CONST_REG) plotName += "_ConstReg.png";
   if(regType==VAR_REG) plotName += "_VarReg.png";
 
-  //canvas1->SaveAs(plotName);
+  canvas1->SaveAs(plotName);
   
 }
