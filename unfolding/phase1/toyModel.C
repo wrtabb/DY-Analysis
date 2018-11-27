@@ -66,25 +66,14 @@ void toyModel()
   TEfficiency*efficiency = (TEfficiency*)file->Get("Efficiency");
   //MC Mass Distribution for filling toy model
   TH1D*hMassDist = (TH1D*)file->Get("hGenAllInvMass"); 
-/*
-  //Toy Models true and reconstructed
-  TH1D*hTrue = new TH1D("hTrue","",nLogBins,massbins);
-  TH1D*hReco = new TH1D("hReco","",nLogBins2,massbins2);
-  //Migration matrix
-  TH2D*hMatrix = new TH2D("hMatrix","",nLogBins,massbins,nLogBins2,massbins2);
-  //Migration matrix for error calculation
-  TH2D*hAltMatrix = new TH2D("hAltMatrix","",nLogBins,massbins,nLogBins2,massbins2);
-  //Simulated
-  TH1D*hMCTrue = new TH1D("hMCTrue","",nLogBins,massbins);
-  TH1D*hMCReco = new TH1D("hMCReco","",nLogBins2,massbins2);
-*/
+
   double eff,rand;
   TRandom3*random = new TRandom3();
 
   const int nHists = 3;
-  TH1D*hRecoA[nHists];
-  TH1D*hTrueA[nHists];
-  TH2D*hMatrixA[nHists];
+  TH1D*hReco[nHists];
+  TH1D*hTrue[nHists];
+  TH2D*hMatrix[nHists];
   const TString recoName[] = {"hReco","hMCReco","hAltReco"};
   const TString trueName[] = {"hTrue","hMCTrue","hAltTrue"};
   const TString matrixName[] = {"hMatrixDontUse","hMatrix","hAltMatrix"};
@@ -92,9 +81,9 @@ void toyModel()
   for(int j=0;j<nHists;j++){
     gRandom->SetSeed(j);
     if(exactClosure) gRandom->SetSeed(0);
-    hRecoA[j] = new TH1D(recoName[j],"",nLogBins2,massbins2);
-    hTrueA[j] = new TH1D(trueName[j],"",nLogBins,massbins);
-    hMatrixA[j] = new TH2D(matrixName[j],"",nLogBins,massbins,nLogBins2,massbins2);
+    hReco[j] = new TH1D(recoName[j],"",nLogBins2,massbins2);
+    hTrue[j] = new TH1D(trueName[j],"",nLogBins,massbins);
+    hMatrix[j] = new TH2D(matrixName[j],"",nLogBins,massbins,nLogBins2,massbins2);
     for(Long64_t i=0;i<nEvents;i++){
       counter(N,nHists*nEvents);
       N++;
@@ -102,72 +91,42 @@ void toyModel()
       smear = fResolutionModel->GetRandom();
       massMeasured = massTrue+smear;
       if(effInc){
-        eff = efficiency->GetEfficiency(hMassDist->FindBin(massTrue));
+        eff = efficiency->GetEfficiency(hMassDist->FindBin(massMeasured));
         rand = random->Rndm(); 
         if(rand>eff) massMeasured = 0;
       }
       if(inMassRange){
-        if(massMeasured<=massMax&&massMeasured>=massMin){
-          hTrueA[j]->Fill(massTrue);
-          hRecoA[j]->Fill(massMeasured);
-          hMatrixA[j]->Fill(massTrue,massMeasured); 
+        if(massMeasured>=massMax||massMeasured<=massMin){
+          massMeasured = 0;
         }
+        hReco[j]->Fill(massMeasured);
+        hTrue[j]->Fill(massTrue);
+        hMatrix[j]->Fill(massTrue,massMeasured); 
       }//end inMassRange
       else{
-        hTrueA[j]->Fill(massTrue);
-        hRecoA[j]->Fill(massMeasured);
-        hMatrixA[j]->Fill(massTrue,massMeasured);
+        hTrue[j]->Fill(massTrue);
+        hReco[j]->Fill(massMeasured);
+        hMatrix[j]->Fill(massTrue,massMeasured);
       }//end !inMassRange
     }
   }//end j loop
-/*
-  //Filling variables
-  if(exactClosure) gRandom->SetSeed(1);
-  Long64_t nentries = 0;
-  for(Long64_t i=0;i<nEvents;i++){
-    counter(i,nEvents);
-    massTrue = hMassDist->GetRandom();
-    smear = fResolutionModel->GetRandom();
-    massMeasured = massTrue+smear;
-    eff[i] = efficiency->GetEfficiency(hMassDist->GetBin(massTrue));
-    rand = random->Rndm(); 
-    if(inMassRange){
-      if(massMeasured<=massMax&&massMeasured>=massMin){
-        nentries++;
-        hTrue->Fill(massTrue);
-        hReco->Fill(massMeasured);
-      }
-    }//end inMassRange
-    else{
-      nentries++;
-      hTrue->Fill(massTrue);
-      hReco->Fill(massMeasured);
-    }//end !inMassRange
-  }//end for loop
-
-  //Produce "sim" data to make migration matrix
-  gRandom->SetSeed(1);
-  for(Long64_t i=0;i<nEvents;i++){
-    counter(i,nEvents);
-    rand = random->Rndm(); 
-    massTrue = hMassDist->GetRandom();
-    smear = fResolutionModel->GetRandom();
-    massMeasured = massTrue+smear;
-    if(inMassRange){
-      if(massMeasured<=massMax&&massMeasured>=massMin){
-        hMCTrue->Fill(massTrue);
-        hMCReco->Fill(massMeasured);
-        hMatrix->Fill(massTrue,massMeasured);
-      }
-    }//end inMassRange
-    else{
-      hMCTrue->Fill(massTrue);
-      hMCReco->Fill(massMeasured);
-      hMatrix->Fill(massTrue,massMeasured);
-    }//end !inMassRange
-  }//end for loop
-*/
   
+  TH1D*hRecoRebin = (TH1D*)hReco[0]->Clone("hRecoRebin");
+  hRecoRebin->Rebin(2);
+  TEfficiency*toyEfficiency = new TEfficiency((*hRecoRebin),(*hTrue[0]));
+  toyEfficiency->SetTitle("Toy Reconstruction Efficiency");
+  toyEfficiency->SetMarkerStyle(20);
+  toyEfficiency->SetMarkerSize(0.5);
+  toyEfficiency->SetStatisticOption(TEfficiency::kFNormal);
+  toyEfficiency->SetMarkerColor(kRed);
+  toyEfficiency->SetLineColor(kRed);
+
+  TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
+  canvas2->SetLogx();
+  canvas2->SetGrid();
+  efficiency->Draw("PE");
+  toyEfficiency->Draw("same,PE");
+
   fToyData.Close();
   TString saveName;
   if(inMassRange)
@@ -177,22 +136,23 @@ void toyModel()
   TCanvas*canvas=new TCanvas("canvas","",10,10,1000,1000);
   canvas->SetLogy();
   canvas->SetLogx();
-  hMatrixA[1]->GetXaxis()->SetMoreLogLabels();
-  hMatrixA[1]->GetXaxis()->SetNoExponent();
-  hMatrixA[1]->GetYaxis()->SetMoreLogLabels();
-  hMatrixA[1]->GetYaxis()->SetNoExponent();
-  hMatrixA[1]->GetXaxis()->SetTitle("true mass [GeV]");
-  hMatrixA[1]->GetYaxis()->SetTitle("reco mass [GeV]");
-  hMatrixA[1]->GetYaxis()->SetTitleOffset(1.5);
-  hMatrixA[1]->Draw("colz");
+  hMatrix[1]->GetXaxis()->SetMoreLogLabels();
+  hMatrix[1]->GetXaxis()->SetNoExponent();
+  hMatrix[1]->GetYaxis()->SetMoreLogLabels();
+  hMatrix[1]->GetYaxis()->SetNoExponent();
+  hMatrix[1]->GetXaxis()->SetTitle("true mass [GeV]");
+  hMatrix[1]->GetYaxis()->SetTitle("reco mass [GeV]");
+  hMatrix[1]->GetYaxis()->SetTitleOffset(1.5);
+  hMatrix[1]->Draw("colz");
 
   canvas->SaveAs(saveName);
   TFile*file2 = new TFile(histSaveName,"recreate");
   file2->cd();
   for(int i=0;i<nHists;i++){
-    hMatrixA[i]->Write();
-    hRecoA[i]->Write();
-    hTrueA[i]->Write();
+    hMatrix[i]->Write();
+    hReco[i]->Write();
+    hTrue[i]->Write();
+    hRecoRebin->Write();
   }
   file2->Write();
   file2->Close();
