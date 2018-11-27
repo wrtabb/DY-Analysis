@@ -78,9 +78,8 @@ void toyModel()
   TH1D*hMCTrue = new TH1D("hMCTrue","",nLogBins,massbins);
   TH1D*hMCReco = new TH1D("hMCReco","",nLogBins2,massbins2);
 */
-  double eff;
+  double eff,rand;
   TRandom3*random = new TRandom3();
-  double rand;
 
   const int nHists = 3;
   TH1D*hRecoA[nHists];
@@ -97,15 +96,16 @@ void toyModel()
     hTrueA[j] = new TH1D(trueName[j],"",nLogBins,massbins);
     hMatrixA[j] = new TH2D(matrixName[j],"",nLogBins,massbins,nLogBins2,massbins2);
     for(Long64_t i=0;i<nEvents;i++){
-      //counter(N,nHists*nEvents);
+      counter(N,nHists*nEvents);
       N++;
       massTrue = hMassDist->GetRandom();
       smear = fResolutionModel->GetRandom();
       massMeasured = massTrue+smear;
-      eff = efficiency->GetEfficiency(hMassDist->FindBin(massTrue));
-      if(massTrue>1000)
-      cout << "mass = " << massTrue << ", efficiency = " << eff << endl;
-      rand = random->Rndm(); 
+      if(effInc){
+        eff = efficiency->GetEfficiency(hMassDist->FindBin(massTrue));
+        rand = random->Rndm(); 
+        if(rand>eff) massMeasured = 0;
+      }
       if(inMassRange){
         if(massMeasured<=massMax&&massMeasured>=massMin){
           hTrueA[j]->Fill(massTrue);
