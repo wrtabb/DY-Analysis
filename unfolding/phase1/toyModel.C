@@ -91,11 +91,11 @@ void toyModel()
       smear = fResolutionModel->GetRandom();
       massMeasured = massTrue+smear;
       if(effInc){
-        eff = efficiency->GetEfficiency(hMassDist->FindBin(massMeasured));
+        eff = efficiency->GetEfficiency(efficiency->FindBin(massMeasured));
         rand = random->Rndm(); 
         if(rand>eff) massMeasured = 0;
       }
-      if(inMassRange){
+      if(!inMassRange){
         if(massMeasured>=massMax||massMeasured<=massMin){
           massMeasured = 0;
         }
@@ -111,22 +111,6 @@ void toyModel()
     }
   }//end j loop
   
-  TH1D*hRecoRebin = (TH1D*)hReco[0]->Clone("hRecoRebin");
-  hRecoRebin->Rebin(2);
-  TEfficiency*toyEfficiency = new TEfficiency((*hRecoRebin),(*hTrue[0]));
-  toyEfficiency->SetTitle("Toy Reconstruction Efficiency");
-  toyEfficiency->SetMarkerStyle(20);
-  toyEfficiency->SetMarkerSize(0.5);
-  toyEfficiency->SetStatisticOption(TEfficiency::kFNormal);
-  toyEfficiency->SetMarkerColor(kRed);
-  toyEfficiency->SetLineColor(kRed);
-
-  TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1000,1000);
-  canvas2->SetLogx();
-  canvas2->SetGrid();
-  efficiency->Draw("PE");
-  toyEfficiency->Draw("same,PE");
-
   fToyData.Close();
   TString saveName;
   if(inMassRange)
@@ -152,7 +136,6 @@ void toyModel()
     hMatrix[i]->Write();
     hReco[i]->Write();
     hTrue[i]->Write();
-    hRecoRebin->Write();
   }
   file2->Write();
   file2->Close();
