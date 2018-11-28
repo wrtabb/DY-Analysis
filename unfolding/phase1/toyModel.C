@@ -79,8 +79,14 @@ void toyModel()
   const TString matrixName[] = {"hMatrixDontUse","hMatrix","hAltMatrix"};
   Long64_t N = 0;
   for(int j=0;j<nHists;j++){
-    gRandom->SetSeed(j);
-    if(exactClosure) gRandom->SetSeed(0);
+    if(!exactClosure){
+      gRandom->SetSeed(j+1);
+      random->SetSeed(j+1);
+    }
+    else{
+      gRandom->SetSeed(1);
+      random->SetSeed(1);
+    }
     hReco[j] = new TH1D(recoName[j],"",nLogBins2,massbins2);
     hTrue[j] = new TH1D(trueName[j],"",nLogBins,massbins);
     hMatrix[j] = new TH2D(matrixName[j],"",nLogBins,massbins,nLogBins2,massbins2);
@@ -91,7 +97,7 @@ void toyModel()
       smear = fResolutionModel->GetRandom();
       massMeasured = massTrue+smear;
       if(effInc){
-        eff = efficiency->GetEfficiency(efficiency->FindBin(massMeasured));
+        eff = efficiency->GetEfficiency(hMassDist->FindBin(massMeasured));
         rand = random->Rndm(); 
         if(rand>eff) massMeasured = 0;
       }
