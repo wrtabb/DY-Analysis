@@ -31,7 +31,7 @@ const double massMax = 3000;
 const double massMin = 15;
 const int nEvents = 1e7;
 
-const bool exactClosure = kFALSE;//set exact closure
+const bool exactClosure = kTRUE;//set exact closure
 const bool inMassRange = kFALSE;//define if bin migration can move into/out of mass range
 const bool effInc = kTRUE; //include efficiency
 
@@ -101,6 +101,7 @@ void toyModel()
         rand = random->Rndm(); 
         if(rand>eff) massMeasured = 0;
       }
+
       if(!inMassRange){
         if(massMeasured>=massMax||massMeasured<=massMin){
           massMeasured = 0;
@@ -119,10 +120,12 @@ void toyModel()
   
   fToyData.Close();
   TString saveName;
-  if(inMassRange)
-    saveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/step1MigrationMatrix_RecoInMassRange.png";
-  else 
-    saveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/step1MigrationMatrix_RecoOutMassRange.png";
+  saveName = 
+    "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/step1MigrationMatrix";
+  if(effInc) saveName += "_EffInc";
+  else saveName += "_NoEff";
+  if(exactClosure) saveName += "_ClosureTest";
+
   TCanvas*canvas=new TCanvas("canvas","",10,10,1000,1000);
   canvas->SetLogy();
   canvas->SetLogx();
@@ -134,7 +137,8 @@ void toyModel()
   hMatrix[1]->GetYaxis()->SetTitle("reco mass [GeV]");
   hMatrix[1]->GetYaxis()->SetTitleOffset(1.5);
   hMatrix[1]->Draw("colz");
-
+  
+  saveName += ".png";
   canvas->SaveAs(saveName);
   TFile*file2 = new TFile(histSaveName,"recreate");
   file2->cd();

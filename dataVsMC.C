@@ -631,6 +631,7 @@ void dataVsMC()
          sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
          totalWeight = sfWeight*genWeight*xSecWeight*pileupWeight;
          weightNoPileup = sfWeight*genWeight*xSecWeight;
+
          hSFvsInvMassAll->Fill(invMass,sfWeight);
          hSFvsInvMassHLT->Fill(invMass,sfHLT);
          hSFvsInvMassID->Fill(invMass,sfID1*sfID2);
