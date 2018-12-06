@@ -30,7 +30,7 @@ const double binLow = 20;
 const double binHigh = 200;
 const double massMax = 3000;
 const double massMin = 15;
-const int nEvents = 1e7;
+const int nEvents = 1e8;
 
 const bool exactClosure = true;//set exact closure
 const bool effInc = true; //include efficiency
@@ -65,7 +65,7 @@ void toyModel()
   TH1D*hMassDist = (TH1D*)file->Get("hGenInvMass"); 
   hMassDist->SetName("hMassDist");
 
-  double effData,effMC,rand;
+  double effData,effMC,rand,rho;
   TRandom3*random = new TRandom3();
 
   const int nHists = 3;
@@ -94,17 +94,18 @@ void toyModel()
       massTrue = hMassDist->GetRandom();
       smear = fResolutionModel->GetRandom();
       massMeasured = massTrue+smear;
-      float rho = profileSF->GetBinContent(profileSF->FindBin(massTrue));
       bool seenInData = kTRUE;
       bool seenInMC = kTRUE;
 
       if(effInc){
+        rho = profileSF->GetBinContent(profileSF->FindBin(massTrue));
         effMC = efficiency->GetEfficiency(hMassDist->FindBin(massMeasured));
         effData = effMC*rho;
         rand = random->Rndm(); 
-        if(rand>effMC) seenInMC = kFALSE;
-        if(rand>effData) seenInData = kFALSE; 
+        if(rand>effMC) seenInMC = false;
+        if(rand>effData) seenInData = false; 
       }
+      else rho = 1.0;
       massMeasuredData = massMeasuredMC = massMeasured;
       if(!seenInData) massMeasuredData = 0;
       if(!seenInMC) massMeasuredMC = 0;
