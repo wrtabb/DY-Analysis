@@ -30,10 +30,10 @@ const double binLow = 20;
 const double binHigh = 200;
 const double massMax = 3000;
 const double massMin = 15;
-const int nEvents = 1e8;
+const int nEvents = 1e7;
 
 const bool exactClosure = true;//set exact closure
-const bool effInc = true; //include efficiency
+const bool effInc = false; //include efficiency
 
 void toyModel()
 {
@@ -44,7 +44,11 @@ void toyModel()
   //Data to store
   float massTrue,massMeasured,smear;
   float massMeasuredData,massMeasuredMC; 
-
+  
+  ofstream parameterFile;
+  parameterFile.open("parameters.txt");
+  parameterFile << exactClosure << " " << effInc << endl;
+  parameterFile.close();
   //Setting up root file and tree for storing data
   TFile fToyData(toyModelName,"recreate");
   TFile*file = new TFile(mcDist);

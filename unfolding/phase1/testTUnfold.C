@@ -44,6 +44,11 @@ void testTUnfold()
   gStyle->SetPalette(1);
   gStyle->SetOptStat(0);
 
+  //Determine parameters used to create the distributions
+  ifstream parameterFile("parameters.txt");
+  bool exactClosure,effInc;
+  parameterFile >> exactClosure >> effInc;
+
   //Define hisograms
   TH1F*hReco = (TH1F*)file->Get("hReco");//reconstructed mass
   TH1F*hGen = (TH1F*)file->Get("hTrue");//true mass
@@ -204,7 +209,32 @@ void testTUnfold()
   ratio->SetMarkerColor(kBlack);
   ratio->Draw("PE");
   line->Draw("same");
-  //canvas1->Update();
+
+  //Save Options
+  TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldData_";
+  TString lineName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves_";
+  if(exactClosure){
+    distName += "_ClosureTest";
+    lineName += "_ClosureTest";
+  }
+  if(effInc){
+    distName += "_EffInc";
+    lineName += "_EffInc";
+  }
+ 
+  if(regType==NO_REG){
+    distName += "_NoReg.png";
+    lineName += "_NoReg.png";
+  }
+  if(regType==CONST_REG){
+    distName += "_ConstReg.png";
+    lineName += "_ConstReg.png";
+  }   
+  if(regType==VAR_REG){
+    distName += "_VarReg.png";
+    lineName += "_VarReg.png";
+  }  
+
   if(regType == VAR_REG){
     TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1000,1000);
     canvas3->SetGrid();
@@ -219,13 +249,8 @@ void testTUnfold()
     bestLogTauLogChi2->SetMarkerColor(kRed);
     bestLogTauLogChi2->SetMarkerSize(2);
     //bestLogTauLogChi2->Draw("*");
-    canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurvese_EffInc_SFINC_ClosureTest");
+    canvas3->SaveAs(lineName);
   }
-  TString plotName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldData_EffInc_SFINC_ClosureTest";
-  if(regType==NO_REG) plotName += "_NoReg.png";
-  if(regType==CONST_REG) plotName += "_ConstReg.png";
-  if(regType==VAR_REG) plotName += "_VarReg.png";
-
-  canvas1->SaveAs(plotName);
+  canvas1->SaveAs(distName);
   
 }
