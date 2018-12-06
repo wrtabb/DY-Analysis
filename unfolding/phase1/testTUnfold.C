@@ -199,6 +199,7 @@ void testTUnfold()
   ratio->GetXaxis()->SetTitleSize(0.1);
   ratio->GetXaxis()->SetNoExponent();
   ratio->GetXaxis()->SetMoreLogLabels();
+  ratio->GetYaxis()->SetRangeUser(0.8,1.2);
   ratio->SetMarkerStyle(20);
   ratio->SetMarkerColor(kBlack);
   ratio->Draw("PE");
@@ -218,9 +219,9 @@ void testTUnfold()
     bestLogTauLogChi2->SetMarkerColor(kRed);
     bestLogTauLogChi2->SetMarkerSize(2);
     //bestLogTauLogChi2->Draw("*");
-    canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves_RecoOutMassRange_EffInc_ClosureTest");
+    canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurvese_EffInc_SFINC_ClosureTest");
   }
-  TString plotName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataRecoOutMassRange_EffInc_ClosureTest";
+  TString plotName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldData_EffInc_SFINC_ClosureTest";
   if(regType==NO_REG) plotName += "_NoReg.png";
   if(regType==CONST_REG) plotName += "_ConstReg.png";
   if(regType==VAR_REG) plotName += "_VarReg.png";

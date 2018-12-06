@@ -21,6 +21,7 @@ const float massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47
 void counter(Long64_t i, Long64_t N);
 const double pi = TMath::Pi();
 const TString mcDist = "/home/hep/wrtabb/git/DY-Analysis/plots/plotsDY.root";
+const TString mcSF =  "/home/hep/wrtabb/git/DY-Analysis/plots/dataVsMC.root";
 const TString toyModelName = "toyData.root";
 const TString histSaveName = "toyUnfold.root";
 const int nBins = 40;
@@ -31,9 +32,8 @@ const double massMax = 3000;
 const double massMin = 15;
 const int nEvents = 1e7;
 
-const bool exactClosure = kTRUE;//set exact closure
-const bool inMassRange = kFALSE;//define if bin migration can move into/out of mass range
-const bool effInc = kTRUE; //include efficiency
+const bool exactClosure = true;//set exact closure
+const bool effInc = true; //include efficiency
 
 void toyModel()
 {
@@ -43,13 +43,14 @@ void toyModel()
   //gROOT->SetBatch(kTRUE);
   //Data to store
   float massTrue,massMeasured,smear;
-  
+  float massMeasuredData,massMeasuredMC; 
+
   //Setting up root file and tree for storing data
   TFile fToyData(toyModelName,"recreate");
-  TTree*tree = new TTree("toyData","");
-  tree->Branch("massTrue",&massTrue,"massTrue/f");
-  tree->Branch("massMeasured",&massMeasured,"massMeasured/f");
   TFile*file = new TFile(mcDist);
+
+  TFile*fileSF = new TFile(mcSF);
+  TProfile*profileSF = (TProfile*)fileSF->Get("hSFvsInvMassAll_pfx");
 
   //Defining mass distribution model
   //and resolution model
@@ -58,16 +59,13 @@ void toyModel()
   TF1*fResolutionModel = new TF1("fPhiResolutionModel","gaus(0)",-20,20);
   fResolutionModel->SetParameters(1,0,3);
 
-  //MC sim models  
-  TF1*fToyModelSim = (TF1*)fToyModel->Clone("fToyModelSim");
-  TF1*fResolutionModelSim = (TF1*)fResolutionModel->Clone("fResolutionModelSim");
-
   //Efficiency Plot
   TEfficiency*efficiency = (TEfficiency*)file->Get("Efficiency");
   //MC Mass Distribution for filling toy model
-  TH1D*hMassDist = (TH1D*)file->Get("hGenAllInvMass"); 
+  TH1D*hMassDist = (TH1D*)file->Get("hGenInvMass"); 
+  hMassDist->SetName("hMassDist");
 
-  double eff,rand;
+  double effData,effMC,rand;
   TRandom3*random = new TRandom3();
 
   const int nHists = 3;
@@ -96,25 +94,27 @@ void toyModel()
       massTrue = hMassDist->GetRandom();
       smear = fResolutionModel->GetRandom();
       massMeasured = massTrue+smear;
-      if(effInc){
-        eff = efficiency->GetEfficiency(hMassDist->FindBin(massMeasured));
-        rand = random->Rndm(); 
-        if(rand>eff) massMeasured = 0;
-      }
+      float rho = profileSF->GetBinContent(profileSF->FindBin(massTrue));
+      bool seenInData = kTRUE;
+      bool seenInMC = kTRUE;
 
-      if(!inMassRange){
-        if(massMeasured>=massMax||massMeasured<=massMin){
-          massMeasured = 0;
-        }
-        hReco[j]->Fill(massMeasured);
-        hTrue[j]->Fill(massTrue);
-        hMatrix[j]->Fill(massTrue,massMeasured); 
-      }//end inMassRange
-      else{
-        hTrue[j]->Fill(massTrue);
-        hReco[j]->Fill(massMeasured);
-        hMatrix[j]->Fill(massTrue,massMeasured);
-      }//end !inMassRange
+      if(effInc){
+        effMC = efficiency->GetEfficiency(hMassDist->FindBin(massMeasured));
+        effData = effMC*rho;
+        rand = random->Rndm(); 
+        if(rand>effMC) seenInMC = kFALSE;
+        if(rand>effData) seenInData = kFALSE; 
+      }
+      massMeasuredData = massMeasuredMC = massMeasured;
+      if(!seenInData) massMeasuredData = 0;
+      if(!seenInMC) massMeasuredMC = 0;
+      hReco[j]->Fill(massMeasuredData);
+      hTrue[j]->Fill(massTrue);
+      if(seenInMC){
+        hMatrix[j]->Fill(massTrue,massMeasuredMC, rho);
+        hMatrix[j]->Fill(massTrue,0.0,1-rho);
+      }
+      else hMatrix[j]->Fill(massTrue,massMeasuredMC,1.0);
     }
   }//end j loop
   
@@ -147,6 +147,7 @@ void toyModel()
     hReco[i]->Write();
     hTrue[i]->Write();
   }
+  hMassDist->Write();
   file2->Write();
   file2->Close();
 
