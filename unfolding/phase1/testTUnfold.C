@@ -52,6 +52,7 @@ void testTUnfold()
   //Define hisograms
   TH1F*hReco = (TH1F*)file->Get("hReco");//reconstructed mass
   TH1F*hGen = (TH1F*)file->Get("hTrue");//true mass
+  TH1F*hBack = (TH1F*)file->Get("hBack2");
   TH2F*hMatrix = (TH2F*)file->Get("hMatrix");//migration matrix
   TH2F*hAltMatrix = (TH2F*)file->Get("hAltMatrix");//alternative migration matrix
   hReco->SetMarkerStyle(20);
@@ -98,7 +99,7 @@ void testTUnfold()
   //////////////////////////////
   //  Background Subtraction  //
   //////////////////////////////
-  //unfold.SubtractBackground(hBackground,"background",1.0,0);
+  //unfold.SubtractBackground(hBack,"background",1.0,0);
 
   ////////////////////////////
   //  Add Systematic Error  //
@@ -161,6 +162,11 @@ void testTUnfold()
   hRecoRebin->Rebin(2);
   TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
   ratio->Divide(hGen);
+
+  double x[nBins],res[nBins];
+  double chi = hUnfolded->Chi2Test(hGen,"CHI2/NDF",res);
+  TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
+
   const float padmargins = 0.03;
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1200);
   TPad*pad1 = new TPad("","",0,0.3,1.0,1.0);
@@ -184,6 +190,7 @@ void testTUnfold()
   hRecoRebin->Draw("PE,same");
   hUnfoldedE->Draw("PE,same");
   legend->Draw("same");
+  chiLabel->Draw("same");
   //canvas1->Update();
 
   canvas1->cd();
@@ -210,29 +217,67 @@ void testTUnfold()
   ratio->Draw("PE");
   line->Draw("same");
 
+  //Graph for residuals
+  for (Int_t i=0; i<nBins; i++){ 
+    x[i]= 4.+i*12./20.+12./40.;
+  }
+  TGraph *resgr = new TGraph(nBins,x,res);
+  resgr->GetYaxis()->SetTitle("Normalized Residuals");
+  resgr->SetMarkerStyle(21);
+  resgr->SetMarkerColor(kBlue);
+  resgr->SetMarkerSize(.9);
+  resgr->SetTitle("Normalized Residuals");
+  //resgr->GetYaxis()->SetRangeUser(-3.5,3.5);
+  
+  //Graph for Quintile-Quintile
+  TF1 *f = new TF1("f","TMath::Gaus(x,0,1)",-10,10);
+  TGraphQQ *qqplot = new TGraphQQ(nBins,res,f);
+  qqplot->SetMarkerStyle(20);
+  qqplot->SetMarkerColor(kRed);
+  qqplot->SetMarkerSize(.9);
+  qqplot->SetTitle("Q-Q plot of Normalized Residuals");
+  
+  TCanvas*canvasStatPlot= new TCanvas("canvasResiduals","",10,10,1400,1000);
+  canvasStatPlot->Divide(2);
+  canvasStatPlot->cd(1);
+  resgr->Draw();
+  canvasStatPlot->cd(2);
+  qqplot->Draw();
+
   //Save Options
-  TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldData_";
-  TString lineName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves_";
+  TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldData";
+  TString lineName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves";
+  TString statPlotName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldStatPlot";
   if(exactClosure){
     distName += "_ClosureTest";
     lineName += "_ClosureTest";
+    statPlotName+= "_ClosureTest";
+    
   }
   if(effInc){
     distName += "_EffInc";
     lineName += "_EffInc";
+    statPlotName+= "_EffInc";
   }
- 
+  if(!effInc){
+    distName += "_NoEff";
+    lineName += "_NoEff";
+    statPlotName+= "_NoEff";
+  } 
   if(regType==NO_REG){
     distName += "_NoReg.png";
     lineName += "_NoReg.png";
+    statPlotName+= "_NoReg.png";
   }
   if(regType==CONST_REG){
     distName += "_ConstReg.png";
     lineName += "_ConstReg.png";
+    statPlotName+= "_ConstReg.png";
   }   
   if(regType==VAR_REG){
     distName += "_VarReg.png";
     lineName += "_VarReg.png";
+    statPlotName+= "_VarReg.png";
   }  
 
   if(regType == VAR_REG){
@@ -252,5 +297,5 @@ void testTUnfold()
     canvas3->SaveAs(lineName);
   }
   canvas1->SaveAs(distName);
-  
+  canvasStatPlot->SaveAs(statPlotName); 
 }

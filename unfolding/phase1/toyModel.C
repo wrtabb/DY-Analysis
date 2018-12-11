@@ -24,13 +24,17 @@ const TString mcDist = "/home/hep/wrtabb/git/DY-Analysis/plots/plotsDY.root";
 const TString mcSF =  "/home/hep/wrtabb/git/DY-Analysis/plots/dataVsMC.root";
 const TString toyModelName = "toyData.root";
 const TString histSaveName = "toyUnfold.root";
+const TString recoName[] = {"hReco","hMCReco","hAltReco"};
+const TString trueName[] = {"hTrue","hMCTrue","hAltTrue"};
+const TString matrixName[] = {"hMatrixDontUse","hMatrix","hAltMatrix"};
+const TString backName[] = {"hBack1","hBack2","hBack3"};
 const int nBins = 40;
 const int nBins2 = 80;
 const double binLow = 20;
 const double binHigh = 200;
 const double massMax = 3000;
 const double massMin = 15;
-const int nEvents = 1e7;
+const int nEvents = 1e8;
 
 const bool exactClosure = true;//set exact closure
 const bool effInc = false; //include efficiency
@@ -44,15 +48,15 @@ void toyModel()
   //Data to store
   float massTrue,massMeasured,smear;
   float massMeasuredData,massMeasuredMC; 
-  
+  //Save parameters for naming purposes in the unfolding script
   ofstream parameterFile;
   parameterFile.open("parameters.txt");
   parameterFile << exactClosure << " " << effInc << endl;
   parameterFile.close();
+
   //Setting up root file and tree for storing data
   TFile fToyData(toyModelName,"recreate");
   TFile*file = new TFile(mcDist);
-
   TFile*fileSF = new TFile(mcSF);
   TProfile*profileSF = (TProfile*)fileSF->Get("hSFvsInvMassAll_pfx");
 
@@ -68,6 +72,17 @@ void toyModel()
   //MC Mass Distribution for filling toy model
   TH1D*hMassDist = (TH1D*)file->Get("hGenInvMass"); 
   hMassDist->SetName("hMassDist");
+  TH1D*hFakes = (TH1D*)fileSF->Get("hFakesInvMass");
+  TH1D*hEW = (TH1D*)fileSF->Get("hEWInvMass");
+  TH1D*hTops = (TH1D*)fileSF->Get("hTopsInvMass");
+  for(int i=0;i<87;i++){
+    if(hFakes->GetBinContent(i)<0.0) hFakes->SetBinContent(i,0.0);
+    if(hEW->GetBinContent(i)<0.0) hEW->SetBinContent(i,0.0);
+    if(hTops->GetBinContent(i)<0.0) hTops->SetBinContent(i,0.0);
+  }
+  TH1D*hBackgroundDist = (TH1D*)hFakes->Clone("hBackgroundDist");
+  hBackgroundDist->Add(hEW);
+  hBackgroundDist->Add(hTops);
 
   double effData,effMC,rand,rho;
   TRandom3*random = new TRandom3();
@@ -75,10 +90,8 @@ void toyModel()
   const int nHists = 3;
   TH1D*hReco[nHists];
   TH1D*hTrue[nHists];
+  //TH1D*hBackground[nHists];
   TH2D*hMatrix[nHists];
-  const TString recoName[] = {"hReco","hMCReco","hAltReco"};
-  const TString trueName[] = {"hTrue","hMCTrue","hAltTrue"};
-  const TString matrixName[] = {"hMatrixDontUse","hMatrix","hAltMatrix"};
   Long64_t N = 0;
   for(int j=0;j<nHists;j++){
     if(!exactClosure){
@@ -91,6 +104,7 @@ void toyModel()
     }
     hReco[j] = new TH1D(recoName[j],"",nLogBins2,massbins2);
     hTrue[j] = new TH1D(trueName[j],"",nLogBins,massbins);
+    //hBackground[j] = new TH1D(backName[j],"",nLogBins2,massbins2);
     hMatrix[j] = new TH2D(matrixName[j],"",nLogBins,massbins,nLogBins2,massbins2);
     for(Long64_t i=0;i<nEvents;i++){
       counter(N,nHists*nEvents);
@@ -98,9 +112,11 @@ void toyModel()
       massTrue = hMassDist->GetRandom();
       smear = fResolutionModel->GetRandom();
       massMeasured = massTrue+smear;
+      //massBackground = hBackgroundDist->GetRandom();
       bool seenInData = kTRUE;
       bool seenInMC = kTRUE;
-
+    
+      //hBackground[j]->Fill(massBackground,backWeight);      
       if(effInc){
         rho = profileSF->GetBinContent(profileSF->FindBin(massTrue));
         effMC = efficiency->GetEfficiency(hMassDist->FindBin(massMeasured));
@@ -113,14 +129,17 @@ void toyModel()
       massMeasuredData = massMeasuredMC = massMeasured;
       if(!seenInData) massMeasuredData = 0;
       if(!seenInMC) massMeasuredMC = 0;
-      hReco[j]->Fill(massMeasuredData);
+      hReco[j]->Fill(massMeasuredMC,rho);
       hTrue[j]->Fill(massTrue);
       if(seenInMC){
-        hMatrix[j]->Fill(massTrue,massMeasuredMC, rho);
+        hMatrix[j]->Fill(massTrue,massMeasuredMC,rho);
         hMatrix[j]->Fill(massTrue,0.0,1-rho);
       }
       else hMatrix[j]->Fill(massTrue,massMeasuredMC,1.0);
     }
+    //hReco[j]->Add(hBackground[j]);
+    //hBackground[j]->Rebin(2);
+    //hTrue[j]->Add(hBackground[j]);
   }//end j loop
   
   fToyData.Close();
@@ -142,7 +161,6 @@ void toyModel()
   hMatrix[1]->GetYaxis()->SetTitle("reco mass [GeV]");
   hMatrix[1]->GetYaxis()->SetTitleOffset(1.5);
   hMatrix[1]->Draw("colz");
-  
   saveName += ".png";
   canvas->SaveAs(saveName);
   TFile*file2 = new TFile(histSaveName,"recreate");
@@ -151,8 +169,10 @@ void toyModel()
     hMatrix[i]->Write();
     hReco[i]->Write();
     hTrue[i]->Write();
+    //hBackground[i]->Write();
   }
   hMassDist->Write();
+  hBackgroundDist->Write();
   file2->Write();
   file2->Close();
 
