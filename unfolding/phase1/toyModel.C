@@ -6,6 +6,10 @@
 #include "TLorentzVector.h"
 #include "TTimeStamp.h"
 
+//forward declaration for counter
+void counter(Long64_t i, Long64_t N);
+
+//defining bins for histograms
 const int nLogBins = 43;
 const int nLogBins2 = 2*nLogBins;
 const float  massbins[] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81,
@@ -18,8 +22,7 @@ const float massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47
  231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
  700,765,830,915,1000,1250,1500,2250,3000};
 
-void counter(Long64_t i, Long64_t N);
-const double pi = TMath::Pi();
+//strings for naming histgrams and for file locations
 const TString mcDist = "/home/hep/wrtabb/git/DY-Analysis/plots/plotsDY.root";
 const TString mcSF =  "/home/hep/wrtabb/git/DY-Analysis/plots/dataVsMC.root";
 const TString histSaveName = "toyUnfold.root";
@@ -27,14 +30,13 @@ const TString recoName[] = {"hReco","hMCReco","hAltReco"};
 const TString trueName[] = {"hTrue","hMCTrue","hAltTrue"};
 const TString matrixName[] = {"hMatrixDontUse","hMatrix","hAltMatrix"};
 const TString backName[] = {"hBack1","hBack2","hBack3"};
-const int nBins = 40;
-const int nBins2 = 80;
-const double binLow = 20;
-const double binHigh = 200;
-const double massMax = 3000;
-const double massMin = 15;
-const int nEvents = 1e8;
 
+//Number of events to process
+const int nEvents = 1e8;
+//Number of histograms per array
+const int nHists = 3;
+
+//parameters for what to include and how to do unfolding
 const bool exactClosure = false;//set exact closure
 const bool effInc = false; //include efficiency
 const bool backInc = false;//include toy background
@@ -46,8 +48,10 @@ void toyModel()
   gStyle->SetOptStat(0); 
   gROOT->SetBatch(kTRUE);
 
-  float massTrue,massMeasured,massBack,smear;
-  float massMeasuredMC,massMeasuredData; 
+  double massTrue,massMeasured,massBack,smear;
+  double massMeasuredMC,massMeasuredData; 
+  double backDistInt,totalInt,backWeight,weight;
+  double effData,effMC,rand,rho;
 
   //file to store state of exactClosure, effInc, and BackInc for unfolding
   ofstream parameterFile;
@@ -73,7 +77,6 @@ void toyModel()
 
   //MC background distribution for filling toy models
   TH1D*hBackDist;
-  double backDistInt;
   TH1D*hFakes = (TH1D*)fileSF->Get("hFakesInvMass");
   TH1D*hEW = (TH1D*)fileSF->Get("hEWInvMass");
   TH1D*hTops = (TH1D*)fileSF->Get("hTopsInvMass");
@@ -86,15 +89,15 @@ void toyModel()
   hBackDist = (TH1D*)hFakes->Clone("hBackDist");
   hBackDist->Add(hEW);
   hBackDist->Add(hTops);
-  if(backInc) backDistInt = hBackDist->Integral();
-  else backDistInt = 0;
-  double totalInt = backDistInt + hMassDist->Integral();
-  double weight = 1.0;
-  double backWeight = backDistInt/totalInt;
 
-  double effData,effMC,rand,rho;
+  //Determination of background weighting factor to closely match full MC
+  if(backInc) backDistInt = hBackDist->Integral();
+  else backDistInt = 0;//if background not included, backWeight = 0
+  totalInt = backDistInt + hMassDist->Integral();
+  weight = 1.0;//weight for signal distributions
+  backWeight = weight*backDistInt/totalInt;//ratio of background to total mass 
+
   TRandom3*random = new TRandom3();
-  const int nHists = 3;
 
   //Initializing histograms
   TH1D*hReco[nHists];
@@ -123,13 +126,14 @@ void toyModel()
     for(Long64_t i=0;i<nEvents;i++){
       counter(N,nHists*nEvents);
       N++;
+      //parameters for filling histograms
       massTrue = hMassDist->GetRandom();
       smear = fResolutionModel->GetRandom();
       massMeasured = massTrue+smear;
       massBack = hBackDist->GetRandom();
 
-      bool seenInData = kTRUE;
-      bool seenInMC = kTRUE;
+      bool seenInData = true;
+      bool seenInMC = true;
 
       if(effInc){
         rho = profileSF->GetBinContent(profileSF->FindBin(massTrue));
@@ -145,12 +149,12 @@ void toyModel()
 
       if(!seenInData) massMeasuredData = 0;
       if(!seenInMC) massMeasuredMC = 0;
-      hReco[j]->Fill(massMeasuredData);
-      hTrue[j]->Fill(massTrue);
+      hReco[j]->Fill(massMeasuredData,weight);
+      hTrue[j]->Fill(massTrue,weight);
       hBack[j]->Fill(massBack,backWeight);
       if(seenInMC){
-        hMatrix[j]->Fill(massTrue,massMeasuredMC,rho);
-        hMatrix[j]->Fill(massTrue,0.0,1-rho);
+        hMatrix[j]->Fill(massTrue,massMeasuredMC,weight*rho);
+        hMatrix[j]->Fill(massTrue,0.0,weight*(1-rho));
       }
       else hMatrix[j]->Fill(massTrue,massMeasuredMC,1.0);
     }
