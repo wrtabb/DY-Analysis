@@ -18,9 +18,16 @@ enum Reglarization {//Strength of regularization
 const int nBins = 43;
 const int binLow = 15;
 const int binHigh = 3000;
-const double massbins[44] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,
+const double massbins[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,
                              110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,
                              380,440,510,600,700,830,1000,1500,3000};
+const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47.5,50,52.5,55,
+                            57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,
+                            98.5,101,103.5,106,108,110,112.5,115,117.5,120,123,126,129.5,133,
+                            137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,210,220,
+                            231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
+                            700,765,830,915,1000,1250,1500,2250,3000};
+const int nLogBins2 = 86;
 //File Names
 const TString fileName= "toyUnfold.root";       
 
@@ -46,21 +53,26 @@ void testTUnfold()
 
   //Determine parameters used to create the distributions
   ifstream parameterFile("parameters.txt");
-  bool exactClosure,effInc;
-  parameterFile >> exactClosure >> effInc;
+  bool exactClosure,effInc,backInc;
+  parameterFile >> exactClosure >> effInc >> backInc;
 
   //Define hisograms
-  TH1F*hReco = (TH1F*)file->Get("hReco");//reconstructed mass
-  TH1F*hGen = (TH1F*)file->Get("hTrue");//true mass
-  TH1F*hBack = (TH1F*)file->Get("hBack2");
-  TH2F*hMatrix = (TH2F*)file->Get("hMatrix");//migration matrix
-  TH2F*hAltMatrix = (TH2F*)file->Get("hAltMatrix");//alternative migration matrix
+  TH1D*hReco = (TH1D*)file->Get("hReco");//reconstructed mass
+  TH1D*hGen = (TH1D*)file->Get("hTrue");//true mass
+  TH1D*hBack;
+  if(backInc){
+    if(exactClosure)
+     hBack = (TH1D*)file->Get("hBack1");
+    else
+     hBack = (TH1D*)file->Get("hBack2");
+  }
+  TH2D*hMatrix = (TH2D*)file->Get("hMatrix");//migration matrix
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
   hReco->SetLineColor(kBlack);
   hGen->SetFillColor(kRed+2);
   hGen->SetLineColor(kRed+2);
-
+  
   ////////////////////////////
   //  Regularization Modes  //
   ////////////////////////////
@@ -99,16 +111,19 @@ void testTUnfold()
   //////////////////////////////
   //  Background Subtraction  //
   //////////////////////////////
-  //unfold.SubtractBackground(hBack,"background",1.0,0);
+  double backScale = 1.0;
+  double backScaleError = 0.0;//scale error for background
+  if(backInc)
+   unfold.SubtractBackground(hBack,"background",backScale,backScaleError);
 
   ////////////////////////////
   //  Add Systematic Error  //
   ////////////////////////////
   //For this part, you need a migration matrix calculated using a different MC generator
-  TUnfoldSys::ESysErrMode sysErrorType = TUnfoldSys::kSysErrModeMatrix;
+  //TUnfoldSys::ESysErrMode sysErrorType = TUnfoldSys::kSysErrModeMatrix;
   //TUnfoldSys::ESysErrMode sysErrorType = TUnfoldSys::kSysErrModeShift;
   //TUnfoldSys::ESysErrMode sysErrorType = TUnfoldSys::kSysErrModeRelative;
-  unfold.AddSysError(hAltMatrix,"systematic error",outputMap,sysErrorType);
+  //unfold.AddSysError(hAltMatrix,"systematic error",outputMap,sysErrorType);
 
   ////////////////////////////
   //  Begin Regularization  //
@@ -142,33 +157,32 @@ void testTUnfold()
 
   //The Unfolded Distribution
   TH1*hUnfolded = unfold.GetOutput("Unfolded");
-  hUnfolded->SetMarkerStyle(25);
-  hUnfolded->SetMarkerColor(kBlue+2);
-  hUnfolded->SetMarkerSize(1);
-  TH2 *histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
-  TH2 *histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
-  //TH1 *histGlobalCorr=unfold.GetRhoItotal("histGlobalCorr",0,0,0,kFALSE);
-  //TH2 *histCorrCoeff=unfold.GetRhoIJtotal("histCorrCoeff",0,0,0,kFALSE);
+   hUnfolded->SetMarkerStyle(25);
+   hUnfolded->SetMarkerColor(kBlue+2);
+   hUnfolded->SetMarkerSize(1);
+  TH2*histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
+  TH2*histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
   TH1F*hUnfoldedE = new TH1F("Unfolded with errors",";(gen)",nBins,massbins);
-  hUnfoldedE->SetMarkerStyle(25);
-  hUnfoldedE->SetMarkerColor(kBlue+2);
-  hUnfoldedE->SetMarkerSize(1);
+   hUnfoldedE->SetMarkerStyle(25);
+   hUnfoldedE->SetMarkerColor(kBlue+2);
+   hUnfoldedE->SetMarkerSize(1);
   for(int i=0;i<nBins;i++){
     double c = hUnfolded->GetBinContent(i+1);
     hUnfoldedE->SetBinContent(i+1,c);
     hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
   }
   TH1F*hRecoRebin=(TH1F*)hReco->Clone("hRecoRebin");
-  hRecoRebin->Rebin(2);
+   hRecoRebin->Rebin(2);
   TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
-  ratio->Divide(hGen);
+   ratio->Divide(hGen);
 
   double x[nBins],res[nBins];
-  double chi = hUnfolded->Chi2Test(hGen,"CHI2/NDF",res);
+  double chi = hUnfolded->Chi2Test(hGen,"CHI2/NDF",res);//chi2/ndf to print on plot
+  double pValues = hUnfolded->Chi2Test(hGen,"P",res);//outputs chi2,prob,ndf,igood
   TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
 
   const float padmargins = 0.03;
-  TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1200);
+  TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1000);
   TPad*pad1 = new TPad("","",0,0.3,1.0,1.0);
   pad1->SetBottomMargin(padmargins);
   pad1->SetGrid();
@@ -181,7 +195,7 @@ void testTUnfold()
   line->SetLineColor(kRed);
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
   legend->SetTextSize(0.02);
-  legend->AddEntry(hGen,"Gen Distribution");
+  legend->AddEntry(hGen,"True Distribution");
   legend->AddEntry(hReco,"Measured Distribution");
   legend->AddEntry(hUnfolded,"Unfolded Distribution");
   hGen->SetLabelSize(0);
@@ -191,7 +205,6 @@ void testTUnfold()
   hUnfoldedE->Draw("PE,same");
   legend->Draw("same");
   chiLabel->Draw("same");
-  //canvas1->Update();
 
   canvas1->cd();
   TPad*pad2 = new TPad("","",0,0.05,1,0.3);
@@ -219,15 +232,15 @@ void testTUnfold()
 
   //Graph for residuals
   for (Int_t i=0; i<nBins; i++){ 
-    x[i]= 4.+i*12./20.+12./40.;
+    x[i]=i+1;
   }
   TGraph *resgr = new TGraph(nBins,x,res);
-  resgr->GetYaxis()->SetTitle("Normalized Residuals");
+  resgr->GetYaxis()->SetTitle("normalized residuals");
+  resgr->GetXaxis()->SetTitle("bin number");
   resgr->SetMarkerStyle(21);
   resgr->SetMarkerColor(kBlue);
   resgr->SetMarkerSize(.9);
   resgr->SetTitle("Normalized Residuals");
-  //resgr->GetYaxis()->SetRangeUser(-3.5,3.5);
   
   //Graph for Quintile-Quintile
   TF1 *f = new TF1("f","TMath::Gaus(x,0,1)",-10,10);
@@ -252,18 +265,32 @@ void testTUnfold()
     distName += "_ClosureTest";
     lineName += "_ClosureTest";
     statPlotName+= "_ClosureTest";
-    
+  }
+  else{
+    distName += "_NoClosure";
+    lineName += "_NoClosure";
+    statPlotName+= "_NoClosure";
   }
   if(effInc){
     distName += "_EffInc";
     lineName += "_EffInc";
     statPlotName+= "_EffInc";
   }
-  if(!effInc){
+  else{
     distName += "_NoEff";
     lineName += "_NoEff";
     statPlotName+= "_NoEff";
   } 
+  if(backInc){
+    distName += "_BackInc";
+    lineName += "_BackInc";
+    statPlotName+= "_BackInc";
+  }
+  else{
+    distName += "_NoBack";
+    lineName += "_NoBack";
+    statPlotName+= "_NoBack";
+  }
   if(regType==NO_REG){
     distName += "_NoReg.png";
     lineName += "_NoReg.png";
@@ -280,22 +307,6 @@ void testTUnfold()
     statPlotName+= "_VarReg.png";
   }  
 
-  if(regType == VAR_REG){
-    TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1000,1000);
-    canvas3->SetGrid();
-    //canvas3->Divide(2);
-    canvas3->cd();
-    lCurve->Draw("AL");
-    bestLcurve->SetMarkerColor(kRed);
-    bestLcurve->SetMarkerSize(2);
-    bestLcurve->Draw("*");
-    //canvas3->cd(2);
-    //logTauX->Draw();
-    bestLogTauLogChi2->SetMarkerColor(kRed);
-    bestLogTauLogChi2->SetMarkerSize(2);
-    //bestLogTauLogChi2->Draw("*");
-    canvas3->SaveAs(lineName);
-  }
   canvas1->SaveAs(distName);
   canvasStatPlot->SaveAs(statPlotName); 
 }
