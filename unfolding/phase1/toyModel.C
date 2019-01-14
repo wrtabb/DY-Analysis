@@ -124,8 +124,10 @@ void toyModel()
     
     //loop to fill distributions
     for(Long64_t i=0;i<nEvents;i++){
+      //counter for keeping track of program progress
       counter(N,nHists*nEvents);
       N++;
+
       //parameters for filling histograms
       massTrue = hMassDist->GetRandom();
       smear = fResolutionModel->GetRandom();
@@ -135,6 +137,7 @@ void toyModel()
       bool seenInData = true;
       bool seenInMC = true;
 
+      //efficiency factors for filling histograms
       if(effInc){
         rho = profileSF->GetBinContent(profileSF->FindBin(massTrue));
         effMC = efficiency->GetEfficiency(hMassDist->FindBin(massMeasured));
@@ -144,9 +147,7 @@ void toyModel()
         if(rand>effData) seenInData = false; 
       }
       else rho = 1.0;
-
       massMeasuredData = massMeasuredMC = massMeasured;
-
       if(!seenInData) massMeasuredData = 0;
       if(!seenInMC) massMeasuredMC = 0;
       hReco[j]->Fill(massMeasuredData,weight);
@@ -156,10 +157,15 @@ void toyModel()
         hMatrix[j]->Fill(massTrue,massMeasuredMC,weight*rho);
         hMatrix[j]->Fill(massTrue,0.0,weight*(1-rho));
       }
-      else hMatrix[j]->Fill(massTrue,massMeasuredMC,1.0);
+      else hMatrix[j]->Fill(massTrue,massMeasuredMC,weight);
     }
 }//end j loop
+  //Adding background to reco distribution
+  //note: reco[0] is distribution with background included
+  //reco[1] and reco[2] are signal only
   hReco[0]->Add(hBack[0]);
+
+  //determination of canvas save name based on parameters used
   TString saveName;
   saveName = 
     "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/step1MigrationMatrix";
