@@ -647,8 +647,8 @@ bool findGenToRecoMatch(int genIndex, int &recoIndex)
 //Kinematic cuts
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)
 {
-  //if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return kFALSE;//eta cut
-  //if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return kFALSE; //eta cut
+  if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return kFALSE;//eta cut
+  if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return kFALSE; //eta cut
   if(abs(eta1)>etaHigh||abs(eta2)>etaHigh) return kFALSE; //eta cut
   if(!((pt1>ptLow && pt2>ptHigh)||(pt1>ptHigh && pt2>ptLow))) return kFALSE;
   return kTRUE;

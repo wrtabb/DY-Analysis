@@ -37,16 +37,16 @@ const int nEvents = 1e8;
 const int nHists = 3;
 
 //parameters for what to include and how to do unfolding
-const bool exactClosure = false;//set exact closure
-const bool effInc = false; //include efficiency
-const bool backInc = false;//include toy background
+const bool exactClosure = true;//set exact closure
+const bool effInc = true; //include efficiency
+const bool backInc = true;//include toy background
 
 void toyModel()
 {
   TH1::SetDefaultSumw2();
   gStyle->SetPalette(1);
   gStyle->SetOptStat(0); 
-  gROOT->SetBatch(kTRUE);
+  gROOT->SetBatch(true);
 
   double massTrue,massMeasured,massBack,smear;
   double massMeasuredMC,massMeasuredData; 
@@ -87,8 +87,8 @@ void toyModel()
     if(hTops->GetBinContent(i)<0.0) hTops->SetBinContent(i,0.0);
   }
   hBackDist = (TH1D*)hFakes->Clone("hBackDist");
-  hBackDist->Add(hEW);
-  hBackDist->Add(hTops);
+   hBackDist->Add(hEW);
+   hBackDist->Add(hTops);
 
   //Determination of background weighting factor to closely match full MC
   if(backInc) backDistInt = hBackDist->Integral();
@@ -150,7 +150,13 @@ void toyModel()
       massMeasuredData = massMeasuredMC = massMeasured;
       if(!seenInData) massMeasuredData = 0;
       if(!seenInMC) massMeasuredMC = 0;
-      hReco[j]->Fill(massMeasuredData,weight);
+      
+      //Filling histograms
+      if(exactClosure){
+        if(seenInMC) hReco[j]->Fill(massMeasuredMC,rho*weight);
+        else hReco[j]->Fill(massMeasuredMC,weight);          
+      }
+      else hReco[j]->Fill(massMeasuredData,weight);
       hTrue[j]->Fill(massTrue,weight);
       hBack[j]->Fill(massBack,backWeight);
       if(seenInMC){

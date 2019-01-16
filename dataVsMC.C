@@ -64,9 +64,9 @@ const float eMass = 0.000511;
 const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
 const TString treeName = "recoTree/DYTree";
 const TString pileupRatioName = "./plots/pileup.root";
-const TString leg2SFName = "./data/Leg2_SF.root";
-const TString medIDSFName = "./data/MediumID_SF.root";
-const TString recoSFName = "./data/Reco_SF.root";
+const TString leg2SFName = "./SFs/Leg2_SF.root";
+const TString medIDSFName = "./SFs/MediumID_SF.root";
+const TString recoSFName = "./SFs/Reco_SF.root";
 
 const int numChains = 48; const double pi=TMath::Pi(); const float axisLow = 0.0001;
 enum ChainNum {
@@ -728,8 +728,8 @@ void counter(Long64_t i, Long64_t N)
 //Kinematic cuts
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)
 {
-  //if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return kFALSE;
-  //if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return kFALSE; 
+  if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return kFALSE;
+  if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return kFALSE; 
   if(abs(eta1)>etaHigh||abs(eta2)>etaHigh) return kFALSE; 
   if(!((pt1>ptLow && pt2>ptHigh)||(pt1>ptHigh && pt2>ptLow))) return kFALSE;
   return kTRUE;
