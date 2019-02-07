@@ -216,26 +216,26 @@ const float binLowY = -2.5;
 const float binHighY = 2.5;
 
 const int nBins[nHistoTypes] = {nBinsInvMass,nBinsInvMassLinear,nBinsVert,nBinsVert,npTBins,
-                                npTBins,npTBins,nEtaBins,nEtaBins,nEtaBins,nYBins,
-                                nBinsInvMass,nBinsInvMass,nBinsInvMass,nBinsInvMass,nBinsInvMass};
+ npTBins,npTBins,nEtaBins,nEtaBins,nEtaBins,nYBins,
+ nBinsInvMass,nBinsInvMass,nBinsInvMass,nBinsInvMass,nBinsInvMass};
 const float binLow[nHistoTypes] = {binLowInvMass,binLowInvMassLinear,binLowVert,binLowVert,
-                                   binLowpT,binLowpT,binLowpT,binLowEta,binLowEta,binLowEta,
-                                   binLowY,binLowInvMass,binLowInvMass,binLowInvMass,
-                                   binLowInvMass,binLowInvMass};
+ binLowpT,binLowpT,binLowpT,binLowEta,binLowEta,binLowEta,
+ binLowY,binLowInvMass,binLowInvMass,binLowInvMass,
+ binLowInvMass,binLowInvMass};
 const float binHigh[nHistoTypes] = {binHighInvMass,binHighInvMassLinear,binHighVert,
-                                    binHighVert,binHighpT,binHighpT,binHighpT,binHighEta,
-                                    binHighEta,binHighEta,binHighY,binHighInvMass,
-                                    binHighInvMass,binHighInvMass,binHighInvMass,binHighInvMass};
+ binHighVert,binHighpT,binHighpT,binHighpT,binHighEta,
+ binHighEta,binHighEta,binHighY,binHighInvMass,
+ binHighInvMass,binHighInvMass,binHighInvMass,binHighInvMass};
 
 //Cross sections calculated by Kyeongpil Lee
 const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,//QCD
-			       61526.7,118.7,12.178,16.523,1.256,47.13,4.4297,//Bosons
-			       734.577,76.605,20.578,35.85,35.85,//tops
-			       6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
-                               0.01042,0.00552772,0.000741613,0.000178737,//DYEE
-			       6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
-                               0.01042,0.00552772,0.000741613,0.000178737,//DYTAUTAU
-			       1,1,1,1,1,1,1};//data (unweighted)
+ 61526.7,118.7,12.178,16.523,1.256,47.13,4.4297,//Bosons
+ 734.577,76.605,20.578,35.85,35.85,//tops
+ 6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
+ 0.01042,0.00552772,0.000741613,0.000178737,//DYEE
+ 6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
+ 0.01042,0.00552772,0.000741613,0.000178737,//DYTAUTAU
+ 1,1,1,1,1,1,1};//data (unweighted)
 
 void dataVsMC()
 {
@@ -507,7 +507,8 @@ void dataVsMC()
     }
     
     nentries = chains[iChain]->GetEntries();
-    
+    cout << "Sample: " << sampleCategory << endl;
+    cout << "Number of Entries: " << nentries << endl; 
     //Finding normalized genWeights,sums,variances
     sumGenWeight = 0.0;
     sumRawGenWeight = 0.0;
@@ -613,7 +614,7 @@ void dataVsMC()
      //Determining weighting factors
      if(isMC){
        xSecWeight=lumi*(xSec[iChain]/1.0);//xSecWeight when used with genWeight 
-       xSecWeightAlone = lumi*(xSec[iChain]/nentries);//sSecWeight when used without genWeight
+       xSecWeightAlone = lumi*(xSec[iChain]/nentries);//xSecWeight when used without genWeight
        pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
        genWeight = (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
 
@@ -660,7 +661,7 @@ void dataVsMC()
      histos[ETA_DI][sampleCategory]->Fill(dielectronEta,totalWeight);
      histos[RAPIDITY][sampleCategory]->Fill(rapidity,totalWeight);
      histos[VERTICES][sampleCategory]->Fill(nVertices,weightNoPileup);
-     if(!isMC) continue; //no weighted version for data
+     if(!isMC) continue; //no Vertex weighting for data
      histos[VERTICES_WEIGHTED][sampleCategory]->Fill(nVertices,totalWeight);
     }//end event loop   
   }//end chain loop 
