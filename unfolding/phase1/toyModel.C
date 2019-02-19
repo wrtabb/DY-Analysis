@@ -24,6 +24,7 @@ const float massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47
 
 //strings for naming histgrams and for file locations
 const TString mcDist = "/home/hep/wrtabb/git/DY-Analysis/plots/plotsDY.root";
+const TString mcEff = "/home/hep/wrtabb/git/DY-Analysis/plots/efficiencies.root";
 const TString mcSF =  "/home/hep/wrtabb/git/DY-Analysis/plots/dataVsMC.root";
 const TString histSaveName = "toyUnfold.root";
 const TString recoName[] = {"hReco","hMCReco","hAltReco"};
@@ -32,7 +33,7 @@ const TString matrixName[] = {"hMatrixDontUse","hMatrix","hAltMatrix"};
 const TString backName[] = {"hBack1","hBack2","hBack3"};
 
 //Number of events to process
-const int nEvents = 1e8;
+const int nEvents = 5e7;
 //Number of histograms per array
 const int nHists = 3;
 
@@ -62,10 +63,10 @@ void toyModel()
   //Open files to pull MC distributions for toy models
   TFile*file = new TFile(mcDist);
   TFile*fileSF = new TFile(mcSF);
-
+  TFile*fileEff = new TFile(mcEff);
   //Open files for scale factors and efficiencies
   TProfile*profileSF = (TProfile*)fileSF->Get("hSFvsInvMassAll_pfx");
-  TEfficiency*efficiency = (TEfficiency*)file->Get("Efficiency");
+  TEfficiency*efficiency = (TEfficiency*)fileEff->Get("Efficiency");
 
   //Mass smearing model
   TF1*fResolutionModel = new TF1("fPhiResolutionModel","gaus(0)",-20,20);
@@ -152,11 +153,12 @@ void toyModel()
       if(!seenInMC) massMeasuredMC = 0;
       
       //Filling histograms
-      if(exactClosure){
-        if(seenInMC) hReco[j]->Fill(massMeasuredMC,rho*weight);
-        else hReco[j]->Fill(massMeasuredMC,weight);          
-      }
-      else hReco[j]->Fill(massMeasuredData,weight);
+      //if(exactClosure){
+      //  if(seenInMC) hReco[j]->Fill(massMeasuredMC,rho*weight);
+      //  else hReco[j]->Fill(massMeasuredMC,weight);          
+      //}
+      //else hReco[j]->Fill(massMeasuredData,weight);
+      hReco[j]->Fill(massMeasuredData,weight);
       hTrue[j]->Fill(massTrue,weight);
       hBack[j]->Fill(massBack,backWeight);
       if(seenInMC){
@@ -210,7 +212,8 @@ void toyModel()
 
 void counter(Long64_t i, Long64_t N)
 {
-  int P = 100*(i)/(N);
+  
+  Long64_t P = 100*(i)/(N);
   TTimeStamp eventTimeStamp;
   if(i%(N/100)==0) {
     cout << "toyModel.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P

@@ -10,6 +10,7 @@
 #include "TProfile.h"
 #include "TBenchmark.h"
 #include "TRandom.h"
+#include "TRandom3.h"
 #include "TSystem.h"
 #include "TChain.h"
 #include "TBranch.h"
@@ -86,7 +87,16 @@ const int nLogBins2 = 2*nLogBins;
 //Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
 const float xSec[numChains] = {6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
  0.01042,0.00552772,0.000741613,0.000178737};
-const double dataMCRatio = 0.16372104;//ratio of data to MC events 
+
+////////////////////////////////////////////////////////////////////////
+//  Here we have number of MC and Data events from the ntuples        //
+//  which pass all cuts. The ratio of these is used to fill           //
+//  distribution with a realistic number of events to test unfolding  //
+////////////////////////////////////////////////////////////////////////
+const double numMC = 14489742.199678;
+const double numData = 13081489.000000;
+const double dataMCRatio = numData/numMC;//ratio of data to MC events 
+
 const float etaHigh = 2.4;
 const float etaGapHigh = 1.566; 
 const float etaGapLow = 1.4442;
@@ -271,6 +281,7 @@ void makeUnfDists()
  TFile*fileRecoSF = new TFile(recoSFName);
  TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
  TH2D*hEffSFvsMass = new TH2D("hEffSFvsMass","",nLogBins,massbins,100,0,1);
+ Long64_t nMCEvents = 0;
 
  for(int iChain=0;iChain<numChains;iChain++)  {
   cout << endl;
@@ -278,7 +289,6 @@ void makeUnfDists()
   cout << endl;
 
   nentries = chains[iChain]->GetEntries();
-  //nentries = nEvents;
   xSecWeight=lumi*(xSec[iChain]/1.0);      
   sumGenWeight = 0;
   for(Long64_t i=0;i<nentries;i++){
@@ -352,7 +362,8 @@ void makeUnfDists()
      }
     }//end inner reco loop	   
    }//end reco loop
-
+  
+   if(nEle!=1) continue;//Must have two electrons only
    if(idxRecoEle1>=0&&idxRecoEle2>=0)
     invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
      Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
@@ -375,12 +386,9 @@ void makeUnfDists()
    continue;
   }	    
   
-  invMassHardProcess = calcInvMass(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
-   GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],            GENLepton_phi[idxGenEle2],eMass);		  
-  invMassFSR = calcInvMass(GENLepton_pT[idxGenEleFS1],GENLepton_eta[idxGenEleFS1],
-   GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],
-   GENLepton_eta[idxGenEleFS2],GENLepton_phi[idxGenEleFS2],eMass);		  
-  invMassTrue = invMassHardProcess;
+  invMassTrue = calcInvMass(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
+   GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],
+   GENLepton_phi[idxGenEle2],eMass);		  
 
   //Weights
   pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
@@ -424,37 +432,34 @@ void makeUnfDists()
   // Apply kinematic acceptance criteria
   if(!passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
    GENLepton_eta[idxGenEleFS1], GENLepton_eta[idxGenEleFS2])){
-   invMassHardProcess = invMassReco = invMassFSR = invMassTrue = 0;
+   invMassReco = invMassTrue = 0;
   } 
 
   // Apply matching to reconstructed electrons requirement
-  int closestTrackLep1, closestTrackLep2;
-  closestTrackLep1 = closestTrackLep2 = -1;
-  bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);	      
-  bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestTrackLep2);	      
+  int closestLep1, closestLep2;
+  closestLep1 = closestLep2 = -1;
+  bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestLep1);	      
+  bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestLep2);	      
+  if(closestLep1!=idxRecoEle1&&closestLep1!=idxRecoEle2) invMassReco = 0; 
+  if(closestLep2!=idxRecoEle1&&closestLep2!=idxRecoEle2) invMassReco = 0; 
   if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
-   invMassHardProcess = invMassReco = invMassFSR = 0;
-  }
-  // Apply ID criteria:
-  // Dilepton pair at gen level matched to reco and passing ID at reco level
-  if(!Electron_passMediumID[closestTrackLep1]){ 
-   invMassHardProcess = invMassReco = invMassFSR = 0;
-  }
-  if(!Electron_passMediumID[closestTrackLep2]){ 
-   invMassHardProcess = invMassReco = invMassFSR = 0;
+   invMassReco = 0;
   }
   // Apply HLT requirement
   if(!passHLT){ 
-   invMassHardProcess = invMassReco = invMassFSR = 0;
+   invMassReco = 0;
   }
   rand = random->Rndm();
+  if(invMassReco != 0) nMCEvents++; 
   if(rand>dataMCRatio){
-   hTrue->Fill(invMassTrue,totalWeight);
    hReco->Fill(invMassReco,totalWeight*sfWeight);
    hMatrix->Fill(invMassReco,invMassTrue,totalWeight*sfWeight);
    hMatrix->Fill(0.0,invMassTrue,totalWeight*(1.0-sfWeight));
   }
-  else hData->Fill(invMassReco,totalWeight*sfWeight*(1/dataMCRatio));
+  else{
+   hData->Fill(invMassReco,totalWeight*sfWeight);
+   hTrue->Fill(invMassTrue,totalWeight);
+  }
   }//end event loop   
  }//end chain loop 
   
@@ -476,7 +481,7 @@ void makeUnfDists()
  cout << "Total CPU RunTime: " << TotalCPURunTime/60 << " minutes" << endl;
  cout << "Total Real RunTime: " << TotalRunTime/60 << " minutes" << endl;
  cout << "[End Time(local time): " << ts_end.AsString("l") << "]" << endl;   
- cout << "Number of Events Processed: " << count << endl;
+ cout << "Number of Events Processed: " << nMCEvents  << endl;
  cout << "**************************************************************************" << endl;
  cout << endl;
   
@@ -502,25 +507,22 @@ bool findGenToRecoMatch(int genIndex, int &recoIndex)
   float dRMin = 100000;
   recoIndex=-1;
   //Matching gen level electrons with reconstructed electrons
-  for(int iEle=0;iEle<Nelectrons;iEle++)
-    {
-      deta=Electron_eta[iEle]-GENLepton_eta[genIndex];
-      dphi=abs(Electron_phi[iEle]-GENLepton_phi[genIndex]);
-      if(dphi>pi) dphi=2*pi-dphi;
-      dR=sqrt(deta*deta+dphi*dphi);
+  for(int iEle=0;iEle<Nelectrons;iEle++) {
+   deta=Electron_eta[iEle]-GENLepton_eta[genIndex];
+   dphi=abs(Electron_phi[iEle]-GENLepton_phi[genIndex]);
+   if(dphi>pi) dphi=2*pi-dphi;
+   dR=sqrt(deta*deta+dphi*dphi);
 
-      if(dR<dRMin)
-	{
-	  recoIndex=iEle;
-	  dRMin=dR;
-	}
-    }//end of Loop 
+   if(dR<dRMin){
+    recoIndex=iEle;
+    dRMin=dR;
+    }
+   }//end of Loop 
   bool matchFound = kTRUE;
-  if(dRMin>=dRMinCut)
-    {
+  if(dRMin>=dRMinCut) {
       recoIndex=-1;
       matchFound=kFALSE;
-    }
+  }
   return matchFound;
 }//end findGetToRecoMatch
 

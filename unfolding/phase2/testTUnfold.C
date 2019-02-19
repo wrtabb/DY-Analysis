@@ -157,6 +157,7 @@ void testTUnfold()
   TH2*histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
   TH2*histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
   TH1F*hUnfoldedE = new TH1F("Unfolded with errors",";(gen)",nBins,massbins);
+   hUnfoldedE->SetName("hUnfoldedE");
    hUnfoldedE->SetMarkerStyle(25);
    hUnfoldedE->SetMarkerColor(kBlue+2);
    hUnfoldedE->SetMarkerSize(1);
@@ -175,8 +176,8 @@ void testTUnfold()
   double binContent;
   cout << "trueScale = " << trueScale << endl;
   for(int i=1;i<nBins+1;i++){
-   binContent = hGen->GetBinContent(i);
-   hGen->SetBinContent(i,binContent*trueScale);
+   //binContent = hGen->GetBinContent(i);
+   //hGen->SetBinContent(i,binContent*trueScale);
   }
 
   TH1F*hRecoRebin=(TH1F*)hReco->Clone("hRecoRebin");
@@ -243,4 +244,16 @@ void testTUnfold()
   if(regType == NO_REG) saveName+="unfPhase2_NoReg.png";
   if(regType == VAR_REG) saveName+="unfPhase2_VarReg.png";
   canvas1->SaveAs(saveName);
+
+  TFile*fileSave = new TFile("unfResults.root","recreate");
+  fileSave->cd();
+  hRecoRebin->Write();
+  hReco->Write();
+  hGen->Write();
+  hUnfolded->Write();
+  hUnfoldedE->Write();
+  ratio->Write();
+  hMatrix->Write();
+  fileSave->Write();
+  fileSave->Close();
 }

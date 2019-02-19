@@ -302,7 +302,7 @@ void testTUnfold()
     statPlotName+= "_ConstReg.png";
   }   
   if(regType==VAR_REG){
-    distName += "_VarReg.png";
+    distName += "_VarReg_Closure.png";
     lineName += "_VarReg.png";
     statPlotName+= "_VarReg.png";
   }  

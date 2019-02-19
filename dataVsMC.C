@@ -467,6 +467,7 @@ void dataVsMC()
 
   TAxis*xAxis;
   double binx,binWidth;   
+  Long64_t nData = 0;
   //Loop over samples
   for(int iChain=0;iChain<numChains;iChain++) {
     if(iChain==WWTo2L2Nu||iChain==ZZTo4L||iChain==WZTo3LNu) continue;
@@ -474,8 +475,8 @@ void dataVsMC()
        iChain==QCD120to170||iChain==QCD170to300||iChain==QCD300toInf) continue;
     //determine if chain is MC or Data
     if(iChain==DataRunB||iChain==DataRunC||iChain==DataRunD||iChain==DataRunE||
-       iChain==DataRunF||iChain==DataRunG||iChain==DataRunH) isMC = kFALSE; 
-    else isMC = kTRUE;
+       iChain==DataRunF||iChain==DataRunG||iChain==DataRunH) isMC = false; 
+    else isMC = true;
 
     cout << endl;
     cout << "Processing chain: " << dirNames[iChain] << endl;
@@ -661,7 +662,10 @@ void dataVsMC()
      histos[ETA_DI][sampleCategory]->Fill(dielectronEta,totalWeight);
      histos[RAPIDITY][sampleCategory]->Fill(rapidity,totalWeight);
      histos[VERTICES][sampleCategory]->Fill(nVertices,weightNoPileup);
-     if(!isMC) continue; //no Vertex weighting for data
+     if(!isMC){
+      nData++;
+      continue; //no Vertex weighting for data
+     }
      histos[VERTICES_WEIGHTED][sampleCategory]->Fill(nVertices,totalWeight);
     }//end event loop   
   }//end chain loop 
@@ -709,6 +713,7 @@ void dataVsMC()
   cout << "Total Real RunTime: " << TotalRunTime/60 << " minutes" << endl;
   cout << "[End Time(local time): " << ts_end.AsString("l") << "]" << endl;   
   cout << "Number of Events Processed: " << count << endl;
+  cout << "Number of data events Processed: " << nData << endl;
   cout << "**************************************************************************" << endl;
   cout << endl;
   
