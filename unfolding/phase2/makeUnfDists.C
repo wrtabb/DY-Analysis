@@ -33,7 +33,7 @@ double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,doubl
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 bool passPromptGenElectron(int ID, int fromfinalstate);
 bool passHardProcess(int ID, int hardProces);
-bool findGenToRecoMatch(int genIndex,int &recoIndex);
+bool findGenToRecoMatch(int genIndex,int recoIndex);
 
 //Defining variables and arrays
 const int MPSIZE = 2000;
@@ -351,8 +351,6 @@ void makeUnfDists()
     for(int jEle = iEle+1; jEle < Nelectrons; jEle++){	  
      if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],
       Electron_eta[iEle],Electron_eta[jEle])) continue; 	
-     if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
-     if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
      nEle++;
      //Reco electrons which passed cuts
      if(nEle==1){
@@ -362,12 +360,15 @@ void makeUnfDists()
      }
     }//end inner reco loop	   
    }//end reco loop
-  
-   if(nEle!=1) continue;//Must have two electrons only
    if(idxRecoEle1>=0&&idxRecoEle2>=0)
     invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
      Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
      Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
+
+   if(!Electron_passMediumID[idxRecoEle1]) invMassReco = 0;//iLep electron ID cut
+   if(!Electron_passMediumID[idxRecoEle2]) invMassReco = 0;//jLep electron ID cut
+  
+   if(nEle!=1) continue;//Must have two electrons only
    if(nGenDielectrons==0) continue; // must be DY->mumu or tautau event, skip it
   
    if(nGenDielectrons>=2){
@@ -438,10 +439,8 @@ void makeUnfDists()
   // Apply matching to reconstructed electrons requirement
   int closestLep1, closestLep2;
   closestLep1 = closestLep2 = -1;
-  bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestLep1);	      
-  bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestLep2);	      
-  if(closestLep1!=idxRecoEle1&&closestLep1!=idxRecoEle2) invMassReco = 0; 
-  if(closestLep2!=idxRecoEle1&&closestLep2!=idxRecoEle2) invMassReco = 0; 
+  bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,idxRecoEle1);	      
+  bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,idxRecoEle2);	      
   if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
    invMassReco = 0;
   }
@@ -501,27 +500,23 @@ void counter(Long64_t i, Long64_t N)
 
 //Finding correspondence between 
 //reconstructed and Generated leptons
-bool findGenToRecoMatch(int genIndex, int &recoIndex)
+bool findGenToRecoMatch(int genIndex, int recoIndex)
 {
   double dR,deta,dphi;
   float dRMin = 100000;
   recoIndex=-1;
   //Matching gen level electrons with reconstructed electrons
-  for(int iEle=0;iEle<Nelectrons;iEle++) {
-   deta=Electron_eta[iEle]-GENLepton_eta[genIndex];
-   dphi=abs(Electron_phi[iEle]-GENLepton_phi[genIndex]);
+   deta=Electron_eta[recoIndex]-GENLepton_eta[genIndex];
+   dphi=abs(Electron_phi[recoIndex]-GENLepton_phi[genIndex]);
    if(dphi>pi) dphi=2*pi-dphi;
    dR=sqrt(deta*deta+dphi*dphi);
 
    if(dR<dRMin){
-    recoIndex=iEle;
     dRMin=dR;
     }
-   }//end of Loop 
-  bool matchFound = kTRUE;
+  bool matchFound = true;
   if(dRMin>=dRMinCut) {
-      recoIndex=-1;
-      matchFound=kFALSE;
+      matchFound=false;
   }
   return matchFound;
 }//end findGetToRecoMatch
