@@ -1,52 +1,12 @@
-#include "TFile.h"
-#include "TROOT.h"
-#include "TTree.h"
-#include "TCanvas.h"
-#include "TFrame.h"
-#include "THStack.h"
-#include "TH1F.h"
-#include "TH1I.h"
-#include "TH2F.h"
-#include "TProfile.h"
-#include "TBenchmark.h"
-#include "TRandom.h"
-#include "TRandom3.h"
-#include "TSystem.h"
-#include "TChain.h"
-#include "TBranch.h"
-#include "TLorentzVector.h"
-#include "TLegend.h"
-#include <fstream>
-#include <iostream>
-#include <vector>
-#include "TStyle.h"
-#include "TEfficiency.h"
-#include "TString.h"
-#include "TLine.h"
-#include "TTimeStamp.h"
-#include "TFileCollection.h"
-#include "THashList.h"
-#include "TGraphAsymmErrors.h"
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 
 void counter(Long64_t i, Long64_t N);
 double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 bool passPromptGenElectron(int ID, int fromfinalstate);
 bool passHardProcess(int ID, int hardProces);
-bool findGenToRecoMatch(int genIndex,int recoIndex);
+bool findGenToRecoMatch(int genIndex,int &recoIndex);
 
-//Defining variables and arrays
-const int MPSIZE = 2000;
-int GENnPair, Nelectrons, HLT_ntrig, nPileUp;
-double GENEvt_weight;
-double GENLepton_phi[MPSIZE],GENLepton_eta[MPSIZE],GENLepton_pT[MPSIZE],GENLepton_Px[MPSIZE],GENLepton_Py[MPSIZE];
-double GENLepton_Pz[MPSIZE],GENLepton_E[MPSIZE];
-int GENLepton_ID[MPSIZE],GENLepton_isHardProcess[MPSIZE],GENLepton_fromHardProcessFinalState[MPSIZE];
-double Electron_pT[MPSIZE], Electron_eta[MPSIZE], Electron_phi[MPSIZE];
-double Electron_Energy[MPSIZE], Electron_Px[MPSIZE];
-double Electron_Py[MPSIZE], Electron_Pz[MPSIZE], Electron_charge[MPSIZE];
-bool Electron_passMediumID[MPSIZE];
-int HLT_trigType[MPSIZE],HLT_trigFired[MPSIZE];
 enum chainNum 
   {        
     MC10to50,
@@ -70,47 +30,22 @@ enum InvMassHist
   HLT_CUTS,
   RECO_ELE
 };
-std::vector<std::string> HLT_trigName;
-std::vector<std::string> *pHLT_trigName = &HLT_trigName;
-const double massbins[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106, 
- 110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,1500,
- 3000};
-const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47.5,50,52.5,55,
- 57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,98.5,101,103.5,106,108,110,
- 112.5,115,117.5,120,123,126,129.5,133,137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,
- 210,220,231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,700,765,830,915,1000,
- 1250,1500,2250,3000};
-const double pi=TMath::Pi();
-const int numChains = 11;
-const int nLogBins = 43;
-const int nLogBins2 = 2*nLogBins;
-//Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
-const float xSec[numChains] = {6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
- 0.01042,0.00552772,0.000741613,0.000178737};
 
 ////////////////////////////////////////////////////////////////////////
 //  Here we have number of MC and Data events from the ntuples        //
 //  which pass all cuts. The ratio of these is used to fill           //
 //  distribution with a realistic number of events to test unfolding  //
 ////////////////////////////////////////////////////////////////////////
-const double numMC = 14489742.199678;
-const double numData = 13081489.000000;
+const double numMC = 21344924;
+const double numData = 12549278;
 const double dataMCRatio = numData/numMC;//ratio of data to MC events 
 
-const float etaHigh = 2.4;
-const float etaGapHigh = 1.566; 
-const float etaGapLow = 1.4442;
-const float ptHigh = 28;
-const float ptLow = 17;
-const float eMass = 0.000511;
 const TString treeName = "recoTree/DYTree";
 const TString pileupRatioName = "/home/hep/wrtabb/git/DY-Analysis/plots/pileup.root"; 
 const TString leg2SFName = "/home/hep/wrtabb/git/DY-Analysis/SFs/Leg2_SF.root"; 
 const TString medIDSFName = "/home/hep/wrtabb/git/DY-Analysis/SFs/MediumID_SF.root";
 const TString recoSFName = "/home/hep/wrtabb/git/DY-Analysis/SFs/Reco_SF.root";
 const TString effName = "/home/hep/wrtabb/git/DY-Analysis/plots/efficiencies.root";
-const float dRMinCut = 0.3;
-const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
 
 const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
@@ -263,7 +198,6 @@ void makeUnfDists()
  double rand;
  Long64_t nentries;
  Long64_t count = 0;
- double nEvents = 250000;
  double lumi = dataLuminosity;
  TString HLTname = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
  TString trigName;
@@ -281,6 +215,7 @@ void makeUnfDists()
  TFile*fileRecoSF = new TFile(recoSFName);
  TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
  TH2D*hEffSFvsMass = new TH2D("hEffSFvsMass","",nLogBins,massbins,100,0,1);
+ Long64_t nDataEvents = 0;
  Long64_t nMCEvents = 0;
 
  for(int iChain=0;iChain<numChains;iChain++)  {
@@ -316,7 +251,8 @@ void makeUnfDists()
    idxGenEle1 = idxGenEle2 = idxGenEleFS1 = idxGenEleFS2 = -1;
    int nGenDielectrons = 0;
    int nGenDielectronsFS = 0;
-
+   double invMassReco = 0;
+   double invMassTrue = 0;
    for(int kLep=0;kLep<GENnPair;kLep++){
     for(int lLep=kLep+1;lLep<GENnPair;lLep++){
      // Require a dielectron
@@ -339,19 +275,19 @@ void makeUnfDists()
      }
     } // end inner loop over gen leptons
    } // end outer loop over gen leptons
+   invMassTrue = calcInvMass(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
+    GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],
+    GENLepton_phi[idxGenEle2],eMass);		  
 	  	  
    //Reco loop
-   double invMassReco,invMassTrue;
-   invMassReco=0;
    int idxRecoEle1,idxRecoEle2;
    idxRecoEle1=idxRecoEle2=-1;
    if(Nelectrons<2) continue;
    int nEle = 0;
    for(int iEle = 0; iEle < Nelectrons; iEle++){
     for(int jEle = iEle+1; jEle < Nelectrons; jEle++){	  
-     if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],
-      Electron_eta[iEle],Electron_eta[jEle])) continue; 	
-     nEle++;
+    if(passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],
+     Electron_eta[iEle],Electron_eta[jEle])) nEle++;
      //Reco electrons which passed cuts
      if(nEle==1){
       //keeping only pairs of electrons per event
@@ -360,15 +296,11 @@ void makeUnfDists()
      }
     }//end inner reco loop	   
    }//end reco loop
+   if(nEle!=1) continue;//Must have two electrons only
    if(idxRecoEle1>=0&&idxRecoEle2>=0)
     invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
      Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
      Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
-
-   if(!Electron_passMediumID[idxRecoEle1]) invMassReco = 0;//iLep electron ID cut
-   if(!Electron_passMediumID[idxRecoEle2]) invMassReco = 0;//jLep electron ID cut
-  
-   if(nEle!=1) continue;//Must have two electrons only
    if(nGenDielectrons==0) continue; // must be DY->mumu or tautau event, skip it
   
    if(nGenDielectrons>=2){
@@ -386,11 +318,15 @@ void makeUnfDists()
    nTooManyDielectronsFS++;
    continue;
   }	    
-  
-  invMassTrue = calcInvMass(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
-   GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],
-   GENLepton_phi[idxGenEle2],eMass);		  
-
+  //Medium ID cuts
+  if(!Electron_passMediumID[idxRecoEle1]) invMassReco = 0;//iLep electron ID cut
+  if(!Electron_passMediumID[idxRecoEle2]) invMassReco = 0;//jLep electron ID cut
+  //Kinematic cuts
+  if(!passDileptonKinematics(Electron_pT[idxRecoEle1],Electron_pT[idxRecoEle2],
+   Electron_eta[idxRecoEle1],Electron_eta[idxRecoEle2])) invMassReco = 0; 	
+  if(!passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
+   GENLepton_eta[idxGenEleFS1], GENLepton_eta[idxGenEleFS2])) invMassTrue = 0;
+   
   //Weights
   pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
   genWeight = GENEvt_weight/fabs(GENEvt_weight);
@@ -423,27 +359,25 @@ void makeUnfDists()
    trigName = pHLT_trigName->at(iHLT);
    if(trigName.CompareTo(HLTname)==0){
     if(HLT_trigFired[iHLT]==1){
-     passHLT = kTRUE;	
+     passHLT = true;	
     }
-    else passHLT = kFALSE;
+    else passHLT = false;
     break; 
    } 
   }// end loop over triggers
 
-  // Apply kinematic acceptance criteria
-  if(!passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
-   GENLepton_eta[idxGenEleFS1], GENLepton_eta[idxGenEleFS2])){
-   invMassReco = invMassTrue = 0;
-  } 
-
-  // Apply matching to reconstructed electrons requirement
-  int closestLep1, closestLep2;
-  closestLep1 = closestLep2 = -1;
-  bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,idxRecoEle1);	      
-  bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,idxRecoEle2);	      
-  if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
-   invMassReco = 0;
-  }
+  ///////////////////////////////////////////////////////////
+  // Apply matching to reconstructed electrons requirement //
+  ///////////////////////////////////////////////////////////
+  //int closestLep1, closestLep2;
+  //closestLep1 = closestLep2 = -1;
+  //bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestLep1);	      
+  //if(closestLep1!=idxRecoEle1&&closestLep1!=idxRecoEle2) invMassReco = 0; 
+  //bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestLep2);	      
+  //if(closestLep2!=idxRecoEle1&&closestLep2!=idxRecoEle2) invMassReco = 0; 
+  //if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
+  // invMassReco = 0;
+  //}
   // Apply HLT requirement
   if(!passHLT){ 
    invMassReco = 0;
@@ -458,6 +392,7 @@ void makeUnfDists()
   else{
    hData->Fill(invMassReco,totalWeight*sfWeight);
    hTrue->Fill(invMassTrue,totalWeight);
+   if(invMassReco != 0) nDataEvents++;
   }
   }//end event loop   
  }//end chain loop 
@@ -480,9 +415,13 @@ void makeUnfDists()
  cout << "Total CPU RunTime: " << TotalCPURunTime/60 << " minutes" << endl;
  cout << "Total Real RunTime: " << TotalRunTime/60 << " minutes" << endl;
  cout << "[End Time(local time): " << ts_end.AsString("l") << "]" << endl;   
- cout << "Number of Events Processed: " << nMCEvents  << endl;
  cout << "**************************************************************************" << endl;
  cout << endl;
+
+ ofstream eventFile;
+ eventFile.open("nEvents.txt");
+ eventFile << "MC Events: " << nMCEvents << ", Data Events: " << nDataEvents << endl; 
+ eventFile.close();
   
 }//end main function
 
@@ -500,23 +439,27 @@ void counter(Long64_t i, Long64_t N)
 
 //Finding correspondence between 
 //reconstructed and Generated leptons
-bool findGenToRecoMatch(int genIndex, int recoIndex)
+bool findGenToRecoMatch(int genIndex, int &recoIndex)
 {
   double dR,deta,dphi;
   float dRMin = 100000;
   recoIndex=-1;
   //Matching gen level electrons with reconstructed electrons
-   deta=Electron_eta[recoIndex]-GENLepton_eta[genIndex];
-   dphi=abs(Electron_phi[recoIndex]-GENLepton_phi[genIndex]);
+  for(int iEle=0;iEle<Nelectrons;iEle++) {
+   deta=Electron_eta[iEle]-GENLepton_eta[genIndex];
+   dphi=abs(Electron_phi[iEle]-GENLepton_phi[genIndex]);
    if(dphi>pi) dphi=2*pi-dphi;
    dR=sqrt(deta*deta+dphi*dphi);
 
    if(dR<dRMin){
     dRMin=dR;
+    recoIndex = iEle;
     }
+  }//end of Loop 
   bool matchFound = true;
   if(dRMin>=dRMinCut) {
       matchFound=false;
+      recoIndex = -1;
   }
   return matchFound;
 }//end findGetToRecoMatch

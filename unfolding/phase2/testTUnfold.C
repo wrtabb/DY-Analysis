@@ -161,23 +161,10 @@ void testTUnfold()
    hUnfoldedE->SetMarkerStyle(25);
    hUnfoldedE->SetMarkerColor(kBlue+2);
    hUnfoldedE->SetMarkerSize(1);
-  for(int i=1;i<nBins;i++){
+  for(int i=1;i<nBins+1;i++){
     double c = hUnfolded->GetBinContent(i);
     hUnfoldedE->SetBinContent(i,c);
     hUnfoldedE->SetBinError(i,TMath::Sqrt(histEmatTotal->GetBinContent(i,i)));
-  }
-
-  ///////////////////////////////////////////////////////////////
-  //  Scaling True Distribution to Unfolded to check something //
-  ///////////////////////////////////////////////////////////////
-  double intUnf = hUnfoldedE->Integral();
-  double intTrue = hGen->Integral();
-  double trueScale = intUnf/intTrue;
-  double binContent;
-  cout << "trueScale = " << trueScale << endl;
-  for(int i=1;i<nBins+1;i++){
-   //binContent = hGen->GetBinContent(i);
-   //hGen->SetBinContent(i,binContent*trueScale);
   }
 
   TH1F*hRecoRebin=(TH1F*)hReco->Clone("hRecoRebin");
@@ -186,8 +173,8 @@ void testTUnfold()
    ratio->Divide(hGen);
 
   double x[nBins],res[nBins];
-  double chi = hUnfolded->Chi2Test(hGen,"CHI2/NDF",res);//chi2/ndf to print on plot
-  double pValues = hUnfolded->Chi2Test(hGen,"P",res);//outputs chi2,prob,ndf,igood
+  double chi = hUnfoldedE->Chi2Test(hGen,"CHI2/NDF",res);//chi2/ndf to print on plot
+  double pValues = hUnfoldedE->Chi2Test(hGen,"P",res);//outputs chi2,prob,ndf,igood
   TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
 
   const float padmargins = 0.03;

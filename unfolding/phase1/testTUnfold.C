@@ -177,8 +177,8 @@ void testTUnfold()
    ratio->Divide(hGen);
 
   double x[nBins],res[nBins];
-  double chi = hUnfolded->Chi2Test(hGen,"CHI2/NDF",res);//chi2/ndf to print on plot
-  double pValues = hUnfolded->Chi2Test(hGen,"P",res);//outputs chi2,prob,ndf,igood
+  double chi = hUnfoldedE->Chi2Test(hGen,"CHI2/NDF",res);//chi2/ndf to print on plot
+  double pValues = hUnfoldedE->Chi2Test(hGen,"P",res);//outputs chi2,prob,ndf,igood
   TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
 
   const float padmargins = 0.03;
@@ -230,83 +230,46 @@ void testTUnfold()
   ratio->Draw("PE");
   line->Draw("same");
 
-  //Graph for residuals
-  for (Int_t i=0; i<nBins; i++){ 
-    x[i]=i+1;
-  }
-  TGraph *resgr = new TGraph(nBins,x,res);
-  resgr->GetYaxis()->SetTitle("normalized residuals");
-  resgr->GetXaxis()->SetTitle("bin number");
-  resgr->SetMarkerStyle(21);
-  resgr->SetMarkerColor(kBlue);
-  resgr->SetMarkerSize(.9);
-  resgr->SetTitle("Normalized Residuals");
-  
-  //Graph for Quintile-Quintile
-  TF1 *f = new TF1("f","TMath::Gaus(x,0,1)",-10,10);
-  TGraphQQ *qqplot = new TGraphQQ(nBins,res,f);
-  qqplot->SetMarkerStyle(20);
-  qqplot->SetMarkerColor(kRed);
-  qqplot->SetMarkerSize(.9);
-  qqplot->SetTitle("Q-Q plot of Normalized Residuals");
-  
-  TCanvas*canvasStatPlot= new TCanvas("canvasResiduals","",10,10,1400,1000);
-  canvasStatPlot->Divide(2);
-  canvasStatPlot->cd(1);
-  resgr->Draw();
-  canvasStatPlot->cd(2);
-  qqplot->Draw();
 
   //Save Options
   TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldData";
   TString lineName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves";
-  TString statPlotName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldStatPlot";
   if(exactClosure){
     distName += "_ClosureTest";
     lineName += "_ClosureTest";
-    statPlotName+= "_ClosureTest";
   }
   else{
     distName += "_NoClosure";
     lineName += "_NoClosure";
-    statPlotName+= "_NoClosure";
   }
   if(effInc){
     distName += "_EffInc";
     lineName += "_EffInc";
-    statPlotName+= "_EffInc";
   }
   else{
     distName += "_NoEff";
     lineName += "_NoEff";
-    statPlotName+= "_NoEff";
   } 
   if(backInc){
     distName += "_BackInc";
     lineName += "_BackInc";
-    statPlotName+= "_BackInc";
   }
   else{
     distName += "_NoBack";
     lineName += "_NoBack";
-    statPlotName+= "_NoBack";
   }
   if(regType==NO_REG){
     distName += "_NoReg.png";
     lineName += "_NoReg.png";
-    statPlotName+= "_NoReg.png";
   }
   if(regType==CONST_REG){
     distName += "_ConstReg.png";
     lineName += "_ConstReg.png";
-    statPlotName+= "_ConstReg.png";
   }   
   if(regType==VAR_REG){
     distName += "_VarReg_Closure.png";
     lineName += "_VarReg.png";
-    statPlotName+= "_VarReg.png";
   }  
 
   canvas1->SaveAs(distName);
-  canvasStatPlot->SaveAs(statPlotName); 
 }
