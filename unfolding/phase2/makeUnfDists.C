@@ -56,122 +56,115 @@ const TString histInvMassTitles[nInvMassHistos] = {"Only Kinematic Cuts","Reco-G
 
 void makeUnfDists()
 {
-  TTimeStamp ts_start;
-  cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
-  TStopwatch totaltime;
-  totaltime.Start();
-  gROOT->SetBatch(kTRUE);
-  gStyle->SetOptStat(0);
-  gStyle->SetPalette(1);
-  //Defining branches
-  TBranch*b_GENnPair;
-  TBranch*b_GENLepton_eta;
-  TBranch*b_GENLepton_phi;
-  TBranch*b_GENLepton_pT;
-  TBranch*b_GENLepton_ID;
-  TBranch*b_GENLepton_isHardProcess;
-  TBranch*b_GENLepton_fromHardProcessFinalState;
-  TBranch*b_GENEvt_weight;
-  TBranch*b_Nelectrons;
-  TBranch*b_Electron_pT;
-  TBranch*b_Electron_eta;
-  TBranch*b_Electron_phi;
-  TBranch*b_Electron_passMediumID;
-  TBranch*b_HLT_ntrig;
-  TBranch*b_HLT_trigType;
-  TBranch*b_HLT_trigFired;
-  TBranch*b_nPileUp;
+ TTimeStamp ts_start;
+ cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
+ TStopwatch totaltime;
+ totaltime.Start();
+ gROOT->SetBatch(kTRUE);
+ gStyle->SetOptStat(0);
+ gStyle->SetPalette(1);
+ //Defining branches
+ TBranch*b_GENnPair;
+ TBranch*b_GENLepton_eta;
+ TBranch*b_GENLepton_phi;
+ TBranch*b_GENLepton_pT;
+ TBranch*b_GENLepton_ID;
+ TBranch*b_GENLepton_isHardProcess;
+ TBranch*b_GENLepton_fromHardProcessFinalState;
+ TBranch*b_GENEvt_weight;
+ TBranch*b_Nelectrons;
+ TBranch*b_Electron_pT;
+ TBranch*b_Electron_eta;
+ TBranch*b_Electron_phi;
+ TBranch*b_Electron_passMediumID;
+ TBranch*b_HLT_ntrig;
+ TBranch*b_HLT_trigType;
+ TBranch*b_HLT_trigFired;
+ TBranch*b_nPileUp;
 
-  //Loading ntuples
-  cout << "Loading ntuples" << endl;
-
-    TString dirNames[numChains] = 
-      {      
-	"/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE/crab_DYLL_M10to50_",
-	"/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100/EE",
-	"/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE/crab_DYLL_M100to200",
-	"/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-	"/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-	"/DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-	"/DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-	"/DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-	"/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-	"/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-	"/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE"
-      }; 
+ //Loading ntuples
+ cout << "Loading ntuples" << endl;
+ TString dirNames[numChains] = {      
+  "/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE/crab_DYLL_M10to50_",
+  "/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100/EE",
+  "/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE/crab_DYLL_M100to200",
+  "/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+  "/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+  "/DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+  "/DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+  "/DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+  "/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+  "/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
+  "/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE"
+ }; 
  TString baseDirectory = 
-   "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/DYJetsToLL_allMasses_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8"; 
+  "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/DYJetsToLL_allMasses_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8"; 
  TChain*chains[numChains];
  vector <TString> *subFiles[numChains]; 
- for(int iChain=0;iChain<numChains;iChain++)
-   {
-     subFiles[iChain] = new vector<TString>;
-     if(iChain==MC10to50) 
-       {
-	 subFiles[iChain]->push_back(dirNames[iChain]+"ext1v1");
-	 subFiles[iChain]->push_back(dirNames[iChain]+"v1");
-	 subFiles[iChain]->push_back(dirNames[iChain]+"v2");
-       }
-     else if(iChain==MC100to200) 
-       {
-	 subFiles[iChain]->push_back(dirNames[iChain]);
-	 subFiles[iChain]->push_back(dirNames[iChain]+"_ext");
-       }
-     else subFiles[iChain]->push_back(dirNames[iChain]);      
-   } 
+ for(int iChain=0;iChain<numChains;iChain++){
+  subFiles[iChain] = new vector<TString>;
+  if(iChain==MC10to50){
+   subFiles[iChain]->push_back(dirNames[iChain]+"ext1v1");
+   subFiles[iChain]->push_back(dirNames[iChain]+"v1");
+   subFiles[iChain]->push_back(dirNames[iChain]+"v2");
+  }
+  else if(iChain==MC100to200){
+   subFiles[iChain]->push_back(dirNames[iChain]);
+   subFiles[iChain]->push_back(dirNames[iChain]+"_ext");
+  }
+  else subFiles[iChain]->push_back(dirNames[iChain]);      
+ } 
+
  TString files;  
  Long64_t subDirectorySize;
  Long64_t totalentries = 0;
- for(int iChain=0;iChain<numChains;iChain++)
-   {
-     chains[iChain] = new TChain(treeName);
-     subDirectorySize = subFiles[iChain]->size();
-      for(int k=0;k<subDirectorySize;k++)
-	{	  	      
-	  TFileCollection filecoll("dum");//Object for creating a list of files in a directory
-	  files = baseDirectory;
-	  files+=subFiles[iChain]->at(k);
-	  files+="/*.root";	  
-	  filecoll.Add(files);
-	  chains[iChain]->AddFileInfoList(filecoll.GetList());
-	  cout << files << endl;
-	  cout << chains[iChain]->GetEntries() << " events loaded" << endl;	
-	  if(chains[iChain]->GetEntries()==0){
-	    cout << endl;
-	    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-	    cout << "ERROR: Broken files or files not found in: " << endl;
-	    cout << files << endl;
-	    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-	    cout << endl;
-	    return;
-	  }
-	}
+ for(int iChain=0;iChain<numChains;iChain++){
+  chains[iChain] = new TChain(treeName);
+  subDirectorySize = subFiles[iChain]->size();
+  for(int k=0;k<subDirectorySize;k++){	  	      
+   TFileCollection filecoll("dum");//Object for creating a list of files in a directory
+   files = baseDirectory;
+   files+=subFiles[iChain]->at(k);
+   files+="/*.root";	  
+   filecoll.Add(files);
+   chains[iChain]->AddFileInfoList(filecoll.GetList());
+   cout << files << endl;
+   cout << chains[iChain]->GetEntries() << " events loaded" << endl;	
+   if(chains[iChain]->GetEntries()==0){
+    cout << endl;
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+    cout << "ERROR: Broken files or files not found in: " << endl;
+    cout << files << endl;
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+    cout << endl;
+    return;
+   }
+  }
   
-      chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
-      chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
-      chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
-      chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
-      chains[iChain]->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
-      chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
-      chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess, 
-				       &b_GENLepton_isHardProcess);
-      chains[iChain]->SetBranchAddress
-        ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState, 
-				       &b_GENLepton_fromHardProcessFinalState);
-      chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
-      chains[iChain]->SetBranchAddress("nPileUp", &nPileUp, &b_nPileUp);
-      chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
-      chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
-      chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
-      chains[iChain]->SetBranchAddress
-        ("Electron_passMediumID",&Electron_passMediumID,&b_Electron_passMediumID);
-      chains[iChain]->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
-      chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
-      chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
-      chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);
-      
-      totalentries=totalentries+chains[iChain]->GetEntries();      
-   }//end loading ntuples
+  chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
+  chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
+  chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
+  chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
+  chains[iChain]->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
+  chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
+  chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess, 
+   &b_GENLepton_isHardProcess);
+  chains[iChain]->SetBranchAddress
+   ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState, 
+   &b_GENLepton_fromHardProcessFinalState);
+  chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
+  chains[iChain]->SetBranchAddress("nPileUp", &nPileUp, &b_nPileUp);
+  chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
+  chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
+  chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
+  chains[iChain]->SetBranchAddress
+   ("Electron_passMediumID",&Electron_passMediumID,&b_Electron_passMediumID);
+  chains[iChain]->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
+  chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
+  chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
+  chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);
+  totalentries=totalentries+chains[iChain]->GetEntries();      
+ }//end loading ntuples
 
  double rapidity, dileptonPt, dileptonEta, xSecWeight, weightNoPileup, genWeight, 
    varGenWeight, totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, 
@@ -394,7 +387,7 @@ void counter(Long64_t i, Long64_t N)
   TTimeStamp eventTimeStamp;
   if(i%(N/100)==0)
     {
-      cout << "efficiencies.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P << "%" << endl;
+      cout << "makeUnfDists.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P << "%" << endl;
     }
   return;
 }
