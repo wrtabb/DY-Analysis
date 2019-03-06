@@ -245,36 +245,32 @@ void makeUnfDists()
    counter(count,totalentries);
    count = count+1;
 
-   // Loop over gen leptons and find the electron pair at the isHardProcess
-   // and isHardProcessFinalState level.
    int idxGenEle1, idxGenEle2, idxGenEleFS1, idxGenEleFS2;
    idxGenEle1 = idxGenEle2 = idxGenEleFS1 = idxGenEleFS2 = -1;
-   int nGenDielectrons = 0;
-   int nGenDielectronsFS = 0;
-   double invMassReco = 0;
-   double invMassTrue = 0;
+   int nGenDielectrons = 0;//number of hard process dielectrons
+   int nGenDielectronsFS = 0;//number of final stat dielectrons
+   double invMassReco = 0;//reconstructed invariant mass
+   double invMassTrue = 0;//true invariant mass
+
+   // Loop over gen leptons and find the electron pair at the isHardProcess
+   // and isHardProcessFinalState level.
    for(int kLep=0;kLep<GENnPair;kLep++){
     for(int lLep=kLep+1;lLep<GENnPair;lLep++){
-     // Require a dielectron
+     //keep only electron pairs   
      if(!(abs(GENLepton_ID[kLep])==11 && abs(GENLepton_ID[lLep])==11))
       continue;
-     // Require opposite signs
+     //require opposite sign
      if(GENLepton_ID[kLep]*GENLepton_ID[lLep]>0) continue;
+     //Found dielectron pair from hard process 
      if(GENLepton_isHardProcess[kLep]==1 && GENLepton_isHardProcess[lLep]==1){
-      // Found a dielectron from hard process
       idxGenEle1 = kLep;
       idxGenEle2 = lLep;
       nGenDielectrons++;
      }
-     if(GENLepton_fromHardProcessFinalState[kLep]==1 && 
-      GENLepton_fromHardProcessFinalState[lLep]==1){
-      // Found a dielectron from final state
-      idxGenEleFS1 = kLep;
-      idxGenEleFS2 = lLep;
-      nGenDielectronsFS++;
-     }
     } // end inner loop over gen leptons
    } // end outer loop over gen leptons
+
+   //Calculate true invariant mass from hard process
    invMassTrue = calcInvMass(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
     GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],
     GENLepton_phi[idxGenEle2],eMass);		  
@@ -286,7 +282,8 @@ void makeUnfDists()
    int nEle = 0;
    for(int iEle = 0; iEle < Nelectrons; iEle++){
     for(int jEle = iEle+1; jEle < Nelectrons; jEle++){	  
-    if(passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],
+     //Find dielectron which passes kinemtatic constraints
+     if(passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],
      Electron_eta[iEle],Electron_eta[jEle])) nEle++;
      //Reco electrons which passed cuts
      if(nEle==1){
@@ -296,13 +293,14 @@ void makeUnfDists()
      }
     }//end inner reco loop	   
    }//end reco loop
+
    if(nEle!=1) continue;//Must have two electrons only
    if(idxRecoEle1>=0&&idxRecoEle2>=0)
+    //Reconstructed invariant mass if dielectron pair found
     invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
      Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
      Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
    if(nGenDielectrons==0) continue; // must be DY->mumu or tautau event, skip it
-  
    if(nGenDielectrons>=2){
     // Strange, there should be only two electrons from hard process
     printf("More than two hard process dielectrons found\n");
@@ -311,21 +309,12 @@ void makeUnfDists()
     continue;
    }
   
-  if(nGenDielectronsFS!=1){
-   // Odd, by now we should have only one pair 
-   printf("More than two hard process final state dielectrons found\n");
-   // skip event, but count the number of cases
-   nTooManyDielectronsFS++;
-   continue;
-  }	    
   //Medium ID cuts
   if(!Electron_passMediumID[idxRecoEle1]) invMassReco = 0;//iLep electron ID cut
   if(!Electron_passMediumID[idxRecoEle2]) invMassReco = 0;//jLep electron ID cut
   //Kinematic cuts
-  if(!passDileptonKinematics(Electron_pT[idxRecoEle1],Electron_pT[idxRecoEle2],
-   Electron_eta[idxRecoEle1],Electron_eta[idxRecoEle2])) invMassReco = 0; 	
-  if(!passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
-   GENLepton_eta[idxGenEleFS1], GENLepton_eta[idxGenEleFS2])) invMassTrue = 0;
+  if(!passDileptonKinematics(Electron_pT[idxGenEle1],Electron_pT[idxGenEle2],
+   Electron_eta[idxGenEle1],Electron_eta[idxGenEle2])) invMassTrue = 0; 	
    
   //Weights
   pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
@@ -378,6 +367,7 @@ void makeUnfDists()
   //if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
   // invMassReco = 0;
   //}
+
   // Apply HLT requirement
   if(!passHLT){ 
    invMassReco = 0;
@@ -419,7 +409,7 @@ void makeUnfDists()
  cout << endl;
 
  ofstream eventFile;
- eventFile.open("nEvents.txt");
+ eventFile.open("nEventsNew.txt");
  eventFile << "MC Events: " << nMCEvents << ", Data Events: " << nDataEvents << endl; 
  eventFile.close();
   
