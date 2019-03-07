@@ -261,13 +261,13 @@ void makeUnfDists()
    //Find all reco electrons
    //Determine if they pass medium ID criteria after the loop
    //And then set invMassReco=0 if they do not to place in underflow
-   int nEle = 0;
-   bool passID = false;
+   int nDieEle = 0;//counter for dielectron pairs
+   bool passID = false;//determines if any dielectron pairs pass medID criteria
    for(int iEle = 0; iEle < Nelectrons; iEle++){
     for(int jEle = iEle+1; jEle < Nelectrons; jEle++){	  
      if(Electron_passMediumID[iEle]&&
       Electron_passMediumID[jEle]){
-      nEle++;
+      nDieEle++;
       passID = true;
       idxRecoEle1 = iEle;
       idxRecoEle2 = jEle;		    
@@ -298,7 +298,7 @@ void makeUnfDists()
    if(!passHLT) invMassReco=0;//HLT cut
    if(!passID) invMassReco=0;//Medium ID cut
   // if(idxRecoEle1<0||idxRecoEle2<0)invMassReco = 0;//cut if Nelectrons<1
-   if(nEle!=1) invMassReco=0;//cut if there is anything other than one dielectron pair
+   if(nDieEle!=1) invMassReco=0;//cut if there is anything other than one dielectron pair
    if(!passDileptonKinematics(Electron_pT[idxRecoEle1],Electron_pT[idxRecoEle2],
     Electron_eta[idxRecoEle1],Electron_eta[idxRecoEle2])) invMassReco=0; 	
 
