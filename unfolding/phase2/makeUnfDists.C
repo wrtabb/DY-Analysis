@@ -60,7 +60,7 @@ void makeUnfDists()
  cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
  TStopwatch totaltime;
  totaltime.Start();
- gROOT->SetBatch(kTRUE);
+ gROOT->SetBatch(true);
  gStyle->SetOptStat(0);
  gStyle->SetPalette(1);
  //Defining branches
@@ -166,6 +166,8 @@ void makeUnfDists()
   totalentries=totalentries+chains[iChain]->GetEntries();      
  }//end loading ntuples
 
+ ofstream eventFile;
+ eventFile.open("nEvents.txt");
  double rapidity, dileptonPt, dileptonEta, xSecWeight, weightNoPileup, genWeight, 
    varGenWeight, totalWeight, lumiEffective, nEffective, localEntry, sumGenWeight, 
    sumRawGenWeight, pileupWeight, sfReco1, sfReco2, sfID1, sfID2, sfHLT;
@@ -252,19 +254,21 @@ void makeUnfDists()
 	  	  
    //Reco loop
    double invMassReco;
-   invMassReco=0;
    int idxRecoEle1,idxRecoEle2;
    idxRecoEle1=idxRecoEle2=-1;
-   if(Nelectrons<2) continue;
+   //if(Nelectrons<2) continue;
 
    //Find all reco electrons
    //Determine if they pass medium ID criteria after the loop
    //And then set invMassReco=0 if they do not to place in underflow
    int nEle = 0;
+   bool passID = false;
    for(int iEle = 0; iEle < Nelectrons; iEle++){
     for(int jEle = iEle+1; jEle < Nelectrons; jEle++){	  
-     nEle++;
-     if(nEle==1){//keeping only pairs of electrons per event
+     if(Electron_passMediumID[iEle]&&
+      Electron_passMediumID[jEle]){
+      nEle++;
+      passID = true;
       idxRecoEle1 = iEle;
       idxRecoEle2 = jEle;		    
      }
@@ -272,29 +276,29 @@ void makeUnfDists()
    }//end reco loop
 
    invMassTrue = calcInvMass(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
-    GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],            GENLepton_phi[idxGenEle2],eMass);		  
+    GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],
+    GENLepton_phi[idxGenEle2],eMass);		  
    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
     Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
     Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
 
    //HLT cut
    trigNameSize = pHLT_trigName->size();
-   bool passHLT = kFALSE;	  
+   bool passHLT = false;	  
    for(int iHLT=0;iHLT<trigNameSize;iHLT++){
     trigName = pHLT_trigName->at(iHLT);
     if(trigName.CompareTo(HLTname)==0){
-     if(HLT_trigFired[iHLT]==1) passHLT = kTRUE;	
-     else passHLT = kFALSE;
+     if(HLT_trigFired[iHLT]==1) passHLT = true;	
+     else passHLT = false;
      break; 
     } 
    }// end loop over triggers
 
    //Reco cuts
-   if(!passHLT) invMassReco=0;
-   if(idxRecoEle1<0||idxRecoEle2<0)invMassReco = 0;
-   if(!Electron_passMediumID[idxRecoEle1]) invMassReco=0;//iLep electron ID cut
-   if(!Electron_passMediumID[idxRecoEle2]) invMassReco=0;//jLep electron ID cut
-   if(nEle!=1) invMassReco=0;//makes sure there's only one dielectron pair
+   if(!passHLT) invMassReco=0;//HLT cut
+   if(!passID) invMassReco=0;//Medium ID cut
+  // if(idxRecoEle1<0||idxRecoEle2<0)invMassReco = 0;//cut if Nelectrons<1
+   if(nEle!=1) invMassReco=0;//cut if there is anything other than one dielectron pair
    if(!passDileptonKinematics(Electron_pT[idxRecoEle1],Electron_pT[idxRecoEle2],
     Electron_eta[idxRecoEle1],Electron_eta[idxRecoEle2])) invMassReco=0; 	
 
@@ -339,8 +343,6 @@ void makeUnfDists()
     (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
    sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
    totalWeight = genWeight*xSecWeight*pileupWeight;
-  
-
 
    // Apply matching to reconstructed electrons requirement
    //int closestTrackLep1, closestTrackLep2;
@@ -357,12 +359,12 @@ void makeUnfDists()
    nEvents++;
    if(invMassReco!=0) nEventsPass++;
 
+   if(count%(totalentries/100)==0)
+    eventFile << "Events passing cuts: " << nEventsPass << "; All events: " << nEvents << endl;
+
   }//end event loop   
  }//end chain loop 
 
- ofstream eventFile;
- eventFile.open("nEvents.txt");
- eventFile << "Events passing cuts: " << nEventsPass << "; All events: " << nEvents << endl;
  eventFile.close();
  
  totaltime.Stop();
@@ -386,9 +388,7 @@ void counter(Long64_t i, Long64_t N)
   int P = 100*(i)/(N);  
   TTimeStamp eventTimeStamp;
   if(i%(N/100)==0)
-    {
-      cout << "makeUnfDists.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P << "%" << endl;
-    }
+   cout << "makeUnfDists.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P << "%" << endl;
   return;
 }
 
@@ -396,56 +396,53 @@ void counter(Long64_t i, Long64_t N)
 //reconstructed and Generated leptons
 bool findGenToRecoMatch(int genIndex, int &recoIndex)
 {
-  double dR,deta,dphi;
-  float dRMin = 100000;
-  recoIndex=-1;
-  //Matching gen level electrons with reconstructed electrons
-  for(int iEle=0;iEle<Nelectrons;iEle++)
-    {
-      deta=Electron_eta[iEle]-GENLepton_eta[genIndex];
-      dphi=abs(Electron_phi[iEle]-GENLepton_phi[genIndex]);
-      if(dphi>pi) dphi=2*pi-dphi;
-      dR=sqrt(deta*deta+dphi*dphi);
+ double dR,deta,dphi;
+ float dRMin = 100000;
+ recoIndex=-1;
+ //Matching gen level electrons with reconstructed electrons
+ for(int iEle=0;iEle<Nelectrons;iEle++){
+  deta=Electron_eta[iEle]-GENLepton_eta[genIndex];
+  dphi=abs(Electron_phi[iEle]-GENLepton_phi[genIndex]);
+  if(dphi>pi) dphi=2*pi-dphi;
+  dR=sqrt(deta*deta+dphi*dphi);
 
-      if(dR<dRMin)
-	{
-	  recoIndex=iEle;
-	  dRMin=dR;
-	}
-    }//end of Loop 
-  bool matchFound = kTRUE;
-  if(dRMin>=dRMinCut)
-    {
-      recoIndex=-1;
-      matchFound=kFALSE;
-    }
-  return matchFound;
+  if(dR<dRMin){
+   recoIndex=iEle;
+   dRMin=dR;
+  }
+ }//end of Loop 
+ bool matchFound = true;
+ if(dRMin>=dRMinCut){
+  recoIndex = -1;
+  matchFound = false;
+ }
+ return matchFound;
 }//end findGetToRecoMatch
 
 //Kinematic cuts
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)
 {
-  if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return kFALSE;//eta cut
-  if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return kFALSE; //eta cut
-  if(abs(eta1)>etaHigh||abs(eta2)>etaHigh) return kFALSE; //eta cut
-  if(!((pt1>ptLow && pt2>ptHigh)||(pt1>ptHigh && pt2>ptLow))) return kFALSE;
-  return kTRUE;
+  if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return false;//eta cut
+  if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return false; //eta cut
+  if(abs(eta1)>etaHigh||abs(eta2)>etaHigh) return false; //eta cut
+  if(!((pt1>ptLow && pt2>ptHigh)||(pt1>ptHigh && pt2>ptLow))) return false;
+  return true;
 }
 
 //Lepton ID and Final state cuts
 bool passPromptGenElectron(int ID, int fromfinalstate)
 {
-  if(abs(ID)!=11) return kFALSE;		
-  if(fromfinalstate!=1) return kFALSE;
-  return kTRUE;
+  if(abs(ID)!=11) return false;		
+  if(fromfinalstate!=1) return false;
+  return true;
 }
 
 //Lepton ID and Hard Process Cuts
 bool passHardProcess(int ID, int hardProcess)
 {
-  if(abs(ID)!=11) return kFALSE;		
-  if(hardProcess!=1) return kFALSE;
-  return kTRUE;
+  if(abs(ID)!=11) return false;		
+  if(hardProcess!=1) return false;
+  return true;
 }
 
 //Invariant mass calculator
