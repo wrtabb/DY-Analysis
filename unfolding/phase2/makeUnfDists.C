@@ -174,8 +174,8 @@ void makeUnfDists()
  double invMassTrue,sfWeight;
  Long64_t nentries;
  Long64_t count = 0;
- Long64_t nEvents = 0;
- Long64_t nEventsPass = 0;
+ //Long64_t nEvents = 0;
+ //Long64_t nEventsPass = 0;
  double lumi = dataLuminosity;
  TString HLTname = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
  TString trigName;
@@ -198,6 +198,9 @@ void makeUnfDists()
   cout << endl;
   cout << "Processing chain: " << dirNames[iChain] << endl;
   cout << endl;
+
+  Long64_t nEvents = 0;
+  Long64_t nEventsPass = 0;
 
   nentries = chains[iChain]->GetEntries();
   xSecWeight=lumi*(xSec[iChain]/1.0);      
@@ -359,10 +362,11 @@ void makeUnfDists()
    nEvents++;
    if(invMassReco!=0) nEventsPass++;
 
-   if(count%(totalentries/100)==0)
-    eventFile << "Events passing cuts: " << nEventsPass << "; All events: " << nEvents << endl;
 
   }//end event loop   
+    
+ double eventRatio = nEventsPass/nEvents;
+ eventFile << "Events passing cuts: " << nEventsPass << "; All events: " << nEvents << "; Ratio: " << eventRatio << endl;
  }//end chain loop 
 
  eventFile.close();
