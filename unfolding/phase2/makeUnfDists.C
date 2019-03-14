@@ -38,6 +38,9 @@ const TString medIDSFName = "/home/hep/wrtabb/git/DY-Analysis/SFs/MediumID_SF.ro
 const TString recoSFName = "/home/hep/wrtabb/git/DY-Analysis/SFs/Reco_SF.root";
 const TString effName = "/home/hep/wrtabb/git/DY-Analysis/plots/efficiencies.root";
 
+const int rangeBinNum = 12;
+const int rangeBinning[rangeBinNum] = {10,50,100,200,400,500,700,800,1000,1500,2000,3000};
+
 const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
 const int ptBinHigh = 499;

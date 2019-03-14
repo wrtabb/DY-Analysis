@@ -1,31 +1,4 @@
-#include "TFile.h"
-#include "TROOT.h"
-#include "TTree.h"
-#include "TCanvas.h"
-#include "TFrame.h"
-#include "THStack.h"
-#include "TH1F.h"
-#include "TH1I.h"
-#include "TH2F.h"
-#include "TProfile.h"
-#include "TBenchmark.h"
-#include "TRandom.h"
-#include "TSystem.h"
-#include "TChain.h"
-#include "TBranch.h"
-#include "TLorentzVector.h"
-#include "TLegend.h"
-#include <fstream>
-#include <iostream>
-#include <vector>
-#include "TStyle.h"
-#include "TEfficiency.h"
-#include "TString.h"
-#include "TLine.h"
-#include "TTimeStamp.h"
-#include "TFileCollection.h"
-#include "THashList.h"
-#include "TGraphAsymmErrors.h"
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 
 void counter(Long64_t i, Long64_t N);
 double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
@@ -34,18 +7,6 @@ bool passPromptGenElectron(int ID, int fromfinalstate);
 bool passHardProcess(int ID, int hardProces);
 bool findGenToRecoMatch(int genIndex,int &recoIndex);
 
-//Defining variables and arrays
-const int MPSIZE = 2000;
-int GENnPair, Nelectrons, HLT_ntrig, nPileUp;
-double GENEvt_weight;
-double GENLepton_phi[MPSIZE],GENLepton_eta[MPSIZE],GENLepton_pT[MPSIZE],GENLepton_Px[MPSIZE],GENLepton_Py[MPSIZE];
-double GENLepton_Pz[MPSIZE],GENLepton_E[MPSIZE];
-int GENLepton_ID[MPSIZE],GENLepton_isHardProcess[MPSIZE],GENLepton_fromHardProcessFinalState[MPSIZE];
-double Electron_pT[MPSIZE], Electron_eta[MPSIZE], Electron_phi[MPSIZE];
-double Electron_Energy[MPSIZE], Electron_Px[MPSIZE];
-double Electron_Py[MPSIZE], Electron_Pz[MPSIZE], Electron_charge[MPSIZE];
-bool Electron_passMediumID[MPSIZE];
-int HLT_trigType[MPSIZE],HLT_trigFired[MPSIZE];
 enum chainNum 
   {        
     MC10to50,
@@ -69,38 +30,13 @@ enum InvMassHist
   HLT_CUTS,
   RECO_ELE
 };
-std::vector<std::string> HLT_trigName;
-std::vector<std::string> *pHLT_trigName = &HLT_trigName;
-const double massbins[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106, 
-                             110,115,120,126,133,141,150,160,171,185,200,220,243,273,320, 
-			     380,440,510,600,700,830,1000,1500,3000};
-const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47.5,50,52.5,55,
-                            57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,
-                            98.5,101,103.5,106,108,110,112.5,115,117.5,120,123,126,129.5,133,
-                            137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,210,220,
-                            231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
-                            700,765,830,915,1000,1250,1500,2250,3000};
-const double pi=TMath::Pi();
-const int numChains = 11;
-const int nLogBins = 43;
-const int nLogBins2 = 2*nLogBins;
-//Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
-const float xSec[numChains] = {6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
-                               0.01042,0.00552772,0.000741613,0.000178737};
-const float etaHigh = 2.4;
-const float etaGapHigh = 1.566; 
-const float etaGapLow = 1.4442;
-const float ptHigh = 28;
-const float ptLow = 17;
-const float eMass = 0.000511;
+
 const TString treeName = "recoTree/DYTree";
-const TString pileupRatioName = "./plots/pileup.root";
-const TString leg2SFName = "./SFs/Leg2_SF.root";
-const TString medIDSFName = "./SFs/MediumID_SF.root";
-const TString recoSFName = "./SFs/Reco_SF.root";
-const TString effName = "/home/hep/wrtabb/git/DY-Analysis/plots/efficiencies.root";
-const float dRMinCut = 0.3;
-const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
+const TString pileupRatioName = "/home/hep/wrtabb/git/DY-Analysis/data/pileup.root";
+const TString leg2SFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Leg2_SF.root";
+const TString medIDSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/MediumID_SF.root";
+const TString recoSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Reco_SF.root";
+const TString effName = "/home/hep/wrtabb/git/DY-Analysis/data/efficiencies.root";
 
 const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
@@ -124,7 +60,7 @@ void efficiencies()
   cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
   TStopwatch totaltime;
   totaltime.Start();
-  //gROOT->SetBatch(kTRUE);
+  gROOT->SetBatch(kTRUE);
   gStyle->SetOptStat(0);
   gStyle->SetPalette(1);
   //Defining branches
@@ -245,12 +181,8 @@ void efficiencies()
  hpTvsMass->GetYaxis()->SetTitle("p_{T} [GeV]"); 
  hpTvsMass->GetXaxis()->SetTitle("m_{ee} [GeV]"); 
 
- TFile*effFile = new TFile(effName);
- TEfficiency*hEff = (TEfficiency*)effFile->Get("Efficiency");
-  hEff->SetName("hEff");
- double eff;
  TH2F*migMatrixGENisHardvsGENFS = 
-   new TH2F("migMatrixGENisHardvsGENFS","",nLogBins,massbins,nLogBins2,massbins2);
+   new TH2F("migMatrixGENisHardvsGENFS","",nLogBins,massbins,nLogBins,massbins);
  migMatrixGENisHardvsGENFS->
    SetTitle("Migration Matrix: Gen-Level Final State vs. Gen-Level Hard Process");
  migMatrixGENisHardvsGENFS->GetYaxis()->
@@ -262,7 +194,7 @@ void efficiencies()
  migMatrixGENisHardvsGENFS->GetYaxis()->SetNoExponent();
  migMatrixGENisHardvsGENFS->GetYaxis()->SetMoreLogLabels();
  TH2F*migMatrixGENFSvsReco = 
-   new TH2F("migMatrixGENFSvsReco","",nLogBins,massbins,nLogBins2,massbins2);
+   new TH2F("migMatrixGENFSvsReco","",nLogBins,massbins,2*nLogBins,massbins2);
  migMatrixGENFSvsReco->SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Final State");
  migMatrixGENFSvsReco->GetXaxis()->
    SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
@@ -272,7 +204,7 @@ void efficiencies()
  migMatrixGENFSvsReco->GetYaxis()->SetNoExponent();
  migMatrixGENFSvsReco->GetYaxis()->SetMoreLogLabels();
  TH2F*migMatrixGENisHardvsReco = 
-   new TH2F("migMatrixGENisHardvsReco","",nLogBins,massbins,nLogBins2,massbins2);
+   new TH2F("migMatrixGENisHardvsReco","",nLogBins,massbins,nLogBins,massbins);
  migMatrixGENisHardvsReco->
    SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Hard Process");
  migMatrixGENisHardvsReco->GetXaxis()->
@@ -301,6 +233,8 @@ void efficiencies()
    }
  
  TFile *rootFile = new TFile("./plots/plotsDY.root","RECREATE");
+ ofstream eventFile;
+ eventFile.open("nEvents.txt");
  
  //Event Loop
  cout << "Starting Event Loop" << endl;
@@ -338,7 +272,6 @@ void efficiencies()
  TH2F*hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
  TFile*fileRecoSF = new TFile(recoSFName);
  TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
- TH2D*hEffSFvsMass = new TH2D("hEffSFvsMass","",nLogBins,massbins,100,0,1);
 
  for(int iChain=0;iChain<numChains;iChain++)
    {
@@ -347,6 +280,7 @@ void efficiencies()
      cout << endl;
 
       nentries = chains[iChain]->GetEntries();
+      //nentries = nEvents;
       xSecWeight=lumi*(xSec[iChain]/1.0);      
       sumGenWeight = 0;
       for(Long64_t i=0;i<nentries;i++){
@@ -362,12 +296,15 @@ void efficiencies()
       pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
       genWeight = GENEvt_weight/fabs(GENEvt_weight);
       genWeight = genWeight/sumGenWeight;
+      Long64_t nEvents = 0;
+      Long64_t nEventsPass = 0;
 
       for(Long64_t i=0;i<nentries;i++)
 	{      
 	  chains[iChain]->GetEntry(i);
 	  counter(count,totalentries);
 	  count = count+1;
+	  nEvents++; 
 	  // Loop over gen leptons and find the electron pair at the isHardProcess
 	  // and isHardProcessFinalState level.
 	  int idxGenEle1, idxGenEle2, idxGenEleFS1, idxGenEleFS2;
@@ -402,7 +339,7 @@ void efficiencies()
 	    } // end outer loop over gen leptons
 	  	  
 	  //Reco loop
-	  double invMassReco,invMassTrue;
+	  double invMassReco;
 	  invMassReco=0;
 	  int idxRecoEle1,idxRecoEle2;
 	  idxRecoEle1=idxRecoEle2=-1;
@@ -425,14 +362,13 @@ void efficiencies()
 		    }
 		}//end inner reco loop	   
 	    }//end reco loop
-
+          //if(nEle!=1) continue;
 	  if(idxRecoEle1>=0&&idxRecoEle2>=0)
 	    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
               Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
               Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
-	  if(nGenDielectrons==0) {
-            invMassReco = invMassHardProcess = invMassFSR = 0;
-          }
+	  if(nGenDielectrons==0) 
+	    continue; // must be DY->mumu or tautau event, skip it
 	  
 	  if(nGenDielectrons>=2)
 	    {
@@ -440,7 +376,7 @@ void efficiencies()
 	      printf("More than two hard process dielectrons found\n");
 	      // skip event, but count the number of cases
 	      nTooManyDielectrons++;
-              invMassReco = invMassHardProcess = invMassFSR = 0;
+	      continue;
 	    }
 	  
 	  if(nGenDielectronsFS!=1)
@@ -449,12 +385,11 @@ void efficiencies()
 	      printf("More than two hard process final state dielectrons found\n");
 	      // skip event, but count the number of cases
 	      nTooManyDielectronsFS++;
-              invMassReco = invMassHardProcess = invMassFSR = 0;
+	      continue;
 	    }	    
 	  
 	  invMassHardProcess = calcInvMass(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
 	    GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],            GENLepton_phi[idxGenEle2],eMass);		  
-          invMassTrue = invMassHardProcess;
 	  invMassFSR = calcInvMass(GENLepton_pT[idxGenEleFS1],GENLepton_eta[idxGenEleFS1],
             GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],
             GENLepton_eta[idxGenEleFS2],GENLepton_phi[idxGenEleFS2],eMass);		  
@@ -482,11 +417,7 @@ void efficiencies()
           sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
 	  totalWeight = genWeight*xSecWeight*pileupWeight;
 	  hHardProcess[iChain]->Fill(invMassHardProcess,totalWeight);
- 
-          const Long64_t N = nentries;
-          eff = hEff->GetEfficiency(histInvMass[0]->FindBin(invMassHardProcess));
-          hEffSFvsMass->Fill(invMassHardProcess,eff*sfWeight);
-
+	  
 	  //HLT cut
 	  trigNameSize = pHLT_trigName->size();
 	  bool passHLT = kFALSE;	  
@@ -513,10 +444,8 @@ void efficiencies()
             
 	  // Apply kinematic acceptance criteria
 	  if(!passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
-	   GENLepton_eta[idxGenEleFS1], GENLepton_eta[idxGenEleFS2])){
-              invMassReco = invMassHardProcess = invMassFSR = invMassTrue = 0;
-          }//
-
+				     GENLepton_eta[idxGenEleFS1], GENLepton_eta[idxGenEleFS2])) 
+	    continue;	      
 	  // Both electrons are in kinematic acceptance at gen level
 	  histInvMass[KINEMATIC_CUTS]->Fill(invMassFSR,totalWeight);
 	  hpTvsMass->Fill(invMassFSR,GENLepton_pT[idxGenEleFS1],totalWeight);
@@ -525,40 +454,35 @@ void efficiencies()
 	  // Apply matching to reconstructed electrons requirement
 	  int closestTrackLep1, closestTrackLep2;
 	  closestTrackLep1 = closestTrackLep2 = -1;
-	  bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);	      
-	  bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestTrackLep2);	      
-	  if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
-            invMassReco = invMassHardProcess = invMassFSR = 0; 
-          }
+	  //bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);  
+          //bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestTrackLep2);
+          //if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) continue;
+
 	  // Both electrons are reconstructed
 	  histInvMass[RECO_MATCHED]->Fill(invMassFSR,totalWeight);//does reco need SFs?
 	  
 	  // Apply ID criteria:
 	  // Dilepton pair at gen level matched to reco and passing ID at reco level
-	  if(!Electron_passMediumID[closestTrackLep1]){
-            invMassReco = invMassHardProcess = invMassFSR = 0; 
-          }
-	  if(!Electron_passMediumID[closestTrackLep2]){
-            invMassReco = invMassHardProcess = invMassFSR = 0; 
-          }
+	  //if(!Electron_passMediumID[closestTrackLep1]) continue;
+	  //if(!Electron_passMediumID[closestTrackLep2]) continue;
 	  // Both electrons pass ID
 	  histInvMass[ID_CUTS]->Fill(invMassFSR,totalWeight);
 	  
 	  // Apply HLT requirement
-	  if(!passHLT){
-            invMassReco = invMassHardProcess = invMassFSR = 0; 
-          } 
+	  if(!passHLT) continue;
 
 	  histInvMass[HLT_CUTS]->Fill(invMassFSR,totalWeight);
-	  histInvMass[RECO_ELE]->Fill(invMassReco,totalWeight*sfWeight);
+	  histInvMass[RECO_ELE]->Fill(invMassReco,totalWeight);
 	  migMatrixGENisHardvsGENFS->Fill(invMassHardProcess,invMassFSR,totalWeight);
 	  migMatrixGENFSvsReco->Fill(invMassFSR,invMassReco,totalWeight*sfWeight);
-	  migMatrixGENisHardvsReco->Fill(invMassTrue,invMassReco,totalWeight*sfWeight);
-          migMatrixGENisHardvsReco->Fill(invMassTrue,0.0,totalWeight*(1.0-sfWeight));
+	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight);
+          nEventsPass++;
 	}//end event loop   
+      eventFile << "Events passing cuts: " << nEventsPass << "; All events: " << nEvents << endl;
+
       
     }//end chain loop 
-  
+  eventFile.close();
   TEfficiency*hMatchedEfficiency = 
     new TEfficiency((*histInvMass[RECO_MATCHED]),(*histInvMass[KINEMATIC_CUTS]));
   hMatchedEfficiency->SetTitle("Reconstruction Efficiency");
@@ -599,11 +523,6 @@ void efficiencies()
   for(int i=0;i<nInvMassHistos;i++){
     histInvMass[i]->Write();
   } 
-  TH1D*hTrue = new TH1D("hTrue","",nLogBins,massbins);
-  for(int i=0;i<numChains;i++){
-   hTrue->Add(hHardProcess[i]);
-   hHardProcess[i]->Write();
-  }
   hAcceptance->Write();
   hEfficiency->Write();
   hHLTEfficiency->Write();
@@ -611,15 +530,8 @@ void efficiencies()
   migMatrixGENFSvsReco->Write();
   migMatrixGENisHardvsReco->Write();
   rootFile->Write();
-  hEffSFvsMass->Write();
   rootFile->Close();   
   
-  TCanvas*canvas = new TCanvas("canvas","",10,10,1000,1000);
-  canvas->SetLogx();
-  canvas->SetGrid();
-  hEffSFvsMass->Draw("colz");
-  canvas->SaveAs("effSFvsMass.png");
-
   totaltime.Stop();
   Double_t TotalCPURunTime = totaltime.CpuTime();
   Double_t TotalRunTime = totaltime.RealTime();
