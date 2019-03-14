@@ -192,6 +192,10 @@ void makeUnfDists()
  TH2F*hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
  TFile*fileRecoSF = new TFile(recoSFName);
  TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
+
+ TH1D*hAllEvents = new TH1D("hAllEvents","",nLogBins,massbins);
+ TH1D*hKinCuts = new TH1D("hKinCuts","",nLogBins,massbins); 
+ TH1D*hAllCuts = new TH1D("hAllCuts","",nLogBins,massbins); 
  
  //loop over chains
  for(int iChain=0;iChain<numChains;iChain++){
@@ -199,8 +203,8 @@ void makeUnfDists()
   cout << "Processing chain: " << dirNames[iChain] << endl;
   cout << endl;
 
-  Long64_t nEvents = 0;
-  Long64_t nEventsPass = 0;
+  double nEvents = 0;
+  double nEventsPass = 0;
 
   nentries = chains[iChain]->GetEntries();
   xSecWeight=lumi*(xSec[iChain]/1.0);      
@@ -260,6 +264,7 @@ void makeUnfDists()
    int idxRecoEle1,idxRecoEle2;
    idxRecoEle1=idxRecoEle2=-1;
    //if(Nelectrons<2) continue;
+   double invMassKinCuts,invMassAll;
 
    //Find all reco electrons
    //Determine if they pass medium ID criteria after the loop
@@ -284,7 +289,8 @@ void makeUnfDists()
    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
     Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
     Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
-
+   invMassKinCuts = invMassReco;
+   invMassAll = invMassReco;
    //HLT cut
    trigNameSize = pHLT_trigName->size();
    bool passHLT = false;	  
@@ -303,7 +309,10 @@ void makeUnfDists()
   // if(idxRecoEle1<0||idxRecoEle2<0)invMassReco = 0;//cut if Nelectrons<1
    if(nDieEle!=1) invMassReco=0;//cut if there is anything other than one dielectron pair
    if(!passDileptonKinematics(Electron_pT[idxRecoEle1],Electron_pT[idxRecoEle2],
-    Electron_eta[idxRecoEle1],Electron_eta[idxRecoEle2])) invMassReco=0; 	
+    Electron_eta[idxRecoEle1],Electron_eta[idxRecoEle2])){ 
+    invMassReco=0; 	
+    invMassKinCuts = 0;
+   }
 
    //Gen cuts
    if(!passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
@@ -361,9 +370,14 @@ void makeUnfDists()
    //Counting total events and events that pass reco cuts
    nEvents++;
    if(invMassReco!=0) nEventsPass++;
+   
+   hAllEvents->Fill(invMassAll);
+   hKinCuts->Fill(invMassKinCuts);
+   hAllCuts->Fill(invMassReco);
 
 
   }//end event loop   
+
     
  double eventRatio = nEventsPass/nEvents;
  eventFile << "Events passing cuts: " << nEventsPass << "; All events: " << nEvents << "; Ratio: " << eventRatio << endl;

@@ -1,11 +1,11 @@
-10-50:     Events passing cuts: 46964;   All events: 45832206; Ratio: 0.00102469
-50-100:    Events passing cuts: 7678797; All events: 39000836; Ratio: 0.19688801
-100-200:   Events passing cuts: 1305500; All events: 5402483; Ratio: 0.24164815
-200-400:   Events passing cuts: 33608;   All events: 98238;   Ratio: 0.34210794
-400-500:   Events passing cuts: 39830;   All events: 95664;   Ratio: 0.41635307
-500-700:   Events passing cuts: 42598;   All events: 93785;   Ratio: 0.45420910
-700-800:   Events passing cuts: 45158;   All events: 91914;   Ratio: 0.49130709
-800-1000:  Events passing cuts: 46767;   All events: 90832;   Ratio: 0.51487361
-1000-1500: Events passing cuts: 47145;   All events: 85916;   Ratio: 0.54873365
-1500-2000: Events passing cuts: 50287;   All events: 86365;   Ratio: 0.58226133
-2000-3000: Events passing cuts: 50815;   All events: 85109;   Ratio: 0.59705789
+Events passing cuts: 46964; All events: 45832206; Ratio: 0
+Events passing cuts: 7678797; All events: 39000836; Ratio: 0
+Events passing cuts: 1305500; All events: 5402483; Ratio: 0
+Events passing cuts: 33608; All events: 98238; Ratio: 0
+Events passing cuts: 39830; All events: 95664; Ratio: 0
+Events passing cuts: 42598; All events: 93785; Ratio: 0
+Events passing cuts: 45158; All events: 91914; Ratio: 0
+Events passing cuts: 46767; All events: 90832; Ratio: 0
+Events passing cuts: 47145; All events: 85916; Ratio: 0
+Events passing cuts: 50287; All events: 86365; Ratio: 0
+Events passing cuts: 50815; All events: 85109; Ratio: 0
