@@ -32,11 +32,10 @@ enum InvMassHist
 };
 
 const TString treeName = "recoTree/DYTree";
-const TString pileupRatioName = "/home/hep/wrtabb/git/DY-Analysis/data/pileup.root";
+const TString pileupRatioName = "/home/hep/wrtabb/git/DY-Analysis/data/pileup/pileup.root";
 const TString leg2SFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Leg2_SF.root";
 const TString medIDSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/MediumID_SF.root";
 const TString recoSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Reco_SF.root";
-const TString effName = "/home/hep/wrtabb/git/DY-Analysis/data/efficiencies.root";
 
 const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
@@ -175,7 +174,7 @@ void efficiencies()
  cout << endl;
  cout << "Total Events Loaded: " << totalentries << endl;
 
- TH2F*hpTvsMass = new TH2F("hpTvsMass","",43,massbins,598,10,3000);
+ TH2F*hpTvsMass = new TH2F("hpTvsMass","",nLogBins,massbins,598,10,3000);
  hpTvsMass->GetXaxis()->SetMoreLogLabels();
  hpTvsMass->GetXaxis()->SetNoExponent();
  hpTvsMass->GetYaxis()->SetTitle("p_{T} [GeV]"); 
@@ -194,7 +193,7 @@ void efficiencies()
  migMatrixGENisHardvsGENFS->GetYaxis()->SetNoExponent();
  migMatrixGENisHardvsGENFS->GetYaxis()->SetMoreLogLabels();
  TH2F*migMatrixGENFSvsReco = 
-   new TH2F("migMatrixGENFSvsReco","",nLogBins,massbins,2*nLogBins,massbins2);
+   new TH2F("migMatrixGENFSvsReco","",nLogBins,massbins,nLogBins2,massbins2);
  migMatrixGENFSvsReco->SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Final State");
  migMatrixGENFSvsReco->GetXaxis()->
    SetTitle("Gen-Level Final State Dielectron Invariant Mass [GeV]");
@@ -231,8 +230,6 @@ void efficiencies()
      hHardProcess[jChain]->GetXaxis()->SetNoExponent();
      hHardProcess[jChain]->GetXaxis()->SetMoreLogLabels();
    }
- 
- TFile *rootFile = new TFile("./plots/plotsDY.root","RECREATE");
  ofstream eventFile;
  eventFile.open("nEvents.txt");
  
@@ -417,7 +414,6 @@ void efficiencies()
           sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
 	  totalWeight = genWeight*xSecWeight*pileupWeight;
 	  hHardProcess[iChain]->Fill(invMassHardProcess,totalWeight);
-	  
 	  //HLT cut
 	  trigNameSize = pHLT_trigName->size();
 	  bool passHLT = kFALSE;	  
@@ -519,6 +515,7 @@ void efficiencies()
   hEfficiency->SetName("Efficiency");
   hEfficiency->SetStatisticOption(TEfficiency::kFNormal);
   
+  TFile *rootFile = new TFile("/home/hep/wrtabb/git/DY-Analysis/data/effMassRange.root","RECREATE");
   rootFile->cd();
   for(int i=0;i<nInvMassHistos;i++){
     histInvMass[i]->Write();
