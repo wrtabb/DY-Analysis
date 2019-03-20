@@ -1,11 +1,5 @@
-Events passing cuts: 46964; All events: 45832206; Ratio: 0
-Events passing cuts: 7678797; All events: 39000836; Ratio: 0
-Events passing cuts: 1305500; All events: 5402483; Ratio: 0
-Events passing cuts: 33608; All events: 98238; Ratio: 0
-Events passing cuts: 39830; All events: 95664; Ratio: 0
-Events passing cuts: 42598; All events: 93785; Ratio: 0
-Events passing cuts: 45158; All events: 91914; Ratio: 0
-Events passing cuts: 46767; All events: 90832; Ratio: 0
-Events passing cuts: 47145; All events: 85916; Ratio: 0
-Events passing cuts: 50287; All events: 86365; Ratio: 0
-Events passing cuts: 50815; All events: 85109; Ratio: 0
+Events passed: 321182, Total Events: 1560032
+Events passed: 401392, Total Events: 1950040
+Events passed: 883705, Total Events: 4290088
+Events passed: 1445640, Total Events: 7020144
+Events passed: 1927187, Total Events: 9360192

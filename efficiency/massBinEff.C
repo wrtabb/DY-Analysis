@@ -1,7 +1,9 @@
-const TString fileName1 = "/home/hep/wrtabb/git/DY-Analysis/data/effMassRange.root";
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
+
+const TString fileName1 = "/home/hep/wrtabb/git/DY-Analysis/data/efficiencyAndMigration.root";
 const TString fileName2 = "/home/hep/wrtabb/git/DY-Analysis/data/effMassRangeNoWeight.root";
-const int nMassBins= 11;
-const double massbins[] = {10,50,100,200,400,500,700,800,1000,1500,2000,3000};
+//const int nMassBins= 11;
+//const double massbins[] = {10,50,100,200,400,500,700,800,1000,1500,2000,3000};
 
 void massBinEff()
 {
@@ -11,14 +13,14 @@ void massBinEff()
  
  TEfficiency*hAccW = (TEfficiency*)file1->Get("Acceptance");
  TEfficiency*hEffW = (TEfficiency*)file1->Get("Efficiency");
- TH1D*hTotEffW = new TH1D("hTotEffW","",nMassBins,massbins);
+ TH1D*hTotEffW = new TH1D("hTotEffW","",nLogBins,massbins);
  
  TEfficiency*hAcc = (TEfficiency*)file2->Get("Acceptance");
  TEfficiency*hEff = (TEfficiency*)file2->Get("Efficiency");
- TH1D*hTotEff = new TH1D("hTotEff","",nMassBins,massbins);
+ TH1D*hTotEff = new TH1D("hTotEff","",nLogBins,massbins);
 
  double eff,acc;
- for(int i=1;i<nMassBins+1;i++){
+ for(int i=1;i<nLogBins+1;i++){
   eff = hEffW->GetEfficiency(i);
   acc = hAccW->GetEfficiency(i);
   hTotEffW->SetBinContent(i,eff*acc);
