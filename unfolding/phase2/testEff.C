@@ -255,7 +255,7 @@ void testEff()
  TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
   ofstream eventFile;
   eventFile.open("nEvents.txt");
-
+  TH1D*hRawCount = new TH1D("hRawCount","",100,0,1);
   double nEff;
    {
      cout << endl;
@@ -285,8 +285,15 @@ void testEff()
       for(Long64_t i=0;i<nentries;i++)
 	{      
 	  chains[iChain]->GetEntry(i);
-	  counter(count,totalentries);
+	  counter(i,nentries);
 	  count = count+1;
+
+          nEff = nEventsPass*1.0/nEvents;
+          hRawCount->Fill(nEff);
+          if(i%(nentries/100)==0){
+       eventFile << "Events passed: " << nEventsPass << ", Total Events: " << nEvents << endl; 
+       cout << "Events passed: " << nEventsPass << ", Total Events: " << nEvents << endl; 
+      }
           nEvents++;//number of all events
 	  
 	  // Loop over gen leptons and find the electron pair at the isHardProcess
@@ -462,11 +469,8 @@ void testEff()
 	  migMatrixGENFSvsReco->Fill(invMassFSR,invMassReco,totalWeight*sfWeight);
 	  migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight);
 
-       if(count%(totalentries/100)==0){
-       eventFile << "Events passed: " << nEventsPass << ", Total Events: " << nEvents << endl; 
-       cout << "Events passed: " << nEventsPass << ", Total Events: " << nEvents << endl; 
-       }
-	}//end event loop   
+
+     }//end event loop   
     
     }//end chain loop 
 
@@ -513,6 +517,7 @@ void testEff()
   for(int i=0;i<nInvMassHistos;i++){
     histInvMass[i]->Write();
   } 
+  hRawCount->Write(); 
   hAcceptance->Write();
   hEfficiency->Write();
   hHLTEfficiency->Write();
