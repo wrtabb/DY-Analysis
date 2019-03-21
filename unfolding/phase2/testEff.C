@@ -265,7 +265,7 @@ void testEff()
      Long64_t nEventsPass = 0;
 
       nentries = chains[iChain]->GetEntries();
-      nentries = 100;
+      nentries = 1000000;
       xSecWeight=lumi*(xSec[iChain]/1.0);      
       sumGenWeight = 0;
       for(Long64_t i=0;i<nentries;i++){
@@ -345,7 +345,6 @@ void testEff()
 		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
 		  if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
 		  nEle++;
-                  if(nEle>1) continue;
 		  //Reco electrons which passed cuts
 		  if(nEle==1)//keeping only pairs of electrons per event
 		    {
@@ -355,7 +354,7 @@ void testEff()
 		}//end inner reco loop	   
 	    }//end reco loop
 
-	  if(idxRecoEle1>=0&&idxRecoEle2>=0)
+	  if(nEle==1)
 	    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
               Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
               Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
@@ -475,6 +474,7 @@ void testEff()
     
     }//end chain loop 
 
+  eventFile << "Events passed: " << nEventsPass << ", Total Events: " << nEvents << endl; 
   
   TEfficiency*hMatchedEfficiency = 
     new TEfficiency((*histInvMass[RECO_MATCHED]),(*histInvMass[KINEMATIC_CUTS]));

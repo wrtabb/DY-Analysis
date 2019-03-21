@@ -336,13 +336,13 @@ void efficiencies()
 	  for(int iEle = 0; iEle < Nelectrons; iEle++)
 	    {
 	      for(int jEle = iEle+1; jEle < Nelectrons; jEle++)
-		{	  
+		{
+                  if(Nelectrons<2) continue;	  
 		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],
                     Electron_eta[iEle],Electron_eta[jEle])) continue; 	
 		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
 		  if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
 		  nEle++;
-      
 		  //Reco electrons which passed cuts
 		  if(nEle==1)//keeping only pairs of electrons per event
 		    {
@@ -351,7 +351,7 @@ void efficiencies()
 		    }
 		}//end inner reco loop	   
 	    }//end reco loop
-	  if((idxRecoEle1>=0&&idxRecoEle2>=0)&&(nEle==1))
+	  if(nEle==1)
 	    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
               Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
               Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
