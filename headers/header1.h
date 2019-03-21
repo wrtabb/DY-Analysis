@@ -28,7 +28,7 @@
 #include "THashList.h"
 #include "TGraphAsymmErrors.h"
 #include "TF1.h"
-/*
+
 const int nLogBins = 43;
 const int nLogBins2 = 2*nLogBins;
 const double massbins[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106, 
@@ -39,18 +39,19 @@ const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,4
  112.5,115,117.5,120,123,126,129.5,133,137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,
  210,220,231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,700,765,830,915,1000,
  1250,1500,2250,3000};
-*/
+
 const TString treeName = "recoTree/DYTree";
 const TString pileupRatioName = "/home/hep/wrtabb/git/DY-Analysis/data/pileup/pileup.root";
 const TString leg2SFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Leg2_SF.root";
 const TString medIDSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/MediumID_SF.root";
 const TString recoSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Reco_SF.root";
 
+/*
 const int nLogBins = 11;
 const double massbins[] = {10,50,100,200,400,500,700,800,1000,1500,2000,3000};
 const int nLogBins2 = 11;
 const double massbins2[] = {10,50,100,200,400,500,700,800,1000,1500,2000,3000};
-
+*/
 const int MPSIZE = 2000;
 int GENnPair, Nelectrons, HLT_ntrig, nPileUp;
 double GENEvt_weight;

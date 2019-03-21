@@ -31,12 +31,6 @@ enum InvMassHist
   RECO_ELE
 };
 
-const TString treeName = "recoTree/DYTree";
-const TString pileupRatioName = "/home/hep/wrtabb/git/DY-Analysis/data/pileup/pileup.root";
-const TString leg2SFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Leg2_SF.root";
-const TString medIDSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/MediumID_SF.root";
-const TString recoSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Reco_SF.root";
-
 const int nSubSamples10to50 = 3;
 const int nSubSamples100to200 = 2;
 const int ptBinHigh = 499;
@@ -241,9 +235,7 @@ void efficiencies()
  double invMassHardProcess,sfWeight;
  Long64_t nentries;
  Long64_t count = 0;
- double nEvents = 250000;
  double lumi = dataLuminosity;
- //double lumi = nEvents/xSec[MC50to100];//luminosity of 50to100
  TString HLTname = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
  TString trigName;
  int trigNameSize;
@@ -298,6 +290,7 @@ void efficiencies()
 
       for(Long64_t i=0;i<nentries;i++)
 	{      
+          nEvents++;
 	  chains[iChain]->GetEntry(i);
 	  counter(count,totalentries);
 	  count = count+1;
@@ -339,7 +332,6 @@ void efficiencies()
 	  invMassReco=0;
 	  int idxRecoEle1,idxRecoEle2;
 	  idxRecoEle1=idxRecoEle2=-1;
-	  if(Nelectrons<2) continue;
 	  int nEle = 0;
 	  for(int iEle = 0; iEle < Nelectrons; iEle++)
 	    {
@@ -350,6 +342,7 @@ void efficiencies()
 		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
 		  if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
 		  nEle++;
+      
 		  //Reco electrons which passed cuts
 		  if(nEle==1)//keeping only pairs of electrons per event
 		    {
@@ -358,8 +351,7 @@ void efficiencies()
 		    }
 		}//end inner reco loop	   
 	    }//end reco loop
-          if(nEle!=1) continue;
-	  if(idxRecoEle1>=0&&idxRecoEle2>=0)
+	  if((idxRecoEle1>=0&&idxRecoEle2>=0)&&(nEle==1))
 	    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
               Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
               Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
@@ -436,7 +428,6 @@ void efficiencies()
 	  // Fill histograms for acceptance and efficiency
 	  // First, fill histogram for all dielectrons
 	  histInvMass[ALL_ELE]->Fill(invMassFSR,totalWeight);
-	  if(invMassReco!=0)nEvents++; 
             
 	  // Apply kinematic acceptance criteria
 	  if(!passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],

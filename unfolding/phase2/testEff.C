@@ -265,7 +265,7 @@ void testEff()
      Long64_t nEventsPass = 0;
 
       nentries = chains[iChain]->GetEntries();
-      //nentries = 10000;
+      nentries = 100;
       xSecWeight=lumi*(xSec[iChain]/1.0);      
       sumGenWeight = 0;
       for(Long64_t i=0;i<nentries;i++){
@@ -334,10 +334,10 @@ void testEff()
 	  invMassReco=0;
 	  int idxRecoEle1,idxRecoEle2;
 	  idxRecoEle1=idxRecoEle2=-1;
-	  if(Nelectrons<2) continue;
 	  int nEle = 0;
 	  for(int iEle = 0; iEle < Nelectrons; iEle++)
 	    {
+              if(Nelectrons<2) continue;
 	      for(int jEle = iEle+1; jEle < Nelectrons; jEle++)
 		{	  
 		  if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],
@@ -345,6 +345,7 @@ void testEff()
 		  if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
 		  if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
 		  nEle++;
+                  if(nEle>1) continue;
 		  //Reco electrons which passed cuts
 		  if(nEle==1)//keeping only pairs of electrons per event
 		    {
