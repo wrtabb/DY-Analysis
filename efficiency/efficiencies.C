@@ -5,7 +5,7 @@ double calcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,doubl
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 bool passPromptGenElectron(int ID, int fromfinalstate);
 bool passHardProcess(int ID, int hardProces);
-bool findGenToRecoMatch(int genIndex,int recoIndex);
+bool findGenToRecoMatch(int genIndex,int &recoIndex);
 
 enum chainNum{        
  MC10to50,
@@ -410,7 +410,7 @@ void efficiencies()
    histInvMass[KINEMATIC_CUTS]->Fill(invMassFSR,totalWeight);
    hpTvsMass->Fill(invMassFSR,GENLepton_pT[idxGenEleFS1],totalWeight);
    hpTvsMass->Fill(invMassFSR,GENLepton_pT[idxGenEleFS2],totalWeight);
-
+/*
    // Apply matching to reconstructed electrons requirement
    bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,idxRecoEle1);  
    bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,idxRecoEle2);
@@ -418,14 +418,20 @@ void efficiencies()
    bool genToRecoMatchedLep4 = findGenToRecoMatch(idxGenEleFS2,idxRecoEle1);
    if(!(genToRecoMatchedLep1&&genToRecoMatchedLep2)||
     (genToRecoMatchedLep3&&genToRecoMatchedLep4))   continue;
+*/
+   int closestTrackLep1, closestTrackLep2;
+   closestTrackLep1 = closestTrackLep2 = -1;
+   bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);   
+   bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestTrackLep2);
+   if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) continue;
 
    //Both electrons are reconstructed
    histInvMass[RECO_MATCHED]->Fill(invMassFSR,totalWeight);//does reco need SFs?
   
    //Apply ID criteria:
    //Dilepton pair at gen level matched to reco and passing ID at reco level
-   //if(!Electron_passMediumID[closestTrackLep1]) continue;
-   //if(!Electron_passMediumID[closestTrackLep2]) continue;
+   if(!Electron_passMediumID[closestTrackLep1]) continue;
+   if(!Electron_passMediumID[closestTrackLep2]) continue;
    //Both electrons pass ID
    histInvMass[ID_CUTS]->Fill(invMassFSR,totalWeight);
    
@@ -480,6 +486,13 @@ void efficiencies()
  hEfficiency->SetMarkerSize(0.5);
  hEfficiency->SetName("Efficiency");
  hEfficiency->SetStatisticOption(TEfficiency::kFNormal);
+ TEfficiency* hAccEff = 
+  new TEfficiency((*histInvMass[HLT_CUTS]),(*histInvMass[ALL_ELE]));
+ hAcceptance->SetTitle("Acceptance x Efficiency");
+ hAcceptance->SetMarkerStyle(20);
+ hAcceptance->SetMarkerSize(0.5);
+ hAcceptance->SetName("AccEff");  
+ hAcceptance->SetStatisticOption(TEfficiency::kFNormal);
  
  //Create root file and save
  TFile *rootFile = new TFile("/home/hep/wrtabb/git/DY-Analysis/data/efficiencyAndMigration.root","RECREATE");
@@ -490,6 +503,8 @@ void efficiencies()
  hAcceptance->Write();
  hEfficiency->Write();
  hHLTEfficiency->Write();
+ hIDEfficiency->Write();
+ hAccEff->Write();
  migMatrixGENisHardvsGENFS->Write();
  migMatrixGENFSvsReco->Write();
  migMatrixGENisHardvsReco->Write();
@@ -521,6 +536,7 @@ void counter(Long64_t i, Long64_t N)
  return;
 }
 
+/*
 //Finding correspondence between 
 //reconstructed and Generated leptons
 bool findGenToRecoMatch(int genIndex, int recoIndex)
@@ -535,6 +551,34 @@ bool findGenToRecoMatch(int genIndex, int recoIndex)
  if(dR<dRMinCut) matchFound=true;
  return matchFound;
 }//end findGetToRecoMatch
+*/
+
+bool findGenToRecoMatch(int genIndex, int &recoIndex)
+{
+  double dR,deta,dphi;
+  float dRMin = 100000;
+  recoIndex=-1;
+  for(int iEle=0;iEle<Nelectrons;iEle++)
+    {
+      deta=Electron_eta[iEle]-GENLepton_eta[genIndex];
+      dphi=abs(Electron_phi[iEle]-GENLepton_phi[genIndex]);
+      if(dphi>pi) dphi=2*pi-dphi;
+      dR=sqrt(deta*deta+dphi*dphi);
+
+      if(dR<dRMin)
+        {
+          recoIndex=iEle;
+          dRMin=dR;
+        }
+    }
+  bool matchFound = kTRUE;
+  if(dRMin>=dRMinCut)
+    {
+      recoIndex=-1;
+      matchFound=kFALSE;
+    }
+  return matchFound;
+}
 
 //Kinematic cuts
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)

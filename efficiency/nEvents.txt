@@ -1,0 +1,11 @@
+Events passing cuts: 46294; All events: 45832206
+Events passing cuts: 7624236; All events: 39000836
+Events passing cuts: 1299764; All events: 5402483
+Events passing cuts: 33601; All events: 98238
+Events passing cuts: 39850; All events: 95664
+Events passing cuts: 42665; All events: 93785
+Events passing cuts: 45223; All events: 91914
+Events passing cuts: 46818; All events: 90832
+Events passing cuts: 47232; All events: 85916
+Events passing cuts: 50390; All events: 86365
+Events passing cuts: 50921; All events: 85109
