@@ -7,18 +7,20 @@
 
 void makeCorrMatrix()
 {
- const int nEle = 5;//number of elements in the vectors
- const int nVec = 10;//number of vectors 
+ const int nEle = 4;//number of elements in the vectors
+ const int nVec = 4;//number of vectors 
 
  //All vectors stored in a 2D array
  //There are nVec vectors with nEle elements in each vector
- double vector[nVec][nEle];
+ //double vector[nVec][nEle];
  
  //Defined vector for testing
- //double vector[nVec][nEle] = {
- // {1,2},
- // {-1,2},
- // {3,1}};
+ double vector[nVec][nEle] = {
+  {1.0, 0.7,  0.1, 0.0},
+  {0.7, 1.0, -0.3, 0.5},
+  {0.1,-0.3,  1.0, 0.2},
+  {0.0, 0.5,  0.2, 1.0}
+};
  
  //Initializing matrices
  TMatrixD matrixB(nEle,nVec);

@@ -1,12 +1,5 @@
-#include "TUnfold.h"
-#include "TUnfoldSys.h"
-#include "TUnfoldDensity.h"
-#include "TUnfoldBinning.h"
-#include "TFile.h"
-#include "TCanvas.h"
-#include "TH1.h"
-#include "TH2.h"
-#include "TMath.h"
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
+#include "TLatex.h"
 using namespace std;
 
 enum Reglarization {//Strength of regularization
@@ -18,20 +11,10 @@ enum Reglarization {//Strength of regularization
 const int nBins = 43;
 const int binLow = 15;
 const int binHigh = 3000;
-const double massbins[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,
-                             110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,
-                             380,440,510,600,700,830,1000,1500,3000};
-const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47.5,50,52.5,55,
-                            57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,
-                            98.5,101,103.5,106,108,110,112.5,115,117.5,120,123,126,129.5,133,
-                            137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,210,220,
-                            231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
-                            700,765,830,915,1000,1250,1500,2250,3000};
-const int nLogBins2 = 86;
 //File Names
 const TString fileName= "toyUnfold.root";       
-
-void testTUnfold()
+const int nSamples = 1000;//number of samples to create
+void testCov()
 {
   ///////////////////////////////////////
   //  Choose Regularization Type       //
@@ -40,7 +23,7 @@ void testTUnfold()
   //  CONST_REG to choose your own tau //
   ///////////////////////////////////////
   
-  //gROOT->SetBatch(kTRUE);
+  gROOT->SetBatch(kTRUE);
   //int regType = NO_REG;
   int regType = VAR_REG;
   //int regType = CONST_REG;
@@ -55,9 +38,16 @@ void testTUnfold()
   ifstream parameterFile("parameters.txt");
   bool exactClosure,effInc,backInc;
   parameterFile >> exactClosure >> effInc >> backInc;
+ double vecSum[nLogBins],vecAvg[nLogBins],vecM[nSamples][nLogBins],vecSum2[nLogBins],
+  vecStd[nLogBins],vector[nSamples][nLogBins2];
 
   //Define hisograms
-  TH1D*hReco = (TH1D*)file->Get("hReco");//reconstructed mass
+  TH1D*hReco[nSamples];
+  //hReco[0] is the original, unchanged reco mass from toyModel.C
+  hReco[0] = (TH1D*)file->Get("hReco");//reconstructed mass
+   hReco[0]->SetMarkerStyle(20);
+   hReco[0]->SetMarkerColor(kBlack);
+   hReco[0]->SetLineColor(kBlack);
   TH1D*hGen = (TH1D*)file->Get("hTrue");//true mass
   TH1D*hBack;
   if(backInc){
@@ -67,12 +57,30 @@ void testTUnfold()
      hBack = (TH1D*)file->Get("hBack2");
   }
   TH2D*hMatrix = (TH2D*)file->Get("hMatrix");//migration matrix
-  hReco->SetMarkerStyle(20);
-  hReco->SetMarkerColor(kBlack);
-  hReco->SetLineColor(kBlack);
   hGen->SetFillColor(kRed+2);
   hGen->SetLineColor(kRed+2);
-  
+ 
+  //each hReco[i] has its bin counts varied by a gaussian with the width of the bin error
+  for(int i=1;i<nSamples;i++){
+   TString recoName = "hReco";
+   recoName += i;
+   hReco[i] = (TH1D*)file->Get("hReco");
+   hReco[i]->SetName(recoName);
+   hReco[i]->SetMarkerStyle(20);
+   hReco[i]->SetMarkerColor(kBlack);
+   hReco[i]->SetLineColor(kBlack);
+   for(int k=1;k<nLogBins2+1;k++){
+    double error = hReco[0]->GetBinError(k);
+    TF1*fGaus = new TF1("fGaus","gaus(0)",-5*error,5*error);
+    fGaus->SetParameters(1,0,error);
+    double smear = fGaus->GetRandom();
+    double bin = hReco[0]->GetBinContent(k)+smear;
+    hReco[i]->SetBinContent(k,bin);
+   }
+  }
+ 
+ //Loop to do unfolding on each sample
+ for(int j=0;j<nSamples;j++){
   ////////////////////////////
   //  Regularization Modes  //
   ////////////////////////////
@@ -106,7 +114,7 @@ void testTUnfold()
   //  Constructor for TUnfoldDensity  //
   //////////////////////////////////////
   TUnfoldDensity unfold(hMatrix,outputMap,regMode,constraintMode,densityFlags);
-  unfold.SetInput(hReco);//the measured distribution
+  unfold.SetInput(hReco[j]);//the measured distribution
 
   //////////////////////////////
   //  Background Subtraction  //
@@ -148,32 +156,41 @@ void testTUnfold()
   }
   else if(regType == NO_REG){
     double tau = 0;
-    unfold.DoUnfold(tau,hReco);
+    unfold.DoUnfold(tau,hReco[j]);
   }
   else{//user defined
     double tau = 1e-2;//larger tau introduces more MC bias
-    unfold.DoUnfold(tau,hReco);
+    unfold.DoUnfold(tau,hReco[j]);
   }
 
   //The Unfolded Distribution
-  TH1*hUnfolded = unfold.GetOutput("Unfolded");
+  TString unfName = "unfolded";
+  unfName += j;
+  TH1*hUnfolded = unfold.GetOutput(unfName);
    hUnfolded->SetMarkerStyle(25);
    hUnfolded->SetMarkerColor(kBlue+2);
    hUnfolded->SetMarkerSize(1);
-  TH2*histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
-  TH2*histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
-  TH1F*hUnfoldedE = new TH1F("Unfolded with errors",";(gen)",nBins,massbins);
+  TString unfEName = "unfoldedE";
+  unfEName += j;
+  TH1F*hUnfoldedE = new TH1F(unfEName,"",nBins,massbins);
    hUnfoldedE->SetMarkerStyle(25);
    hUnfoldedE->SetMarkerColor(kBlue+2);
    hUnfoldedE->SetMarkerSize(1);
+  TString eMatName = "errorMatrix";
+  eMatName += j;
+  TH2*histEmatTotal=unfold.GetEmatrixTotal(eMatName);
   for(int i=0;i<nBins;i++){
     double c = hUnfolded->GetBinContent(i+1);
     hUnfoldedE->SetBinContent(i+1,c);
     hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
   }
-  TH1F*hRecoRebin=(TH1F*)hReco->Clone("hRecoRebin");
+  TString recoRebinName = "hRecoRebin";
+  recoRebinName += j;
+  TH1F*hRecoRebin=(TH1F*)hReco[j]->Clone(recoRebinName);
    hRecoRebin->Rebin(2);
-  TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
+  TString ratioName = "ratio";
+  ratioName += j;
+  TH1F*ratio = (TH1F*)hUnfoldedE->Clone(ratioName);
    ratio->Divide(hGen);
 
   double x[nBins],res[nBins];
@@ -182,7 +199,9 @@ void testTUnfold()
   TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
 
   const float padmargins = 0.03;
-  TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1000);
+  TString canName = "canvas";
+  canName += j;
+  TCanvas*canvas1 = new TCanvas(canName,"",10,10,1200,1000);
   TPad*pad1 = new TPad("","",0,0.3,1.0,1.0);
   pad1->SetBottomMargin(padmargins);
   pad1->SetGrid();
@@ -196,7 +215,7 @@ void testTUnfold()
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
   legend->SetTextSize(0.02);
   legend->AddEntry(hGen,"True Distribution");
-  legend->AddEntry(hReco,"Measured Distribution");
+  legend->AddEntry(hReco[j],"Measured Distribution");
   legend->AddEntry(hUnfolded,"Unfolded Distribution");
   hGen->SetLabelSize(0);
   hGen->SetTitleSize(0);
@@ -229,51 +248,92 @@ void testTUnfold()
   ratio->SetMarkerColor(kBlack);
   ratio->Draw("PE");
   line->Draw("same");
-TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1000,1000);
-canvas3->SetLogy();
-canvas3->SetLogx();
-canvas3->SetLogz();
-histEmatTotal->Draw("colz");
 
-  //Save Options
-  TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldData";
-  TString lineName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves";
-  if(exactClosure){
-    distName += "_ClosureTest";
-    lineName += "_ClosureTest";
+  for(int k=1;k<nLogBins+1;k++){
+    vector[j-1][k-1] = hUnfolded->GetBinContent(k);
+    cout << vector[j-1][k-1] << ", " << endl;
   }
-  else{
-    distName += "_NoClosure";
-    lineName += "_NoClosure";
-  }
-  if(effInc){
-    distName += "_EffInc";
-    lineName += "_EffInc";
-  }
-  else{
-    distName += "_NoEff";
-    lineName += "_NoEff";
-  } 
-  if(backInc){
-    distName += "_BackInc";
-    lineName += "_BackInc";
-  }
-  else{
-    distName += "_NoBack";
-    lineName += "_NoBack";
-  }
-  if(regType==NO_REG){
-    distName += "_NoReg.png";
-    lineName += "_NoReg.png";
-  }
-  if(regType==CONST_REG){
-    distName += "_ConstReg.png";
-    lineName += "_ConstReg.png";
-  }   
-  if(regType==VAR_REG){
-    distName += "_VarReg_Closure.png";
-    lineName += "_VarReg.png";
-  }  
 
-  canvas1->SaveAs(distName);
+ }//end unfolding loop
+
+ //Calculate covariance matrix
+ //matrixB is made up of each vector with the average vector subtracted from it
+ TMatrixD matrixB(nLogBins,nSamples);
+ TMatrixD matrixBT(nSamples,nLogBins);//transpose of matrixB
+ TMatrixD covM(nLogBins,nLogBins);//covariance matrix
+ TMatrixD corrM(nLogBins,nLogBins);
+
+ for(int i=0;i<nLogBins;i++){
+  vecSum[i] = 0;
+  vecSum2[i]=0;
+ }
+ for(int iEle=0;iEle<nLogBins;iEle++){
+  for(int jVec=0;jVec<nSamples;jVec++){
+   vecSum[iEle] += vector[jVec][iEle];//sum of element iEle summed over vectors
+   vecSum2[iEle] += vector[jVec][iEle]*vector[jVec][iEle];//sum of squares of elements
+  }
+  vecAvg[iEle] = vecSum[iEle]/nSamples;
+  vecStd[iEle] = sqrt(vecSum2[iEle]/nSamples-vecSum[iEle]*vecSum[iEle]/(nSamples*nSamples*1.0));
+ }
+
+ for(int iEle=0;iEle<nLogBins;iEle++){
+  for(int jVec=0;jVec<nSamples;jVec++){
+   vecM[jVec][iEle] = vector[jVec][iEle]-vecAvg[iEle];//vectors minus average vector
+   matrixB(iEle,jVec) = vecM[jVec][iEle];
+  }
+ }
+
+ matrixBT.Transpose(matrixB);//the transpose of matrixB calculated above
+ covM = matrixB*matrixBT;//covariance matrix without proper weight
+ TH2D*hCovM = new TH2D("hCovM","",nLogBins,massbins,nLogBins,massbins);
+ TH2D*hCorrM = new TH2D("hCorrM","",nLogBins,massbins,nLogBins,massbins);
+ double valCov,valCorr;
+
+ for(int jEle=0;jEle<nLogBins;jEle++){
+  for(int iEle=0;iEle<nLogBins;iEle++){
+   covM(iEle,jEle) = covM(iEle,jEle)/nSamples;//covariance matrix
+   corrM(iEle,jEle) = covM(iEle,jEle)/(vecStd[iEle]*vecStd[jEle]);//correlation matrix
+   valCov = covM(iEle,jEle);//value in each bin to place in the histogram
+   valCorr = corrM(iEle,jEle);//value in each bin to place in the histogram
+   hCovM->SetBinContent(iEle+1,jEle+1,valCov);
+   hCorrM->SetBinContent(iEle+1,jEle+1,valCorr);
+   
+  }
+ }
+
+ TCanvas*can = new TCanvas("can","",1000,1000);
+ can->SetLogy();
+ can->SetLogx();
+ can->SetLogz();
+ hCovM->SetTitle("Covariance Matrix");
+ hCovM->Draw("colz");
+ can->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testCovM.png");
+
+ TCanvas*can1 = new TCanvas("can1","",1000,1000);
+ can1->SetLogy();
+ can1->SetLogx();
+ hCorrM->SetTitle("Correlation Matrix");
+ hCorrM->Draw("colz");
+ can1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testCorrM.png");
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

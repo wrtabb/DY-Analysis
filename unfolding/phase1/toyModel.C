@@ -4,9 +4,9 @@
 void counter(Long64_t i, Long64_t N);
 
 //strings for naming histgrams and for file locations
-const TString mcDist = "/home/hep/wrtabb/git/DY-Analysis/plots/plotsDY.root";
+const TString mcDist = "/home/hep/wrtabb/git/DY-Analysis/data/plotsDY.root";
 const TString mcEff = "/home/hep/wrtabb/git/DY-Analysis/plots/efficiencies.root";
-const TString mcSF =  "/home/hep/wrtabb/git/DY-Analysis/plots/dataVsMC.root";
+const TString mcSF =  "/home/hep/wrtabb/git/DY-Analysis/data/dataVsMC.root";
 const TString histSaveName = "toyUnfold.root";
 const TString recoName[] = {"hReco","hMCReco","hAltReco"};
 const TString trueName[] = {"hTrue","hMCTrue","hAltTrue"};
@@ -19,9 +19,9 @@ const int nEvents = 1e7;
 const int nHists = 3;
 
 //parameters for what to include and how to do unfolding
-const bool exactClosure = true;//set exact closure
+const bool exactClosure = false;//set exact closure
 const bool effInc = true; //include efficiency
-const bool backInc = true;//include toy background
+const bool backInc = false;//include toy background
 
 void toyModel()
 {

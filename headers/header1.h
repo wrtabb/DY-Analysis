@@ -28,6 +28,10 @@
 #include "THashList.h"
 #include "TGraphAsymmErrors.h"
 #include "TF1.h"
+#include "TUnfold.h"
+#include "TUnfoldDensity.h"
+#include "TSpline.h"
+#include "TMatrixD.h"
 
 const int nLogBins = 43;
 const int nLogBins2 = 2*nLogBins;
