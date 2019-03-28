@@ -23,12 +23,12 @@ void testCov()
   //  CONST_REG to choose your own tau //
   ///////////////////////////////////////
   
-  gROOT->SetBatch(kTRUE);
   //int regType = NO_REG;
   int regType = VAR_REG;
   //int regType = CONST_REG;
   
   TH1::SetDefaultSumw2();
+  gROOT->SetBatch(kTRUE);
   //Load the files
   TFile*file= new TFile(fileName);
   gStyle->SetPalette(1);
@@ -38,7 +38,7 @@ void testCov()
   ifstream parameterFile("parameters.txt");
   bool exactClosure,effInc,backInc;
   parameterFile >> exactClosure >> effInc >> backInc;
- double vecSum[nLogBins],vecAvg[nLogBins],vecM[nSamples][nLogBins],vecSum2[nLogBins],
+  double vecSum[nLogBins],vecAvg[nLogBins],vecM[nSamples][nLogBins],vecSum2[nLogBins],
   vecStd[nLogBins],vector[nSamples][nLogBins2];
 
   //Define hisograms
@@ -60,6 +60,7 @@ void testCov()
   hGen->SetFillColor(kRed+2);
   hGen->SetLineColor(kRed+2);
  
+  //Initialize array of histograms and then smear each bin using a gaussian
   //each hReco[i] has its bin counts varied by a gaussian with the width of the bin error
   for(int i=1;i<nSamples;i++){
    TString recoName = "hReco";
@@ -198,6 +199,8 @@ void testCov()
   double pValues = hUnfoldedE->Chi2Test(hGen,"P",res);//outputs chi2,prob,ndf,igood
   TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
 
+  //Drawing unfolded distributions. 
+  //Comment this section out or set kbatch to true if looping over many samples
   const float padmargins = 0.03;
   TString canName = "canvas";
   canName += j;
@@ -249,9 +252,9 @@ void testCov()
   ratio->Draw("PE");
   line->Draw("same");
 
+  //place each unfolded distribution into an array
   for(int k=1;k<nLogBins+1;k++){
     vector[j-1][k-1] = hUnfolded->GetBinContent(k);
-    cout << vector[j-1][k-1] << ", " << endl;
   }
 
  }//end unfolding loop
@@ -301,6 +304,7 @@ void testCov()
   }
  }
 
+ //Draw covariance and correlation matrices
  TCanvas*can = new TCanvas("can","",1000,1000);
  can->SetLogy();
  can->SetLogx();
