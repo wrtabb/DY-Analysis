@@ -169,7 +169,7 @@ void efficiencies()
  hpTvsMass->GetXaxis()->SetTitle("m_{ee} [GeV]"); 
 
  TH2F*migMatrixGENisHardvsGENFS = 
-  new TH2F("migMatrixGENisHardvsGENFS","",nLogBins,massbins,nLogBins,massbins);
+  new TH2F("migMatrixGENisHardvsGENFS","",nLogBins,massbins,nLogBins2,massbins2);
  migMatrixGENisHardvsGENFS->
   SetTitle("Migration Matrix: Gen-Level Final State vs. Gen-Level Hard Process");
  migMatrixGENisHardvsGENFS->GetYaxis()->
@@ -191,7 +191,7 @@ void efficiencies()
  migMatrixGENFSvsReco->GetYaxis()->SetNoExponent();
  migMatrixGENFSvsReco->GetYaxis()->SetMoreLogLabels();
  TH2F*migMatrixGENisHardvsReco = 
-  new TH2F("migMatrixGENisHardvsReco","",nLogBins,massbins,nLogBins,massbins);
+  new TH2F("migMatrixGENisHardvsReco","",nLogBins,massbins,nLogBins2,massbins2);
  migMatrixGENisHardvsReco->
   SetTitle("Migration Matrix: Reconstructed vs. Gen-Level Hard Process");
  migMatrixGENisHardvsReco->GetXaxis()->
@@ -323,17 +323,14 @@ void efficiencies()
    int nEle = 0;
    for(int iEle = 0; iEle < Nelectrons; iEle++){
     for(int jEle = iEle+1; jEle < Nelectrons; jEle++){
-     if(Nelectrons<2) continue;//don't keep single reco electrons	  
      if(!passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],
       Electron_eta[iEle],Electron_eta[jEle])) continue; 	
      if(!Electron_passMediumID[iEle]) continue;//iLep electron ID cut
      if(!Electron_passMediumID[jEle]) continue;//jLep electron ID cut
      nEle++;
      //Reco electrons which passed cuts
-    if(nEle==1){
      idxRecoEle1 = iEle;
      idxRecoEle2 = jEle;		    
-    }
    }//end inner reco loop	   
   }//end reco loop
   if(nEle==1)//calculate inv mass of reco electrons
@@ -405,44 +402,40 @@ void efficiencies()
     
    // Apply kinematic acceptance criteria
    if(!passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
-    GENLepton_eta[idxGenEleFS1], GENLepton_eta[idxGenEleFS2])) continue;	      
+    GENLepton_eta[idxGenEleFS1], GENLepton_eta[idxGenEleFS2])){ 
+    invMassReco = 0;	     
+    invMassHardProcess = 0;
+   } 
    // Both electrons are in kinematic acceptance at gen level
-   histInvMass[KINEMATIC_CUTS]->Fill(invMassFSR,totalWeight);
+   histInvMass[KINEMATIC_CUTS]->Fill(invMassHardProcess,totalWeight);
    hpTvsMass->Fill(invMassFSR,GENLepton_pT[idxGenEleFS1],totalWeight);
    hpTvsMass->Fill(invMassFSR,GENLepton_pT[idxGenEleFS2],totalWeight);
-/*
-   // Apply matching to reconstructed electrons requirement
-   bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,idxRecoEle1);  
-   bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,idxRecoEle2);
-   bool genToRecoMatchedLep3 = findGenToRecoMatch(idxGenEleFS1,idxRecoEle2);  
-   bool genToRecoMatchedLep4 = findGenToRecoMatch(idxGenEleFS2,idxRecoEle1);
-   if(!(genToRecoMatchedLep1&&genToRecoMatchedLep2)||
-    (genToRecoMatchedLep3&&genToRecoMatchedLep4))   continue;
-*/
+
    int closestTrackLep1, closestTrackLep2;
    closestTrackLep1 = closestTrackLep2 = -1;
    bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);   
    bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestTrackLep2);
-   if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) continue;
+   if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMassReco=0;
 
    //Both electrons are reconstructed
    histInvMass[RECO_MATCHED]->Fill(invMassFSR,totalWeight);//does reco need SFs?
   
    //Apply ID criteria:
    //Dilepton pair at gen level matched to reco and passing ID at reco level
-   if(!Electron_passMediumID[closestTrackLep1]) continue;
-   if(!Electron_passMediumID[closestTrackLep2]) continue;
+   if(!Electron_passMediumID[closestTrackLep1]) invMassReco=0;
+   if(!Electron_passMediumID[closestTrackLep2]) invMassReco=0;
    //Both electrons pass ID
    histInvMass[ID_CUTS]->Fill(invMassFSR,totalWeight);
    
    //Apply HLT requirement
-   if(!passHLT) continue;
+   if(!passHLT) invMassReco=0;
 
    histInvMass[HLT_CUTS]->Fill(invMassFSR,totalWeight);
    histInvMass[RECO_ELE]->Fill(invMassReco,totalWeight);
    migMatrixGENisHardvsGENFS->Fill(invMassHardProcess,invMassFSR,totalWeight);
    migMatrixGENFSvsReco->Fill(invMassFSR,invMassReco,totalWeight*sfWeight);
-   migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight);
+   migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight*sfWeight);
+   migMatrixGENisHardvsReco->Fill(invMassHardProcess,0.0,totalWeight*(1-sfWeight));
    nEventsPass++;
   }//end event loop   
   eventFile << "Events passing cuts: " << nEventsPass << "; All events: " << nEvents << endl;
@@ -536,23 +529,10 @@ void counter(Long64_t i, Long64_t N)
  return;
 }
 
-/*
+
+
 //Finding correspondence between 
 //reconstructed and Generated leptons
-bool findGenToRecoMatch(int genIndex, int recoIndex)
-{
- double dR,deta,dphi;
- bool matchFound = false;
- //Matching gen level electrons with reconstructed electrons
- deta=Electron_eta[recoIndex]-GENLepton_eta[genIndex];
- dphi=abs(Electron_phi[recoIndex]-GENLepton_phi[genIndex]);
- if(dphi>pi) dphi=2*pi-dphi;
- dR=sqrt(deta*deta+dphi*dphi);
- if(dR<dRMinCut) matchFound=true;
- return matchFound;
-}//end findGetToRecoMatch
-*/
-
 bool findGenToRecoMatch(int genIndex, int &recoIndex)
 {
   double dR,deta,dphi;

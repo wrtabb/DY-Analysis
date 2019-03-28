@@ -28,7 +28,7 @@ void testCov()
   //int regType = CONST_REG;
   
   TH1::SetDefaultSumw2();
-  gROOT->SetBatch(kTRUE);
+  //gROOT->SetBatch(kTRUE);
   //Load the files
   TFile*file= new TFile(fileName);
   gStyle->SetPalette(1);
@@ -200,7 +200,8 @@ void testCov()
   TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
 
   //Drawing unfolded distributions. 
-  //Comment this section out or set kbatch to true if looping over many samples
+  //Comment this section out or set batch to true if looping over many samples
+/*  
   const float padmargins = 0.03;
   TString canName = "canvas";
   canName += j;
@@ -251,7 +252,12 @@ void testCov()
   ratio->SetMarkerColor(kBlack);
   ratio->Draw("PE");
   line->Draw("same");
-
+  TString saveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/";
+  saveName += "testCovUnfolded";
+  saveName += j;
+  saveName += ".png";
+  canvas1->SaveAs(saveName);
+*/
   //place each unfolded distribution into an array
   for(int k=1;k<nLogBins+1;k++){
     vector[j-1][k-1] = hUnfolded->GetBinContent(k);
@@ -311,14 +317,20 @@ void testCov()
  can->SetLogz();
  hCovM->SetTitle("Covariance Matrix");
  hCovM->Draw("colz");
- can->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testCovM.png");
+ TString canName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testCovM_";
+ canName += nSamples;
+ canName += "Samples.png";
+ can->SaveAs(canName);
 
  TCanvas*can1 = new TCanvas("can1","",1000,1000);
  can1->SetLogy();
  can1->SetLogx();
  hCorrM->SetTitle("Correlation Matrix");
  hCorrM->Draw("colz");
- can1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testCorrM.png");
+ TString can1Name = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testCorrM_";
+ can1Name += nSamples;
+ can1Name += "Samples.png";
+ can1->SaveAs(can1Name);
 
 }
 

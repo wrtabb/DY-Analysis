@@ -7,7 +7,7 @@
 
 void makeCorrMatrix()
 {
- const int nEle = 4;//number of elements in the vectors
+ const int nEle = 3;//number of elements in the vectors
  const int nVec = 4;//number of vectors 
 
  //All vectors stored in a 2D array
@@ -16,10 +16,10 @@ void makeCorrMatrix()
  
  //Defined vector for testing
  double vector[nVec][nEle] = {
-  {1.0, 0.7,  0.1, 0.0},
-  {0.7, 1.0, -0.3, 0.5},
-  {0.1,-0.3,  1.0, 0.2},
-  {0.0, 0.5,  0.2, 1.0}
+  {1,2,1},
+  {4,2,13},
+  {7,8,1},
+  {8,4,5}
 };
  
  //Initializing matrices
@@ -42,8 +42,8 @@ void makeCorrMatrix()
 
  for(int iEle=0;iEle<nEle;iEle++){
   for(int jVec=0;jVec<nVec;jVec++){
-   rndEle = 8*random->Rndm();//random number
-   vector[jVec][iEle] = rndEle;//random number placed in vector
+   //rndEle = 8*random->Rndm();//random number
+   //vector[jVec][iEle] = rndEle;//random number placed in vector
    vecSum[iEle] += vector[jVec][iEle];//sum of element iEle summed over vectors
    vecSum2[iEle] += vector[jVec][iEle]*vector[jVec][iEle];//sum of squares of elements
   }
@@ -64,7 +64,7 @@ void makeCorrMatrix()
  covM = matrixB*matrixBT;//covariance matrix without proper weight
  for(int jEle=0;jEle<nEle;jEle++){
   for(int iEle=0;iEle<nEle;iEle++){
-   covM(iEle,jEle) = covM(iEle,jEle)/nVec;//covariance matrix
+   covM(iEle,jEle) = covM(iEle,jEle)/(nVec);//covariance matrix
    corrM(iEle,jEle) = covM(iEle,jEle)/(vecStd[iEle]*vecStd[iEle]);//correlation matrix
   }
  }
