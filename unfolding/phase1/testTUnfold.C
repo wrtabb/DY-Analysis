@@ -155,6 +155,7 @@ void testTUnfold()
     unfold.DoUnfold(tau,hReco);
   }
 
+  double binError;
   //The Unfolded Distribution
   TH1*hUnfolded = unfold.GetOutput("Unfolded");
    hUnfolded->SetMarkerStyle(25);
@@ -166,11 +167,17 @@ void testTUnfold()
    hUnfoldedE->SetMarkerStyle(25);
    hUnfoldedE->SetMarkerColor(kBlue+2);
    hUnfoldedE->SetMarkerSize(1);
+  ofstream errorFile;
+  errorFile.open("unfoldErrors.txt");
+ 
   for(int i=0;i<nBins;i++){
     double c = hUnfolded->GetBinContent(i+1);
+    binError = TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1));
     hUnfoldedE->SetBinContent(i+1,c);
-    hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
+    hUnfoldedE->SetBinError(i+1,binError);
+    errorFile << "Bin: " << i+1 << ", Error: " << binError << endl;
   }
+  errorFile.close();
   TH1F*hRecoRebin=(TH1F*)hReco->Clone("hRecoRebin");
    hRecoRebin->Rebin(2);
   TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
