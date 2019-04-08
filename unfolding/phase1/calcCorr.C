@@ -1,6 +1,6 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 
-const Long64_t nSamples = 10000;//number of input vectors to create
+const Long64_t nSamples = 1000;//number of input vectors to create
 const TString fileName = "toyUnfold.root";//location of toy model distributions
 
 void calcCorr()

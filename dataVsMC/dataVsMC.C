@@ -4,71 +4,13 @@
 //wrtabb@huskers.unl.edu
 ////////////////////////////////////////////////////////////////////
 
-#include "TFile.h"
-#include "TTree.h"
-#include "TCanvas.h"
-#include "TFrame.h"
-#include "THStack.h"
-#include "TH1F.h"
-#include "TH1I.h"
-#include "TH2F.h"
-#include "TBenchmark.h"
-#include "TRandom.h"
-#include "TSystem.h"
-#include "TChain.h"
-#include "TBranch.h"
-#include "TLorentzVector.h"
-#include "TLegend.h"
-#include <fstream>
-#include <iostream>
-#include <vector>
-#include "TStyle.h"
-#include "TEfficiency.h"
-#include "TString.h"
-#include "TLine.h"
-#include "TTimeStamp.h"
-#include "TFileCollection.h"
-#include "TRatioPlot.h"
-#include "THashList.h"
-#include "TProfile.h"
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/headerDataVsMC.h"
 
 void counter(Long64_t i, Long64_t N);
 TLorentzVector getDielectronP4(double pt1,double eta1,double phi1,double m1,double pt2,
-  double eta2,double phi2,double m2);
+ double eta2,double phi2,double m2);
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 
-//Defining variables and arrays
-const int MPSIZE = 2000;
-int Nelectrons, HLT_ntrig, nVertices, nPileUp;
-double GENEvt_weight;
-double Electron_pT[MPSIZE], Electron_eta[MPSIZE], Electron_phi[MPSIZE];
-double Electron_Energy[MPSIZE], Electron_Px[MPSIZE];
-double Electron_Py[MPSIZE], Electron_Pz[MPSIZE], Electron_charge[MPSIZE];
-bool Electron_passMediumID[MPSIZE];
-int HLT_trigType[MPSIZE],HLT_trigFired[MPSIZE];
-std::vector<std::string> HLT_trigName;
-std::vector<std::string> *pHLT_trigName = &HLT_trigName;
-
-//cutting parameters
-const float etaHigh = 2.4;
-const float etaGapHigh = 1.566; 
-const float etaGapLow = 1.4442;
-const float ptHigh = 28;
-const float ptLow = 17;
-const float dRMinCut = 0.3;
-const int ptBinHigh = 499;
-const int ptBinLow = 26;
-const int invMassHigh = 120;
-const int invMassLow = 60;
-const float eMass = 0.000511;
-const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
-const TString treeName = "recoTree/DYTree";
-const TString pileupRatioName = "./plots/pileup.root";
-const TString leg2SFName = "./SFs/Leg2_SF.root";
-const TString medIDSFName = "./SFs/MediumID_SF.root";
-const TString recoSFName = "./SFs/Reco_SF.root";
-
-const int numChains = 48; const double pi=TMath::Pi(); const float axisLow = 0.0001;
 enum ChainNum {
   QCD20to30,
   QCD30to50,
@@ -120,40 +62,6 @@ enum ChainNum {
   DataRunH
 }; 
 
-//Histogram parameters
-const int nHistoTypes = 16; 
-const int nHistos = 5;
-const TString histName[nHistos] = {
-  "hFakes", "hEW", "hTops", "hMC", "hData"
-};
-const TString histTypeName[nHistoTypes] = {
-  "InvMass", "InvMassLinear", "Vert", "VertWeighted", "pTLead", "pTSub", "pTDi", "EtaLead", 
-    "EtaSub", "EtaDi", "Rapidity", "InvMass0","InvMass1","InvMass2","InvMass3","InvMassScaled"
-};
-const Color_t histFillColors[nHistos] = {
-  kViolet+5, kRed+2, kBlue+2, kOrange-2, kWhite
-};
-const Color_t histLineColors[nHistos] = {
-  kViolet+3, kRed+4, kBlue+3, kOrange+3, kBlack
-};
-const TString xAxisLabels[nHistoTypes] = {
-  "Dielectron invariant mass [GeV]",
-  "Dielectron invariant mass [GeV]",
-  "Number of vertices",
-  "Number of vertices"
-  "p_{T} [GeV]",
-  "p_{T} [GeV]",
-  "p_{T} [GeV]",
-  "#eta",
-  "#eta",
-  "#eta",
-  "Y"
-  "Dielectron invariant mass [GeV]",
-  "Dielectron invariant mass [GeV]",
-  "Dielectron invariant mass [GeV]",
-  "Dielectron invariant mass [GeV]",
-  "Dielectron invariatn mass [GeV]"
-};
 enum HistBins {
   FAKES,
   EW,
@@ -180,62 +88,6 @@ enum HistTypes {
   INV_MASS3,
   INV_MASS_SCALED
 };
-//InvMass
-const int nBinsInvMass = 2*43;
-//const double massbins[] = {15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 64, 68, 72, 76, 81, 86, 
-//                             91,96, 101, 106, 110, 115, 120, 126, 133, 141, 150, 160, 171, 
-//                             185,200, 220, 243, 273, 320, 380, 440, 510, 600, 700, 830, 1000, 
-//                             1500,3000};
-const double massbins[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47.5,50,52.5,55,
-                            57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,
-                            98.5,101,103.5,106,108,110,112.5,115,117.5,120,123,126,129.5,133,
-                            137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,210,220,
-                            231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
-                            700,765,830,915,1000,1250,1500,2250,3000};
-const float binLowInvMass = 0;
-const float binHighInvMass = 3000;
-//InvMass Linear Plot
-const int nBinsInvMassLinear = 60;
-const float binLowInvMassLinear = 60;
-const float binHighInvMassLinear = 120;
-//nVertices
-const int nBinsVert = 50;
-const float binLowVert = 0;
-const float binHighVert = 50;
-//pT 
-const int npTBins = 100;
-const float binLowpT = 0;
-const float binHighpT = 500;
-//eta
-const int nEtaBins = 50;
-const float binLowEta = -2.5;
-const float binHighEta = 2.5;
-//rapidity
-const int nYBins = 50;
-const float binLowY = -2.5;
-const float binHighY = 2.5;
-
-const int nBins[nHistoTypes] = {nBinsInvMass,nBinsInvMassLinear,nBinsVert,nBinsVert,npTBins,
- npTBins,npTBins,nEtaBins,nEtaBins,nEtaBins,nYBins,
- nBinsInvMass,nBinsInvMass,nBinsInvMass,nBinsInvMass,nBinsInvMass};
-const float binLow[nHistoTypes] = {binLowInvMass,binLowInvMassLinear,binLowVert,binLowVert,
- binLowpT,binLowpT,binLowpT,binLowEta,binLowEta,binLowEta,
- binLowY,binLowInvMass,binLowInvMass,binLowInvMass,
- binLowInvMass,binLowInvMass};
-const float binHigh[nHistoTypes] = {binHighInvMass,binHighInvMassLinear,binHighVert,
- binHighVert,binHighpT,binHighpT,binHighpT,binHighEta,
- binHighEta,binHighEta,binHighY,binHighInvMass,
- binHighInvMass,binHighInvMass,binHighInvMass,binHighInvMass};
-
-//Cross sections calculated by Kyeongpil Lee
-const float xSec[numChains] = {5352960,9928000,2890800,350000,62964,18810,1350,//QCD
- 61526.7,118.7,12.178,16.523,1.256,47.13,4.4297,//Bosons
- 734.577,76.605,20.578,35.85,35.85,//tops
- 6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
- 0.01042,0.00552772,0.000741613,0.000178737,//DYEE
- 6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
- 0.01042,0.00552772,0.000741613,0.000178737,//DYTAUTAU
- 1,1,1,1,1,1,1};//data (unweighted)
 
 void dataVsMC()
 {
@@ -534,7 +386,7 @@ void dataVsMC()
       counter(count,totalentries);
       count = count+1; 
       chains[iChain]->GetEntry(i);
-      if(Nelectrons<2) continue;   	  
+      //if(Nelectrons<2) continue;   	  
       //Weights
       totalWeight = 1.0;
       sfWeight = 1.0;
@@ -591,8 +443,8 @@ void dataVsMC()
      if(numDielectrons==1){
         passNumEle = kTRUE;
      }
-     if(!passNumEle) continue;
-     if(leadEle<0||subEle<0) continue;
+     //if(!passNumEle) continue;
+     //if(leadEle<0||subEle<0) continue;
      dielectronP4 = getDielectronP4(Electron_pT[leadEle],Electron_eta[leadEle],
        Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
        Electron_phi[subEle],eMass);
@@ -671,7 +523,7 @@ void dataVsMC()
   }//end chain loop 
   genWeightFile.close();
   
-  TFile *rootFile = new TFile("./plots/dataVsMC.root","RECREATE");
+  TFile *rootFile = new TFile("/home/hep/wrtabb/git/DY-Analysis/data/dataVsMC.root","RECREATE");
   rootFile->cd();
   for(int i=0;i<nHistoTypes;i++) {
     for(int j=0;j<nHistos;j++){

@@ -19,8 +19,8 @@ const int nEvents = 1e7;
 const int nHists = 3;
 
 //parameters for what to include and how to do unfolding
-const bool exactClosure = false;//set exact closure
-const bool effInc = true; //include efficiency
+const bool exactClosure = true;//set exact closure
+const bool effInc = false; //include efficiency
 const bool backInc = false;//include toy background
 
 void toyModel()
@@ -51,7 +51,7 @@ void toyModel()
 
   //Mass smearing model
   TF1*fResolutionModel = new TF1("fPhiResolutionModel","gaus(0)",-20,20);
-  fResolutionModel->SetParameters(1,0,3);
+  fResolutionModel->SetParameters(1,0,1e-6);
 
   //MC mass distribution for filling toy models
   TH1D*hMassDist = (TH1D*)file->Get("hGenInvMass"); 

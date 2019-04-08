@@ -1,0 +1,18 @@
+
+Processing conditionNumber.C...
+fTol       = 2.2204e-16
+fDet1      = 0.0000e+00
+fDet2      = 0.0000e+00
+fCondition = -1.0000e+00
+fRowLwb    = 0
+fColLwb    = 0
+
+0x0 matrix is as follows
+
+0x0 matrix is as follows
+
+Vector (0) fSig is as follows
+
+     |        1  |
+------------------
+
