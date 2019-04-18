@@ -333,25 +333,26 @@ void efficiencies()
      idxRecoEle2 = jEle;		    
    }//end inner reco loop	   
   }//end reco loop
+
   if(nEle==1)//calculate inv mass of reco electrons
    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
     Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
     Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
-   if(nGenDielectrons==0) continue; // must be DY->mumu or tautau event, skip it
-   if(nGenDielectrons>=2){
-    // Strange, there should be only two electrons from hard process
-    printf("More than two hard process dielectrons found\n");
-    // skip event, but count the number of cases
-    nTooManyDielectrons++;
-    continue;
-   }
-   if(nGenDielectronsFS!=1){
-    //Odd, by now we should have only one pair 
-     printf("More than two hard process final state dielectrons found\n");
-    //skip event, but count the number of cases
-    nTooManyDielectronsFS++;
-    continue;
-   }	    
+  if(nGenDielectrons==0) continue; // must be DY->mumu or tautau event, skip it
+  if(nGenDielectrons>=2){
+  // Strange, there should be only two electrons from hard process
+  printf("More than two hard process dielectrons found\n");
+  // skip event, but count the number of cases
+  nTooManyDielectrons++;
+  continue;
+ }
+ if(nGenDielectronsFS!=1){
+  //Odd, by now we should have only one pair 
+   printf("More than two hard process final state dielectrons found\n");
+  //skip event, but count the number of cases
+  nTooManyDielectronsFS++;
+  continue;
+ }	    
   
    //Gen level invariant masses	  
    invMassHardProcess = calcInvMass(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
@@ -415,20 +416,20 @@ void efficiencies()
    closestTrackLep1 = closestTrackLep2 = -1;
    bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);   
    bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestTrackLep2);
-   if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMassReco=0;
+   //if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMassReco=0;
 
    //Both electrons are reconstructed
    histInvMass[RECO_MATCHED]->Fill(invMassFSR,totalWeight);//does reco need SFs?
   
    //Apply ID criteria:
    //Dilepton pair at gen level matched to reco and passing ID at reco level
-   if(!Electron_passMediumID[closestTrackLep1]) invMassReco=0;
-   if(!Electron_passMediumID[closestTrackLep2]) invMassReco=0;
+   //if(!Electron_passMediumID[closestTrackLep1]) invMassReco=0;
+   //if(!Electron_passMediumID[closestTrackLep2]) invMassReco=0;
    //Both electrons pass ID
    histInvMass[ID_CUTS]->Fill(invMassFSR,totalWeight);
    
    //Apply HLT requirement
-   if(!passHLT) invMassReco=0;
+   //if(!passHLT) invMassReco=0;
 
    histInvMass[HLT_CUTS]->Fill(invMassFSR,totalWeight);
    histInvMass[RECO_ELE]->Fill(invMassReco,totalWeight);

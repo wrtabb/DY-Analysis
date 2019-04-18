@@ -241,7 +241,7 @@ canvas3->SetLogy();
 canvas3->SetLogx();
 canvas3->SetLogz();
 histEmatTotal->Draw("colz");
-
+canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/eMatrix.png");
   //Save Options
   TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldData";
   TString lineName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves";

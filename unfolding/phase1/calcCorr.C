@@ -1,6 +1,6 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 
-const Long64_t nSamples = 1000;//number of input vectors to create
+const Long64_t nSamples = 4000;//number of input vectors to create
 const TString fileName = "toyUnfold.root";//location of toy model distributions
 
 void calcCorr()
@@ -21,18 +21,23 @@ void calcCorr()
   hTrue->SetLineColor(kRed+2);
  TH1D*hBack = (TH1D*)file->Get("hBack1");
  TH2D*hMatrix = (TH2D*)file->Get("hMatrix");
+
  //Get reco distribution
  TH1D*hReco = (TH1D*)file->Get("hReco");
- hReco->SetMarkerStyle(20);
- hReco->SetMarkerColor(kBlack);
- hReco->SetLineColor(kBlack);
+  hReco->SetMarkerStyle(20);
+  hReco->SetMarkerColor(kBlack);
+  hReco->SetLineColor(kBlack);
+
+ //Array of reco distributions smeared with a gaussian
+ //These will make up the input vectors for unfolding
  TH1D*hRecoSmeared[nSamples];
+
  //Begin loop over samples doing unfold on each one and placing it in an array
  for(Long64_t i=1;i<nSamples+1;i++){
+  gRandom->SetSeed(i);
   ////////////////////////////////////////////////////////////////////////
   // Part 1: smearing each histogram to create various input histograms //
   ////////////////////////////////////////////////////////////////////////
-  //gRandom->SetSeed(time(0));
   TString recoName = "hRecoSmeared";
   recoName += i;
   hRecoSmeared[i-1] = (TH1D*)hReco->Clone("hRecoSmeared");
@@ -47,7 +52,6 @@ void calcCorr()
    hRecoSmeared[i-1]->SetBinContent(j,binContent);
    //Now hReco is varied
   }
-
   /////////////////////////////////////////////////////
   // Part 2: Doing the unfolding with TUnfoldDensity //
   /////////////////////////////////////////////////////
@@ -117,8 +121,10 @@ void calcCorr()
   histEmatTotal->Draw("colz");
   */
   //Now that unfolding has been done, place results into an array
+  hRecoSmeared[i-1]->Rebin(2);
   for(int j=1;j<nLogBins+1;j++){
     vector[i-1][j-1] = hUnfolded->GetBinContent(j);
+    //vector[i-1][j-1] = hRecoSmeared[i-1]->GetBinContent(j);
   }
  }//end loop over samples
 
@@ -131,6 +137,7 @@ void calcCorr()
  TMatrixD matrixB(nLogBins,nSamples);
  TMatrixD matrixBT(nSamples,nLogBins);//transpose of matrixB
  TMatrixD covM(nLogBins,nLogBins);//covariance matrix
+ TMatrixD covMB(nLogBins,nLogBins);//intermediate matrix before dividing by nSamples
  TMatrixD corrM(nLogBins,nLogBins);//correlation matrix
  
  //arrays needed for covariance calculation
@@ -140,12 +147,12 @@ void calcCorr()
  //set vector sums such that all components are zero
  for(int i=0;i<nLogBins;i++){
   vecSum[i] = 0;
-  vecSum2[i]=0;
+  vecSum2[i] = 0;
  }
 
  //loop over all vectors and components to calculate the average of each component
- for(int iEle=0;iEle<nLogBins;iEle++){
-  for(int jVec=0;jVec<nSamples;jVec++){
+ for(int iEle=0;iEle<nLogBins;iEle++){//loop over elements of vector
+  for(int jVec=0;jVec<nSamples;jVec++){//loop over each vector
    vecSum[iEle] += vector[jVec][iEle];//sum of element iEle summed over vectors
    vecSum2[iEle] += vector[jVec][iEle]*vector[jVec][iEle];//sum of squares of elements
   }
@@ -163,14 +170,14 @@ void calcCorr()
  }
 
  matrixBT.Transpose(matrixB);//the transpose of matrixB calculated above
- covM = matrixB*matrixBT;//covariance matrix without proper weight
+ covMB = matrixB*matrixBT;//covariance matrix without proper weight
  //Define a histogram to hold covariance matrix so it can be plotted
  TH2D*hCovM = new TH2D("hCovM","",nLogBins,massbins,nLogBins,massbins);
  double val;
  //calculate covariance and correlation matrices
  for(int jEle=0;jEle<nLogBins;jEle++){
   for(int iEle=0;iEle<nLogBins;iEle++){
-   covM(iEle,jEle) = covM(iEle,jEle)/nSamples;//covariance matrix
+   covM(iEle,jEle) = covMB(iEle,jEle)/nSamples;//covariance matrix
    corrM(iEle,jEle) = covM(iEle,jEle)/(vecStd[iEle]*vecStd[jEle]);//correlation matrix
    val = covM(iEle,jEle);//value in each bin to place in the histogram
    hCovM->SetBinContent(iEle+1,jEle+1,val);
@@ -222,6 +229,7 @@ void calcCorr()
   cout << ")" << endl;
  }
  */
+
  //Output bin errors to a .txt file
  ofstream errorFile;
  errorFile.open("myCovErrors.txt");
@@ -231,6 +239,12 @@ void calcCorr()
   errorFile << "Bin: " << i << ", Error: " << binError << endl;
  } 
  errorFile.close();
+
+ TFile*saveFile = new TFile("save.root","recreate");
+ hCovM->Write();
+ saveFile->Write();
+ saveFile->Close();
+
 }//end main()
 
 
