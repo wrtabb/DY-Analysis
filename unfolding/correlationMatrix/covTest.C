@@ -1,19 +1,28 @@
 
+void counter(Long64_t i, Long64_t N);
+
 
 void covTest()
 {
  gStyle->SetOptStat(0);
- int nPoints = 10000;
- int nSampleStart = 10;
- int stepSize = 100;
+ Long64_t nPoints = 10000;
+ Long64_t nSampleStart = 100;
+ double mean1 = 100;
+ double mean2 = 500; 
+ int stepSize = nSampleStart;
  TF1*distX = new TF1("distX","TMath::Poisson(x,[0])",0,1000);
- distX->SetParameter(0,100); 
+ distX->SetParameter(0,mean1); 
+ distX->SetLineColor(kBlue);
  TF1*distY = new TF1("distY","TMath::Poisson(x,[0])",0,1000);
- distY->SetParameter(0,500); 
+ distY->SetParameter(0,mean2); 
+ distY->SetLineColor(kRed);
  TH1D*hGraph = new TH1D("hGraph","",nPoints,nSampleStart,stepSize*nPoints);
  int nSamples = nSampleStart;
  double x,y,xy,xAvg,yAvg,xyAvg,xStd,yStd,xyStd,covXY;
 
+ distX->Draw();
+ distY->Draw("same");
+ Long64_t count = 0;
 for(Long64_t j=0;j<nPoints;j++){
  double xSum = 0.0;
  double ySum = 0.0;
@@ -21,7 +30,7 @@ for(Long64_t j=0;j<nPoints;j++){
  double xSum2 = 0.0;
  double ySum2 = 0.0;
  double xySum2 = 0.0;
-
+ 
  for(Long64_t i=0;i<nSamples;i++){
   x = distX->GetRandom();
   y = distY->GetRandom();
@@ -60,10 +69,26 @@ canvas->SetGrid();
 canvas->SetLogy();
 hGraph->GetXaxis()->SetTitle("Number of samples");
 hGraph->GetYaxis()->SetTitle("Covariance^{2}");
-TLine*line = new TLine(nSampleStart,0,stepSize*nPoints,0);
-line->SetLineColor(kRed);
 hGraph->SetMarkerStyle(20);
 hGraph->Draw("P");
-line->Draw("same");
-canvas->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/testCovariance.png");
+TString saveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/covariance/";
+saveName += "testCovariance";
+saveName += nSamples;
+saveName += "Samples";
+saveName += "_Mean";
+saveName += mean1;
+saveName += "_";
+saveName += mean2;
+saveName += ".png";
+canvas->SaveAs(saveName);
 }
+
+void counter(Long64_t i, Long64_t N)
+{
+ int P = 100*(i)/(N);  
+ TTimeStamp eventTimeStamp;
+ if(i%(N/100)==0)
+  cout << "covTest.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P << "%" << endl;
+ return;
+}
+
