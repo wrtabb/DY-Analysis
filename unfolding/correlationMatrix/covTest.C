@@ -5,18 +5,18 @@ void counter(Long64_t i, Long64_t N);
 void covTest()
 {
  gStyle->SetOptStat(0);
- Long64_t nPoints = 10000;
- Long64_t nSampleStart = 100;
+ Long64_t nPoints = 1000;
+ Long64_t nSampleStart = 1000;
  double mean1 = 100;
- double mean2 = 500; 
+ double mean2 = 250; 
  int stepSize = nSampleStart;
- TF1*distX = new TF1("distX","TMath::Poisson(x,[0])",0,1000);
+ TF1*distX = new TF1("distX","TMath::Poisson(x,[0])",0,10000);
  distX->SetParameter(0,mean1); 
  distX->SetLineColor(kBlue);
- TF1*distY = new TF1("distY","TMath::Poisson(x,[0])",0,1000);
+ TF1*distY = new TF1("distY","TMath::Poisson(x,[0])",0,10000);
  distY->SetParameter(0,mean2); 
  distY->SetLineColor(kRed);
- TH1D*hGraph = new TH1D("hGraph","",nPoints,nSampleStart,stepSize*nPoints);
+
  int nSamples = nSampleStart;
  double x,y,xy,xAvg,yAvg,xyAvg,xStd,yStd,xyStd,covXY;
 
@@ -51,7 +51,6 @@ for(Long64_t j=0;j<nPoints;j++){
  xStd = sqrt(xSum2/nSamples-xSum*xSum/(nSamples*nSamples*1.0));
  yStd = sqrt(ySum2/nSamples-ySum*ySum/(nSamples*nSamples*1.0));
  xyStd = sqrt(xySum2/nSamples-xySum*xySum/(nSamples*nSamples*1.0));
- //covXY = 0.5*(xyStd*xyStd-xStd*xStd-yStd*yStd);
  covXY = (xyAvg-xAvg*yAvg)*(xyAvg-xAvg*yAvg);
  hGraph->SetBinContent(j,covXY);
 /*
@@ -73,8 +72,6 @@ hGraph->SetMarkerStyle(20);
 hGraph->Draw("P");
 TString saveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/covariance/";
 saveName += "testCovariance";
-saveName += nSamples;
-saveName += "Samples";
 saveName += "_Mean";
 saveName += mean1;
 saveName += "_";
