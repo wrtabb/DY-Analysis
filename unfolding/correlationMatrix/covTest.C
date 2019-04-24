@@ -7,8 +7,8 @@ void covTest()
  gStyle->SetOptStat(0);
  Long64_t nPoints = 1000;
  Long64_t nSampleStart = 1000;
- double mean1 = 100;
- double mean2 = 250; 
+ double mean1 = 500;
+ double mean2 = 500; 
  int stepSize = nSampleStart;
  TF1*distX = new TF1("distX","TMath::Poisson(x,[0])",0,10000);
  distX->SetParameter(0,mean1); 
@@ -19,6 +19,8 @@ void covTest()
 
  int nSamples = nSampleStart;
  double x,y,xy,xAvg,yAvg,xyAvg,xStd,yStd,xyStd,covXY;
+ TH1D*hGraph = new TH1D("hGraph","",nPoints,0,nPoints*nSampleStart);
+ hGraph->SetMarkerStyle(20);
 
  distX->Draw();
  distY->Draw("same");
