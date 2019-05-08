@@ -50,7 +50,7 @@ void toyModel()
   TEfficiency*efficiency = (TEfficiency*)fileEff->Get("Efficiency");
 
   //Mass smearing model
-  double resSD = 1e-9;
+  double resSD = 3;
   double resMean = 0.0;
   double resScale = 1.0;
   TF1*fResolutionModel = new TF1("fPhiResolutionModel","gaus(0)",-20,20);
@@ -160,7 +160,7 @@ void toyModel()
   //determination of canvas save name based on parameters used
   TString saveName;
   saveName = 
-    "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/step1MigrationMatrix";
+    "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/step1MigrationMatrix";
   if(effInc) saveName += "_EffInc";
   else saveName += "_NoEff";
   if(exactClosure) saveName += "_ClosureTest";

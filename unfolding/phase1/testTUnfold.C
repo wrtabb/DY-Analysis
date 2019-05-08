@@ -162,7 +162,8 @@ void testTUnfold()
    hUnfolded->SetMarkerColor(kBlue+2);
    hUnfolded->SetMarkerSize(1);
   TH2*histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
-  TH2*histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
+  TH2*histEmatTotal=unfold.GetEmatrixInput("unfolding total error matrix");
+  TH2*histCorrTotal=unfold.GetRhoIJtotal("unfolding correlations");
   TH1F*hUnfoldedE = new TH1F("Unfolded with errors",";(gen)",nBins,massbins);
    hUnfoldedE->SetMarkerStyle(25);
    hUnfoldedE->SetMarkerColor(kBlue+2);
@@ -240,11 +241,12 @@ TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1000,1000);
 canvas3->SetLogy();
 canvas3->SetLogx();
 canvas3->SetLogz();
+//histCorrTotal->Draw("colz");
 histEmatTotal->Draw("colz");
-canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/eMatrix.png");
+canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/eMatrixCov.png");
   //Save Options
-  TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldData";
-  TString lineName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/testUnfoldDataCurves";
+  TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/testUnfoldData";
+  TString lineName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/testUnfoldDataCurves";
   if(exactClosure){
     distName += "_ClosureTest";
     lineName += "_ClosureTest";

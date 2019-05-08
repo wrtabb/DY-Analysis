@@ -1,6 +1,6 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 
-const Long64_t nSamples = 10000;//number of input vectors to create
+const Long64_t nSamples = 100;//number of input vectors to create
 const TString fileName = "toyUnfold.root";//location of toy model distributions
 
 void calcCorr()
@@ -8,6 +8,7 @@ void calcCorr()
  //initialize variables, arrays, TFile, and set histogram options
  double error,binContent,smear;
  double vector[nSamples][nLogBins];
+ const bool corrTest = false;
  TFile*file = new TFile(fileName);
  TH1::SetDefaultSumw2();
  TCanvas*c[nSamples];
@@ -31,7 +32,7 @@ void calcCorr()
  //Array of reco distributions smeared with a gaussian
  //These will make up the input vectors for unfolding
  TH1D*hRecoSmeared[nSamples];
-
+ TRandom3 gen;
  //Begin loop over samples doing unfold on each one and placing it in an array
  for(Long64_t i=1;i<nSamples+1;i++){
   gRandom->SetSeed(i);
@@ -44,10 +45,7 @@ void calcCorr()
   //vary each bin with a gaussian of width equal to the bin error
   for(int j=1;j<nLogBins2+1;j++){
    error = hReco->GetBinError(j);
-   //not certain what range to place on this TF1
-   TF1*fGaus = new TF1("fgaus","gaus(0)",-100*error,100*error);
-   fGaus->SetParameters(1,0,error);
-   smear = fGaus->GetRandom();
+   smear = gen.Gaus(0,error);
    binContent = hReco->GetBinContent(j)+smear;
    hRecoSmeared[i-1]->SetBinContent(j,binContent);
    //Now hReco is varied
@@ -123,8 +121,8 @@ void calcCorr()
   //Now that unfolding has been done, place results into an array
   hRecoSmeared[i-1]->Rebin(2);
   for(int j=1;j<nLogBins+1;j++){
-    vector[i-1][j-1] = hUnfolded->GetBinContent(j);
-    //vector[i-1][j-1] = hRecoSmeared[i-1]->GetBinContent(j);
+    //vector[i-1][j-1] = hUnfolded->GetBinContent(j);
+    vector[i-1][j-1] = hRecoSmeared[i-1]->GetBinContent(j);
   }
  }//end loop over samples
 
@@ -179,7 +177,8 @@ void calcCorr()
   for(int iEle=0;iEle<nLogBins;iEle++){
    covM(iEle,jEle) = covMB(iEle,jEle)/nSamples;//covariance matrix
    corrM(iEle,jEle) = covM(iEle,jEle)/(vecStd[iEle]*vecStd[jEle]);//correlation matrix
-   val = covM(iEle,jEle);//value in each bin to place in the histogram
+   if(corrTest) val = corrM(iEle,jEle);
+   else val = covM(iEle,jEle);//value in each bin to place in the histogram
    hCovM->SetBinContent(iEle+1,jEle+1,val);
   }
  }
@@ -190,7 +189,10 @@ void calcCorr()
  canvas->SetLogx();
  canvas->SetLogz();
  hCovM->Draw("colz");
- TString saveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1Plots/covariance_";
+ TString saveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/";
+ if(corrTest) saveName += "correlations_";
+ else saveName += "covariance_";
+ saveName += "Input_";
  saveName += nSamples;
  saveName += "Samples.png";
  canvas->SaveAs(saveName);
