@@ -1,6 +1,6 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 
-const Long64_t nSamples = 100;//number of input vectors to create
+const Long64_t nSamples = 1000;//number of input vectors to create
 const TString fileName = "toyUnfold.root";//location of toy model distributions
 
 void calcCorr()
@@ -8,7 +8,7 @@ void calcCorr()
  //initialize variables, arrays, TFile, and set histogram options
  double error,binContent,smear;
  double vector[nSamples][nLogBins];
- const bool corrTest = false;
+ const bool corrTest = true;
  TFile*file = new TFile(fileName);
  TH1::SetDefaultSumw2();
  TCanvas*c[nSamples];
@@ -121,8 +121,8 @@ void calcCorr()
   //Now that unfolding has been done, place results into an array
   hRecoSmeared[i-1]->Rebin(2);
   for(int j=1;j<nLogBins+1;j++){
-    //vector[i-1][j-1] = hUnfolded->GetBinContent(j);
-    vector[i-1][j-1] = hRecoSmeared[i-1]->GetBinContent(j);
+    vector[i-1][j-1] = hUnfolded->GetBinContent(j);
+    //vector[i-1][j-1] = hRecoSmeared[i-1]->GetBinContent(j);
   }
  }//end loop over samples
 

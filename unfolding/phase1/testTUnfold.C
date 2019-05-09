@@ -241,8 +241,8 @@ TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1000,1000);
 canvas3->SetLogy();
 canvas3->SetLogx();
 canvas3->SetLogz();
-//histCorrTotal->Draw("colz");
-histEmatTotal->Draw("colz");
+histCorrTotal->Draw("colz");
+//histEmatTotal->Draw("colz");
 canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/eMatrixCov.png");
   //Save Options
   TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/testUnfoldData";

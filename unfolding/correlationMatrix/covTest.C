@@ -5,14 +5,14 @@ void covTest()
 {
  TH1::SetDefaultSumw2();
  gStyle->SetOptStat(0);
- Long64_t nPoints = 100;
- Long64_t nSampleStart = 10000;
+ Long64_t nPoints = 1000;
+ Long64_t nSampleStart = 1000;
  double mean1 = 200;
  double mean2 = 500; 
  int stepSize = nSampleStart;
  const bool corrTest = true;//do correlation matrix instead of covariance
  
- TF1*fitFunc = new TF1("fitFunc","[0]*x^[1]",nSampleStart,nPoints*nSampleStart);
+ TF1*fitFunc = new TF1("fitFunc","[0]*x^[1]",0,nPoints*nSampleStart);
   //fit->SetNpx(10000);
   //fitFunc->SetParameters(1.0,1.0);
   fitFunc->SetParameter(0,10);
@@ -59,6 +59,7 @@ void covTest()
   yStd = sqrt(yAvg2-yAvg*yAvg);
   xyStd = sqrt(xyAvg2-xyAvg*xyAvg);
 
+  //must set error bars in order to do fitting
   binError = 1/sqrt(nSamples);
   covXY = abs(xyAvg-xAvg*yAvg);
   corrXY = covXY/((xStd*yStd));
@@ -77,7 +78,7 @@ void covTest()
  else hGraph->GetYaxis()->SetTitle("covariance");
  hGraph->SetMarkerStyle(20);
  hGraph->Fit("fitFunc");
- hGraph->Draw("PE");
+ hGraph->Draw("P");
 
  TString saveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/covariance/";
  if(corrTest) saveName += "testCorrelations";
@@ -86,6 +87,8 @@ void covTest()
  saveName += mean1;
  saveName += "_";
  saveName += mean2;
+ saveName += "_Range";
+ saveName += nSampleStart*nPoints;
  saveName += ".png";
  canvas->SaveAs(saveName);
 }
