@@ -1,19 +1,23 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 
-const Long64_t nSamples = 100000;//number of input vectors to create
+const Long64_t nSamples = 500000;//number of input vectors to create
 const TString fileName = "toyUnfold.root";//location of toy model distributions
 
 void covCalc()
 {
+ TTimeStamp ts_start;
+ cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
+ TStopwatch totaltime;
+ totaltime.Start();
+
  //initialize variables, arrays, TFile, and set histogram options
  double error,binContent,smear;
- //double vector[nSamples][nLogBins];
  vector <double>*inVec[nSamples];
  TFile*file = new TFile(fileName);
  TH1::SetDefaultSumw2();
  gStyle->SetPalette(1);
  gStyle->SetOptStat(0);
-
+ gROOT->SetBatch(true);
  //Get histograms from files
  TH1D*hTrue = (TH1D*)file->Get("hTrue");
   hTrue->SetFillColor(kRed+2);
@@ -136,26 +140,66 @@ void covCalc()
   }//end j loop
  }//end i loop
 
- TCanvas*canvas = new TCanvas("canvas","",10,10,1200,1000);
+ TCanvas*canvas = new TCanvas("canvas","",10,10,1200,1200);
  canvas->SetLogx();
  canvas->SetLogy();
  canvas->SetLogz();
+ hCovM->GetYaxis()->SetNoExponent();
+ hCovM->GetYaxis()->SetMoreLogLabels();
+ hCovM->GetXaxis()->SetNoExponent();
+ hCovM->GetXaxis()->SetMoreLogLabels();
+ hCovM->SetTitle("Unfolding covariance matrix");
+ hCovM->GetXaxis()->SetTitle("mass [GeV]");
+ hCovM->GetYaxis()->SetTitle("mass [GeV]");
  hCovM->Draw("colz");
  TString saveName1 = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/";
  saveName1 += "covariance_";
  saveName1 += nSamples;
  saveName1 += "Samples.png";
  canvas->SaveAs(saveName1);
- TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1200,1000);
+ TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1200,1200);
  canvas2->SetLogx();
  canvas2->SetLogy();
  canvas2->SetLogz();
+ hCorrM->GetYaxis()->SetNoExponent();
+ hCorrM->GetYaxis()->SetMoreLogLabels();
+ hCorrM->GetXaxis()->SetNoExponent();
+ hCorrM->GetXaxis()->SetMoreLogLabels();
+ hCorrM->SetTitle("Unfolding correlations matrix");
+ hCorrM->GetXaxis()->SetTitle("mass [GeV]");
+ hCorrM->GetYaxis()->SetTitle("mass [GeV]");
  hCorrM->Draw("colz");
  TString saveName2 = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/";
  saveName2 += "correlations_";
  saveName2 += nSamples;
  saveName2 += "Samples.png";
  canvas2->SaveAs(saveName2);
+
+ TString saveFileName = "./data/correlations_";//location to save correlations
+ saveFileName += nSamples;
+ saveFileName += "Samples.root";
+ TFile*saveFile = new TFile(saveFileName,"recreate");
+ saveFile->cd();
+ hCovM->Write();
+ hCorrM->Write();
+ canvas->Write();
+ canvas2->Write();
+ saveFile->Write();
+ saveFile->Close();
+
+ totaltime.Stop();
+ Double_t TotalCPURunTime = totaltime.CpuTime();
+ Double_t TotalRunTime = totaltime.RealTime();
+ TTimeStamp ts_end;
+ cout << endl;
+ cout << "**************************************************************************" << endl;
+ cout << "Total CPU RunTime: " << TotalCPURunTime/60 << " minutes" << endl;
+ cout << "Total Real RunTime: " << TotalRunTime/60 << " minutes" << endl;
+ cout << "[End Time(local time): " << ts_end.AsString("l") << "]" << endl;
+ cout << "Number of Samples Processed: " << nSamples << endl;
+ cout << "**************************************************************************" << endl;
+ cout << endl;
+
 }//end main()
 
 

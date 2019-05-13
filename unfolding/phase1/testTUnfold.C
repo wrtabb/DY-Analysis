@@ -50,7 +50,7 @@ void testTUnfold()
   TFile*file= new TFile(fileName);
   gStyle->SetPalette(1);
   gStyle->SetOptStat(0);
-
+  gROOT->SetBatch(true);
   //Determine parameters used to create the distributions
   ifstream parameterFile("parameters.txt");
   bool exactClosure,effInc,backInc;
@@ -237,7 +237,7 @@ void testTUnfold()
   ratio->SetMarkerColor(kBlack);
   ratio->Draw("PE");
   line->Draw("same");
-TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1000,1000);
+TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1200,1200);
 canvas3->SetLogy();
 canvas3->SetLogx();
 canvas3->SetLogz();
@@ -285,4 +285,13 @@ canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/eMatrix
   }  
 
   canvas1->SaveAs(distName);
+
+ histEmatTotal->SetName("covariance");
+ histCorrTotal->SetName("correlations");
+ TFile*corrSave = new TFile("./data/tunfoldCorr.root","recreate");
+ corrSave->cd();
+ histEmatTotal->Write(); 
+ histCorrTotal->Write();
+ corrSave->Write();
+ corrSave->Close();
 }
