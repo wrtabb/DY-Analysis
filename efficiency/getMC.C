@@ -217,11 +217,7 @@ void getMC()
   hHardProcess[jChain]->GetXaxis()->SetNoExponent();
   hHardProcess[jChain]->GetXaxis()->SetMoreLogLabels();
  }//end loop to define hard process histograms
- 
- //File for saving raw event counts
- ofstream eventFile;
- eventFile.open("nEvents.txt");
- 
+ TH1D*hTrue = new TH1D("hTrue","",nLogBins,massbins);
  double invMassFSR,xSecWeight,weightNoPileup,genWeight,varGenWeight,totalWeight,lumiEffective,
   nEffective,localEntry,sumGenWeight,sumRawGenWeight,pileupWeight,sfReco1,sfReco2,sfID1,sfID2,
   sfHLT,invMassHardProcess,sfWeight,eEta1,eEta2,ePt1,ePt2;
@@ -275,7 +271,8 @@ void getMC()
  lumiEffective = nEffective/xSec[iChain];
 
  Long64_t nEvents = 0;
-
+ int idxGenEle1,idxGenEle2,idxGenEleFS1,idxGenEleFS2,leadEle,subEle;
+ int nGenDielectrons,nGenDielectronsFS;
   for(Long64_t i=0;i<nentries;i++){      
    nEvents++;
    chains[iChain]->GetEntry(i);
@@ -284,10 +281,11 @@ void getMC()
 
    // Loop over gen leptons and find the electron pair at the isHardProcess
    // and isHardProcessFinalState level.
-   int idxGenEle1, idxGenEle2, idxGenEleFS1, idxGenEleFS2;
    idxGenEle1 = idxGenEle2 = idxGenEleFS1 = idxGenEleFS2 = -1;
-   int nGenDielectrons = 0;
-   int nGenDielectronsFS = 0;
+   leadEle = subEle = -1;
+   nGenDielectrons = 0;
+   nGenDielectronsFS = 0;
+
    for(int kLep=0;kLep<GENnPair;kLep++){
     for(int lLep=kLep+1;lLep<GENnPair;lLep++){
      // Require a dielectron
@@ -327,10 +325,18 @@ void getMC()
      //Reco electrons which passed cuts
      idxRecoEle1 = iEle;
      idxRecoEle2 = jEle;		    
+     if(Electron_pT[iEle]>Electron_pT[jEle]) {
+      leadEle = iEle; 
+      subEle = jEle;
+     }
+     else{
+      leadEle = jEle; 
+      subEle = iEle;
+     }
    }//end inner reco loop	   
   }//end reco loop
 
-  if(nDielectrons==1)//calculate inv mass of reco electrons
+  if(idxRecoEle1>=0&&idxRecoEle2>=0)
    invMassReco=calcInvMass(Electron_pT[idxRecoEle1],Electron_eta[idxRecoEle1],
     Electron_phi[idxRecoEle1],eMass,Electron_pT[idxRecoEle2],
     Electron_eta[idxRecoEle2],Electron_phi[idxRecoEle2],eMass);	  
@@ -361,10 +367,10 @@ void getMC()
    xSecWeight=lumi*(xSec[iChain]/1.0);
    pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
    genWeight = (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
-   eEta1 = Electron_eta[idxRecoEle1];
-   eEta2 = Electron_eta[idxRecoEle2];
-   ePt1 = Electron_pT[idxRecoEle1];
-   ePt2 = Electron_pT[idxRecoEle2];
+   eEta1 = Electron_eta[leadEle];
+   eEta2 = Electron_eta[subEle];
+   ePt1 = Electron_pT[leadEle];
+   ePt2 = Electron_pT[subEle];
 
    if(ePt1<ptBinLow) ePt1 = ptBinLow;//pull this information from the histograms
    if(ePt2<ptBinLow) ePt2 = ptBinLow;//raise bin
@@ -405,6 +411,7 @@ void getMC()
     invMassHardProcess = 0;
    } 
    // Both electrons are in kinematic acceptance at gen level
+   hTrue->Fill(invMassHardProcess,totalWeight);
    histInvMass[KINEMATIC_CUTS]->Fill(invMassFSR,totalWeight);
    hpTvsMass->Fill(invMassFSR,GENLepton_pT[idxGenEleFS1],totalWeight);
    hpTvsMass->Fill(invMassFSR,GENLepton_pT[idxGenEleFS2],totalWeight);
@@ -419,7 +426,7 @@ void getMC()
    }
 
    //Both electrons are reconstructed
-   histInvMass[RECO_MATCHED]->Fill(invMassFSR,totalWeight);//does reco need SFs?
+   histInvMass[RECO_MATCHED]->Fill(invMassFSR,totalWeight);
   
    //Apply ID criteria:
    //Dilepton pair at gen level matched to reco and passing ID at reco level
@@ -442,21 +449,18 @@ void getMC()
 
    histInvMass[HLT_CUTS]->Fill(invMassFSR,totalWeight);
    histInvMass[RECO_ELE]->Fill(invMassReco,totalWeight*sfWeight);
-   migMatrixGENisHardvsGENFS->Fill(invMassHardProcess,invMassFSR,totalWeight);
-   migMatrixGENFSvsReco->Fill(invMassFSR,invMassReco,totalWeight*sfWeight);
    migMatrixGENisHardvsReco->Fill(invMassHardProcess,invMassReco,totalWeight*sfWeight);
    migMatrixGENisHardvsReco->Fill(invMassHardProcess,0.0,totalWeight*(1-sfWeight));
   }//end event loop   
  }//end chain loop 
 
- eventFile.close();
- 
  //Create root file and save
- TFile *rootFile = new TFile("/home/hep/wrtabb/git/DY-Analysis/data/efficiencyAndMigration.root","RECREATE");
+ TFile *rootFile = new TFile("/home/hep/wrtabb/git/DY-Analysis/data/mcHists.root","RECREATE");
  rootFile->cd();
  for(int i=0;i<nInvMassHistos;i++){
    histInvMass[i]->Write();
  } 
+ hTrue->Write();
  migMatrixGENisHardvsGENFS->Write();
  migMatrixGENFSvsReco->Write();
  migMatrixGENisHardvsReco->Write();

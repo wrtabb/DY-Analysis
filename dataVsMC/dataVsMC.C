@@ -386,7 +386,7 @@ void dataVsMC()
       counter(count,totalentries);
       count = count+1; 
       chains[iChain]->GetEntry(i);
-      //if(Nelectrons<2) continue;   	  
+
       //Weights
       totalWeight = 1.0;
       sfWeight = 1.0;
@@ -443,8 +443,8 @@ void dataVsMC()
      if(numDielectrons==1){
         passNumEle = kTRUE;
      }
-     //if(!passNumEle) continue;
-     //if(leadEle<0||subEle<0) continue;
+     if(!passNumEle) continue;
+     if(leadEle<0||subEle<0) continue;
      dielectronP4 = getDielectronP4(Electron_pT[leadEle],Electron_eta[leadEle],
        Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
        Electron_phi[subEle],eMass);
