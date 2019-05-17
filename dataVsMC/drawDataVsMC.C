@@ -15,7 +15,7 @@ const float padmargins = 0.03;
 const float profYHigh = 1.05;
 const float profYLow = 0.85;
 const TString hStackName = "hStack";
-const TString dataFileName = "./plots/dataVsMC.root";
+const TString dataFileName = "/home/hep/wrtabb/git/DY-Analysis/data/dataVsMC.root";
 const TString histName[nHistos] = {
   "hFakes", "hEW", "hTops", "hMC", "hData"
 };

@@ -459,10 +459,10 @@ void dataVsMC()
      ePt1 = Electron_pT[leadEle];
      ePt2 = Electron_pT[subEle];
      
-     if(ePt1<ptBinLow) ePt1 = ptBinLow;//pull this information from the histograms
-     if(ePt2<ptBinLow) ePt2 = ptBinLow;//raise bin
-     if(ePt1>ptBinHigh) ePt1 = ptBinHigh;//lower bin
-     if(ePt2>ptBinHigh) ePt2 = ptBinHigh;//
+     if(ePt1<ptBinLow) ePt1 = ptBinLow;
+     if(ePt2<ptBinLow) ePt2 = ptBinLow;
+     if(ePt1>ptBinHigh) ePt1 = ptBinHigh;
+     if(ePt2>ptBinHigh) ePt2 = ptBinHigh;
 
      //Determining weighting factors
      if(isMC){
