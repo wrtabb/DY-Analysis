@@ -2,7 +2,7 @@
 
 
 const TString file1Name= "/home/hep/wrtabb/git/DY-Analysis/data/dataVsMC.root";
-const TString file2Name= "/home/hep/wrtabb/git/DY-Analysis/data/mcHists.root";
+const TString file2Name= "outputDataUnfold.root";
 
 
 void conditionNumber()
@@ -12,7 +12,7 @@ void conditionNumber()
  TFile*file1 = new TFile(file1Name);
  TFile*file2 = new TFile(file2Name);
 
- TH2D*hMatrix = (TH2D*)file2->Get("migMatrixGENisHardvsReco");
+ TH2D*hMatrix = (TH2D*)file2->Get("hMatrix");
   hMatrix->SetName("hMatrix");
  TMatrixD matrix(nLogBins2,nLogBins);
  for(int i=1;i<nLogBins+1;i++){
