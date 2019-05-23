@@ -55,13 +55,15 @@ void doUnfold()
   TH1D*hTrue = (TH1D*)file->Get("hTrue");//true mass
   TH1D*hBack = (TH1D*)file->Get("hBack");//background mass
   TH2D*hMatrix = (TH2D*)file->Get("hMatrix");//migration matrix
+  TH2D*hCovM = (TH2D*)file->Get("hCovM");
+  TH2D*hCovMinv = (TH2D*)file->Get("hCovMinv");
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
   hReco->SetLineColor(kBlack);
   hTrue->SetFillColor(kRed+2);
   hTrue->SetLineColor(kRed+2);
   hTrue->SetTitle("");
-  
+
   ////////////////////////////
   //  Regularization Modes  //
   ////////////////////////////
@@ -95,6 +97,7 @@ void doUnfold()
   //  Constructor for TUnfoldDensity  //
   //////////////////////////////////////
   TUnfoldDensity unfold(hMatrix,outputMap,regMode,constraintMode,densityFlags);
+  //unfold.SetInput(hReco,0.0,0.0,hCovM,hCovMinv);//the measured distribution
   unfold.SetInput(hReco);//the measured distribution
 
   //////////////////////////////
@@ -206,7 +209,7 @@ void doUnfold()
   ratio->GetYaxis()->SetLabelSize(0.06);
   ratio->GetYaxis()->SetTitleSize(0.08);
   ratio->GetYaxis()->SetTitleOffset(0.3);
-  ratio->GetYaxis()->SetTitle("Unfolded/Gen");
+  ratio->GetYaxis()->SetTitle("Unfolded/Truth");
   ratio->GetXaxis()->SetTitle("mass [GeV]");
   ratio->GetXaxis()->SetLabelSize(0.1);
   ratio->GetXaxis()->SetTitleSize(0.1);
@@ -238,13 +241,16 @@ void doUnfold()
   TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1400,1000);
   canvas2->SetLogy();
   canvas2->SetLogx();
+  canvas2->SetLogz();
   canvas2->SetGrid();
+  //histEmatStat->Draw("colz");
   hCross->Draw("PE");
   canvas2->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/xsec_only2Ele.png");
   TFile*fileXsec = new TFile("xsec.root","recreate");
   hCross->Write();
   canvas1->Write();
   hUnfoldedE->Write();
+  histEmatTotal->Write();
   hTrue->Write();
   hReco->Write();
   fileXsec->Write();

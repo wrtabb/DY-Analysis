@@ -4,7 +4,7 @@
 void counter(Long64_t i, Long64_t N);
 
 //strings for naming histgrams and for file locations
-const TString mcDist = "/home/hep/wrtabb/git/DY-Analysis/data/plotsDY.root";
+const TString mcDist = "/home/hep/wrtabb/git/DY-Analysis/data/efficiencyAndMigration.root";
 const TString mcEff = "/home/hep/wrtabb/git/DY-Analysis/plots/efficiencies.root";
 const TString mcSF =  "/home/hep/wrtabb/git/DY-Analysis/data/dataVsMC.root";
 const TString histSaveName = "toyUnfold.root";

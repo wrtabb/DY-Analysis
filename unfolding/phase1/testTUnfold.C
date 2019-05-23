@@ -30,7 +30,7 @@ const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,4
 const int nLogBins2 = 86;
 //File Names
 const TString fileName= "toyUnfold.root";       
-
+const TString file2Name = "./data/inputCorrelations_10000Samples.root";
 void testTUnfold()
 {
   ///////////////////////////////////////
@@ -48,9 +48,10 @@ void testTUnfold()
   TH1::SetDefaultSumw2();
   //Load the files
   TFile*file= new TFile(fileName);
+  TFile*file2 = new TFile(file2Name);
   gStyle->SetPalette(1);
   gStyle->SetOptStat(0);
-  gROOT->SetBatch(true);
+  //gROOT->SetBatch(true);
   //Determine parameters used to create the distributions
   ifstream parameterFile("parameters.txt");
   bool exactClosure,effInc,backInc;
@@ -67,6 +68,8 @@ void testTUnfold()
      hBack = (TH1D*)file->Get("hBack2");
   }
   TH2D*hMatrix = (TH2D*)file->Get("hMatrix");//migration matrix
+  TH2D*hCovM = (TH2D*)file2->Get("hCovM");
+  TH2D*hCovMinv = (TH2D*)file2->Get("hCovMinv");
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
   hReco->SetLineColor(kBlack);
@@ -106,8 +109,8 @@ void testTUnfold()
   //  Constructor for TUnfoldDensity  //
   //////////////////////////////////////
   TUnfoldDensity unfold(hMatrix,outputMap,regMode,constraintMode,densityFlags);
-  unfold.SetInput(hReco);//the measured distribution
-
+  unfold.SetInput(hReco,0.0,0.0,hCovM,hCovMinv);//the measured distribution
+  //unfold.SetInput(hReco);//the measured distribution
   //////////////////////////////
   //  Background Subtraction  //
   //////////////////////////////
@@ -241,8 +244,8 @@ TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1200,1200);
 canvas3->SetLogy();
 canvas3->SetLogx();
 canvas3->SetLogz();
-histCorrTotal->Draw("colz");
-//histEmatTotal->Draw("colz");
+//histCorrTotal->Draw("colz");
+histEmatTotal->Draw("colz");
 canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/eMatrixCov.png");
   //Save Options
   TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/testUnfoldData";

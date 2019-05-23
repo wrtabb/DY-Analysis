@@ -300,26 +300,19 @@ void unfoldingMatrix()
        Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
        Electron_phi[subEle],eMass);
      invMass=dielectronP4.M();
-     
      int closestTrackLep1, closestTrackLep2;
      closestTrackLep1 = closestTrackLep2 = -1;
      bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);
      bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestTrackLep2);
-     if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
-      invMass=0;
-     }
-      
-     if(!Electron_passMediumID[closestTrackLep1]){
-      invMass=0;
-     }
-     if(!Electron_passMediumID[closestTrackLep2]){
-      invMass=0;
-     }
- 
 
+     //All cuts
+     if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMass=0;
+     if(!Electron_passMediumID[closestTrackLep1]) invMass=0;
+     if(!Electron_passMediumID[closestTrackLep2]) invMass=0;
      if(!passNumEle) invMass = 0;;
      if(leadEle<0||subEle<0) invMass = 0;
      if(!passHLT) invMass = 0;
+
      eEta1 = Electron_eta[leadEle];
      eEta2 = Electron_eta[subEle];
      ePt1 = Electron_pT[leadEle];

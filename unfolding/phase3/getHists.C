@@ -4,14 +4,15 @@
 const TString file1Name= "/home/hep/wrtabb/git/DY-Analysis/data/dataVsMC.root";
 const TString file2Name= "/home/hep/wrtabb/git/DY-Analysis/data/mcHists.root";
 const TString fileTestName = "/home/hep/wrtabb/git/DY-Analysis/efficiency/testMC.root";
-
+const TString fileCorrName = "inputCorrelations_10000Samples.root";
 
 void getHists()
 {
+ TH1::SetDefaultSumw2();
  TFile*file1 = new TFile(file1Name);
  TFile*file2 = new TFile(file2Name);
  TFile*fileTest = new TFile(fileTestName);
- TH1::SetDefaultSumw2();
+ TFile*fileCorr= new TFile(fileCorrName);
 
  //gROOT->SetBatch(true);
  gStyle->SetOptStat(0);
@@ -29,7 +30,8 @@ void getHists()
  TH1D*hBack = (TH1D*)file1->Get("hFakesInvMass");
  TH1D*hEW = (TH1D*)file1->Get("hEWInvMass");
  TH1D*hTops = (TH1D*)file1->Get("hTopsInvMass");
-
+ TH2D*hCovM = (TH2D*)fileCorr->Get("hCovM");
+ TH2D*hCovMinv = (TH2D*)fileCorr->Get("hCovMinv");
  //Set any negative bin values to 0
  for(int i=1;i<nLogBins2+1;i++){
   if(hBack->GetBinContent(i)<0) hBack->SetBinContent(i,0);

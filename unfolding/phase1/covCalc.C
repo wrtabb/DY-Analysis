@@ -1,6 +1,6 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 
-const Long64_t nSamples = 500000;//number of input vectors to create
+const Long64_t nSamples = 10000;//number of input vectors to create
 const TString fileName = "toyUnfold.root";//location of toy model distributions
 
 void covCalc()
@@ -55,7 +55,7 @@ void covCalc()
   /////////////////////////////////////////////////////
   // Part 2: Doing the unfolding with TUnfoldDensity //
   /////////////////////////////////////////////////////
-
+/*
   //Set unfolding options
   TUnfold::ERegMode regMode = TUnfold::kRegModeCurvature;
   TUnfold::EConstraint constraintMode = TUnfold::kEConstraintArea;
@@ -82,12 +82,13 @@ void covCalc()
   TString unfName = "unfolded";
   unfName += i;
   TH1*hUnfolded = unfold.GetOutput(unfName);
-
+*/
   //Now that unfolding has been done, place results into an array
-  hRecoSmeared->Rebin(2);
+  //hRecoSmeared->Rebin(2);
   inVec[i-1] = new vector<double>;
-  for(int j=1;j<nLogBins+1;j++){
-   inVec[i-1]->push_back(hUnfolded->GetBinContent(j));
+  for(int j=1;j<nLogBins2+1;j++){
+   //inVec[i-1]->push_back(hUnfolded->GetBinContent(j));
+   inVec[i-1]->push_back(hRecoSmeared->GetBinContent(j));
   }
  }//end loop over samples
 
@@ -95,13 +96,15 @@ void covCalc()
  // Part 3: Calculating covariance matrix //
  ///////////////////////////////////////////
 
- TH2D*hCovM = new TH2D("hCovM","",nLogBins,massbins,nLogBins,massbins);
- TH2D*hCorrM = new TH2D("hCorrM","",nLogBins,massbins,nLogBins,massbins);
+ TH2D*hCovM = new TH2D("hCovM","",nLogBins2,massbins2,nLogBins2,massbins2);
+ TH2D*hCovMinv = new TH2D("hCovMinv","",nLogBins2,massbins2,nLogBins2,massbins2);
+ TH2D*hCorrM = new TH2D("hCorrM","",nLogBins2,massbins2,nLogBins2,massbins2);
  double x,y,xy,xAvg,yAvg,xyAvg,xAvg2,yAvg2,xyAvg2,xStd,yStd,xyStd,covXY,corrXY;
  double xSum,ySum,xySum,xSum2,ySum2,xySum2;
+ TMatrixD fCovM(nLogBins2,nLogBins2);
 
-  for(int i=1;i<nLogBins+1;i++){
-   for(int j=1;j<nLogBins+1;j++){
+  for(int i=1;i<nLogBins2+1;i++){
+   for(int j=1;j<nLogBins2+1;j++){
     xSum = 0;
     ySum = 0;
     xySum = 0;
@@ -137,9 +140,16 @@ void covCalc()
    corrXY = covXY/(xStd*yStd);
    hCovM->SetBinContent(i,j,covXY);
    hCorrM->SetBinContent(i,j,corrXY);
+   fCovM(i-1,j-1) = covXY;
   }//end j loop
  }//end i loop
-
+ TMatrixD fCovMinv = fCovM;
+ fCovMinv.Invert();
+ for(int i=0;i<nLogBins2;i++){
+  for(int j=0;j<nLogBins2;j++){
+   hCovMinv->SetBinContent(i+1,j+1,fCovMinv(i,j));
+  }
+ } 
  TCanvas*canvas = new TCanvas("canvas","",10,10,1200,1200);
  canvas->SetLogx();
  canvas->SetLogy();
@@ -170,17 +180,18 @@ void covCalc()
  hCorrM->GetYaxis()->SetTitle("mass [GeV]");
  hCorrM->Draw("colz");
  TString saveName2 = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/";
- saveName2 += "correlations_";
+ saveName2 += "inputCorrelations_";
  saveName2 += nSamples;
  saveName2 += "Samples.png";
  canvas2->SaveAs(saveName2);
 
- TString saveFileName = "./data/correlations_";//location to save correlations
+ TString saveFileName = "./data/inputCorrelations_";//location to save correlations
  saveFileName += nSamples;
  saveFileName += "Samples.root";
  TFile*saveFile = new TFile(saveFileName,"recreate");
  saveFile->cd();
  hCovM->Write();
+ hCovMinv->Write();
  hCorrM->Write();
  canvas->Write();
  canvas2->Write();
