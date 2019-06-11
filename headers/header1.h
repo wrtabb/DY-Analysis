@@ -49,13 +49,8 @@ const TString pileupRatioName = "/home/hep/wrtabb/git/DY-Analysis/data/pileup/pi
 const TString leg2SFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Leg2_SF.root";
 const TString medIDSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/MediumID_SF.root";
 const TString recoSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Reco_SF.root";
+const TString pvzFileName = "/home/hep/wrtabb/git/DY-Analysis/data/PVz.root";
 
-/*
-const int nLogBins = 11;
-const double massbins[] = {10,50,100,200,400,500,700,800,1000,1500,2000,3000};
-const int nLogBins2 = 11;
-const double massbins2[] = {10,50,100,200,400,500,700,800,1000,1500,2000,3000};
-*/
 const int MPSIZE = 2000;
 int GENnPair, Nelectrons, HLT_ntrig, nPileUp;
 double GENEvt_weight;
@@ -80,6 +75,7 @@ const float etaGapLow = 1.4442;
 const float ptHigh = 28;
 const float ptLow = 17;
 const float eMass = 0.000511;
+double muMass = 0.105658;
 
 const float dRMinCut = 0.3;//max value for reco-gen matching in dR
 const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30

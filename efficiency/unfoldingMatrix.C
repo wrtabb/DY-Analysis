@@ -1,4 +1,5 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/ntupleSkimLocation.h"
 
 const int ptBinHigh = 499;
 const int ptBinLow = 26;
@@ -54,22 +55,9 @@ void unfoldingMatrix()
   //Loading ntuples
   cout << "Loading ntuples" << endl;
   //The names of every directory being loaded
-   TString dirNames[numChains] = {
-  "/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE/crab_DYLL_M10to50_",
-  "/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100/EE",
-  "/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE/crab_DYLL_M100to200",
-  "/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-  "/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-  "/DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-  "/DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-  "/DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-  "/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-  "/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-  "/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE"
- };
+ TString dirNames[numChains] = {EEM10to50,EEM50to100,EEM100to200,EEM200to400,EEM400to500,
+  EEM500to700,EEM700to800,EEM800to1000,EEM1000to1500,EEM1500to2000,EEM2000to3000};
 
- TString baseDirectory =
-  "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3/DYJetsToLL_allMasses_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8";
 
   TChain*chains[numChains];
  vector <TString> *subFiles[numChains];
@@ -95,8 +83,7 @@ void unfoldingMatrix()
   subDirectorySize = subFiles[iChain]->size();
   for(int k=0;k<subDirectorySize;k++){
    TFileCollection filecoll("dum");//Object for creating a list of files in a directory
-   files = baseDirectory;
-   files+=subFiles[iChain]->at(k);
+   files=subFiles[iChain]->at(k);
    files+="/*.root";
    filecoll.Add(files);
    chains[iChain]->AddFileInfoList(filecoll.GetList());

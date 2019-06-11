@@ -1,10 +1,6 @@
-////////////////////////////////////////////////////////////////////
-//Data versus MC signal and backgrounds
-//Robert Tabb
-//wrtabb@huskers.unl.edu
-////////////////////////////////////////////////////////////////////
-
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/headerDataVsMC.h"
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/ntupleSkimLocation.h"
+
 
 void counter(Long64_t i, Long64_t N);
 TLorentzVector getDielectronP4(double pt1,double eta1,double phi1,double m1,double pt2,
@@ -113,60 +109,15 @@ void dataVsMC()
   //Loading ntuples
   cout << "Loading ntuples" << endl;
   //The names of every directory being loaded
-  TString dirNames[numChains] = {
-    "/QCD_Pt-20to30_EMEnriched_TuneCUETP8M1_13TeV_pythia8",
-    "/QCD_Pt-30to50_EMEnriched_TuneCUETP8M1_13TeV_pythia8/crab_QCDEMEnriched_Pt30to50",
-    "/QCD_Pt-50to80_EMEnriched_TuneCUETP8M1_13TeV_pythia8/crab_QCDEMEnriched_Pt50to80",
-    "/QCD_Pt-80to120_EMEnriched_TuneCUETP8M1_13TeV_pythia8/crab_QCDEMEnriched_Pt80to120",
-    "/QCD_Pt-120to170_EMEnriched_TuneCUETP8M1_13TeV_pythia8/crab_QCDEMEnriched_Pt120to170",
-    "/QCD_Pt-170to300_EMEnriched_TuneCUETP8M1_13TeV_pythia8",
-    "/QCD_Pt-300toInf_EMEnriched_TuneCUETP8M1_13TeV_pythia8",
-    "/WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/crab_WJetsToLNu_amcatnlo",
-    "/WW_TuneCUETP8M1_13TeV-pythia8",
-    "/WWTo2L2Nu_13TeV-powheg",
-    "/ZZ_TuneCUETP8M1_13TeV-pythia8",
-    "/ZZTo4L_13TeV_powheg_pythia8",
-    "/WZ_TuneCUETP8M1_13TeV-pythia8",
-    "/WZTo3LNu_TuneCUETP8M1_13TeV-powheg-pythia8",
-    "/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_truncated_M0To700/crab_ttbar",
-    "/TT_Mtt-700to1000_TuneCUETP8M2T4_13TeV-powheg-pythia8",
-    "/TT_Mtt-1000toInf_TuneCUETP8M2T4_13TeV-powheg-pythia8",
-    "/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1",
-    "/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1",
-    "/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE/crab_DYLL_M10to50",
-    "/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100/EE",
-    "/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE/crab_DYLL_M100to200",
-    "/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-    "/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-    "/DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-    "/DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-    "/DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-    "/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-    "/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-    "/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/EE",
-    "/DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/TauTau/crab_DYLL_M10to50",
-    "/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_truncated_M50To100/TauTau",
-    "/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/TauTau/crab_DYLL_M100to200",
-    "/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/TauTau",
-    "/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/TauTau",
-    "/DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/TauTau",
-    "/DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/TauTau",
-    "/DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/TauTau",
-    "/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/TauTau",
-    "/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/TauTau",
-    "/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/TauTau",
-    "/DoubleEG/crab_DoubleEG_RunB",
-    "/DoubleEG/crab_DoubleEG_RunC",
-    "/DoubleEG/crab_DoubleEG_RunD",
-    "/DoubleEG/crab_DoubleEG_RunE",
-    "/DoubleEG/crab_DoubleEG_RunF",
-    "/DoubleEG/crab_DoubleEG_RunG",
-    "/DoubleEG/crab_DoubleEG_RunH"
-  };
+  TString dirNames[numChains] = {QCDReco20to30,QCDReco30to50,QCDReco50to80,QCDReco80to120,
+   QCDReco120to170,QCDReco170to300,QCDReco300andUp,WJetsReco,WWReco,WWtoLNuReco,ZZReco,
+   ZZtoLReco,WZReco,WZtoLNuReco,TT0to700Reco,TT700to1000Reco,TT1000andUpReco,tWReco,tWantiReco,
+   EEM10to50Reco,EEM50to100Reco,EEM100to200Reco,EEM200to400Reco,EEM400to500Reco,
+   EEM500to700Reco,EEM700to800Reco,EEM800to1000Reco,EEM1000to1500Reco,EEM1500to2000Reco,
+   EEM2000to3000Reco,Taus10to50Reco,Taus50to100Reco,Taus100to200Reco,Taus200to400Reco,
+   Taus400to500Reco,Taus500to700Reco,Taus700to800Reco,Taus800to1000Reco,Taus1000to1500Reco,
+   Taus1500to2000Reco,Taus2000to3000Reco,runB,runC,runD,runE,runF,runG,runH};
 
-  TString baseDirectory =
-    "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/ikrav/DrellYan_13TeV_2016/v2p3";
-  TString subDirectoryDY = "/DYJetsToLL_allMasses_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8";
   TChain*chains[numChains];
 
   vector <TString> *subFiles[numChains];  
@@ -212,18 +163,7 @@ void dataVsMC()
     subDirectorySize = subFiles[iChain]->size();
     for(int k=0;k<subDirectorySize;k++) {	  	      
       TFileCollection filecoll("dum");//Object for creating a list of files in a directory
-      files = baseDirectory;      
-      if(iChain==EE10to50||iChain==EE50to100||iChain==EE100to200||iChain==EE200to400||
-	 iChain==EE400to500||iChain==EE500to700||iChain==EE700to800||iChain==EE800to1000||
-	 iChain==EE1000to1500||iChain==EE1500to2000||iChain==EE2000to3000||
-	 iChain==TAUTAU10to50||iChain==TAUTAU50to100||iChain==TAUTAU100to200||
-         iChain==TAUTAU200to400||iChain==TAUTAU400to500||iChain==TAUTAU500to700||
-         iChain==TAUTAU700to800||iChain==TAUTAU800to1000||iChain==TAUTAU1000to1500||
-         iChain==TAUTAU1500to2000||iChain==TAUTAU2000to3000) {
-	files+=subDirectoryDY;	 
-      }      
-
-      files+=subFiles[iChain]->at(k);
+      files=subFiles[iChain]->at(k);
       files+="/skims_0002/*.root";      
       filecoll.Add(files);
       chains[iChain]->AddFileInfoList(filecoll.GetList());
@@ -294,6 +234,8 @@ void dataVsMC()
   TH2F*hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
   TFile*fileRecoSF = new TFile(recoSFName); 
   TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
+  TFile*pvzFile = new TFile(pvzFileName);
+  TH1D*hPVzSF = (TH1D*)pvzFile->Get("PVz_SF");
   
   TH2F*hSFvsInvMassAll = new TH2F("hSFvsInvMassAll","",nBinsInvMass,massbins,150,0,1.5);
   TH2F*hSFvsInvMassHLT = new TH2F("hSFvsInvMassHLT","",nBinsInvMass,massbins,150,0,1.5);
@@ -302,7 +244,7 @@ void dataVsMC()
 
   cout << "Starting Event Loop" << endl;
   double varGenWeight, lumiEffective, nEffective, localEntry, sumGenWeight, sumRawGenWeight, 
-    totalWeight, sfWeight, weightNoPileup, xSecWeight, genWeight, pileupWeight, 
+    totalWeight, sfWeight, weightNoPileup, xSecWeight, genWeight, pileupWeight,pvzWeight 
     xSecWeightAlone;
   Long64_t nentries;
   Long64_t count = 0;
@@ -395,6 +337,7 @@ void dataVsMC()
       genWeight = 1.0;
       pileupWeight = 1.0;
       xSecWeightAlone = 1.0; 
+      pvzWeight = 1.0;
       //HLT cut
       trigNameSize = pHLT_trigName->size();
       bool passHLT = kFALSE;	  
@@ -470,9 +413,9 @@ void dataVsMC()
        xSecWeightAlone = lumi*(xSec[iChain]/nentries);//xSecWeight when used without genWeight
        pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
        genWeight = (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
-
+       //pvzWeight = hPVzSF->GetBinContent(hPVzSF->FindBin(PVz));//need ntuples with PVz 
        if(sampleCategory==FAKES){
-         totalWeight = genWeight*xSecWeight*pileupWeight;
+         totalWeight = genWeight*xSecWeight*pileupWeight*pvzWeight;
          weightNoPileup = genWeight*xSecWeight;
        }
        else{

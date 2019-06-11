@@ -40,8 +40,8 @@ void doUnfold()
   ///////////////////////////////////////
   
   //gROOT->SetBatch(kTRUE);
-  //int regType = NO_REG;
-  int regType = VAR_REG;
+  int regType = NO_REG;
+  //int regType = VAR_REG;
   //int regType = CONST_REG;
   
   TH1::SetDefaultSumw2();

@@ -36,10 +36,10 @@ void makeCorrMatrix()
  //Initialize variables and arrays
  double rndEle,vecSum[nEle],vecAvg[nEle],vecM[nVec][nEle],vecSum2[nEle],vecStd[nEle];
  
- //Set sums to zer 
+ //Set sums to zero 
  for(int i=0;i<nEle;i++){
   vecSum[i] = 0;
-  vecSum2[i]=0;
+  vecSum2[i] = 0;
  }
 
  for(int iEle=0;iEle<nEle;iEle++){
