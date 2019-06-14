@@ -13,8 +13,6 @@ void covTest()
  const bool corrTest = true;//do correlation matrix instead of covariance
  
  TF1*fitFunc = new TF1("fitFunc","[0]*x^[1]",0,nPoints*nSampleStart);
-  //fit->SetNpx(10000);
-  //fitFunc->SetParameters(1.0,1.0);
   fitFunc->SetParameter(0,10);
   fitFunc->SetParameter(1,0.5);
 
@@ -79,6 +77,7 @@ void covTest()
  hGraph->SetMarkerStyle(20);
  hGraph->Fit("fitFunc");
  hGraph->Draw("P");
+
 /*
  TString saveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/covariance/";
  if(corrTest) saveName += "testCorrelations";
