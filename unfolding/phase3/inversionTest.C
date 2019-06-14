@@ -1,4 +1,5 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
 const TString inputFileName = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/outputDataUnfold.root";
 
 void inversionTest()
@@ -69,21 +70,13 @@ void inversionTest()
 
  //draw results
  TCanvas*c2 = new TCanvas("c2","",0,0,1000,1000);
- c2->SetLogx();
- c2->SetLogy();
- c2->SetLogz();
- hResponse->GetZaxis()->SetRangeUser(0,1);
- hResponse->Draw("colz");
+ hResponse->SetTitle("Response matrix");
+ hist2DPlot(c2,hResponse,"colz",true,true,true);
 
  TCanvas*canvas = new TCanvas("canvas","",0,0,1200,1000);
- canvas->SetLogy();
- canvas->SetLogx();
- canvas->SetLogz();
- canvas->SetGrid();
- hUnfolded->GetXaxis()->SetNoExponent();
- hUnfolded->GetXaxis()->SetMoreLogLabels();
  hUnfolded->SetFillColor(kRed+2);
- hUnfolded->Draw("hist");
+ hUnfolded->SetTitle("Unfolding: Inversion method");
  hTrue->SetMarkerStyle(20);
- hTrue->Draw("PE,same");
+ histPlot(canvas,hUnfolded,"hist",hTrue,"PE,same",true,true);
 }
+

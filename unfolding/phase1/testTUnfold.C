@@ -7,6 +7,8 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TMath.h"
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
+
 using namespace std;
 
 enum Reglarization {//Strength of regularization
@@ -109,8 +111,9 @@ void testTUnfold()
   //  Constructor for TUnfoldDensity  //
   //////////////////////////////////////
   TUnfoldDensity unfold(hMatrix,outputMap,regMode,constraintMode,densityFlags);
-  unfold.SetInput(hReco,0.0,0.0,hCovM,hCovMinv);//the measured distribution
-  //unfold.SetInput(hReco);//the measured distribution
+  //unfold.SetInput(hReco,0.0,0.0,hCovM,hCovMinv);//the measured distribution
+  unfold.SetInput(hReco);//the measured distribution
+
   //////////////////////////////
   //  Background Subtraction  //
   //////////////////////////////
@@ -171,27 +174,25 @@ void testTUnfold()
    hUnfoldedE->SetMarkerStyle(25);
    hUnfoldedE->SetMarkerColor(kBlue+2);
    hUnfoldedE->SetMarkerSize(1);
-  ofstream errorFile;
-  errorFile.open("unfoldErrors.txt");
  
   for(int i=0;i<nBins;i++){
     double c = hUnfolded->GetBinContent(i+1);
     binError = TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1));
     hUnfoldedE->SetBinContent(i+1,c);
     hUnfoldedE->SetBinError(i+1,binError);
-    errorFile << "Bin: " << i+1 << ", Error: " << binError << endl;
   }
-  errorFile.close();
+
   TH1F*hRecoRebin=(TH1F*)hReco->Clone("hRecoRebin");
    hRecoRebin->Rebin(2);
-  TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
-   ratio->Divide(hGen);
+  //TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
+  // ratio->Divide(hGen);
 
-  double x[nBins],res[nBins];
-  double chi = hUnfoldedE->Chi2Test(hGen,"CHI2/NDF",res);//chi2/ndf to print on plot
-  double pValues = hUnfoldedE->Chi2Test(hGen,"P",res);//outputs chi2,prob,ndf,igood
-  TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
-
+  //double x[nBins],res[nBins];
+  //double chi = hUnfoldedE->Chi2Test(hGen,"CHI2/NDF",res);//chi2/ndf to print on plot
+  //double pValues = hUnfoldedE->Chi2Test(hGen,"P",res);//outputs chi2,prob,ndf,igood
+  //TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
+  TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1000);
+/*
   const float padmargins = 0.03;
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1000);
   TPad*pad1 = new TPad("","",0,0.3,1.0,1.0);
@@ -240,13 +241,29 @@ void testTUnfold()
   ratio->SetMarkerColor(kBlack);
   ratio->Draw("PE");
   line->Draw("same");
-TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1200,1200);
-canvas3->SetLogy();
-canvas3->SetLogx();
-canvas3->SetLogz();
-//histCorrTotal->Draw("colz");
-histEmatTotal->Draw("colz");
-canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/eMatrixCov.png");
+*/
+
+  ratioPlot(canvas1,hGen,hRecoRebin,hUnfoldedE);
+
+  TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1000,1000);
+  histCorrTotal->GetYaxis()->SetTitle("mass [GeV]");
+  histCorrTotal->GetXaxis()->SetTitle("mass [GeV]");
+  hist2DPlot(canvas3,histCorrTotal,"colz",true,true,true);
+/*
+  canvas3->SetLogy();
+  canvas3->SetLogx();
+  canvas3->SetLogz();
+  canvas3->SetRightMargin(0.16);
+  canvas3->SetLeftMargin(0.12);
+
+  histCorrTotal->GetYaxis()->SetNoExponent();
+  histCorrTotal->GetYaxis()->SetMoreLogLabels();
+  histCorrTotal->GetXaxis()->SetNoExponent();
+  histCorrTotal->GetXaxis()->SetMoreLogLabels();
+  histCorrTotal->GetYaxis()->SetTitleOffset(1.8);
+  histCorrTotal->Draw("colz");
+*/  
+  canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/corrTUnfold.png");
   //Save Options
   TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/testUnfoldData";
   TString lineName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/testUnfoldDataCurves";

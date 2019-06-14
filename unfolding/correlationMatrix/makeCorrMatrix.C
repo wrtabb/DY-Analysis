@@ -44,8 +44,6 @@ void makeCorrMatrix()
 
  for(int iEle=0;iEle<nEle;iEle++){
   for(int jVec=0;jVec<nVec;jVec++){
-   //rndEle = 8*random->Rndm();//random number
-   //vector[jVec][iEle] = rndEle;//random number placed in vector
    vecSum[iEle] += vector[jVec][iEle];//sum of element iEle summed over vectors
    vecSum2[iEle] += vector[jVec][iEle]*vector[jVec][iEle];//sum of squares of elements
   }

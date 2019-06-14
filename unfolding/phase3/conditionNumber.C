@@ -20,11 +20,10 @@ void conditionNumber()
    matrix(j-1,i-1) = hMatrix->GetBinContent(i,j);
   }
  }
- matrix.Draw("colz");
+ //matrix.Draw("colz");
  TDecompSVD svd(matrix);
  TVectorD sig = svd.GetSig();
  double condN = sig.Max()/sig.Min();
  sig.Print();
-
  cout << "Condition number = " << condN << endl;
 }
