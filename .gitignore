@@ -4,5 +4,7 @@
 *.pdf
 *.root
 .nsf*
+*.swp
+*.swo
 index.php
 
