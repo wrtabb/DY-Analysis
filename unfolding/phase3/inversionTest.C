@@ -2,6 +2,9 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
 const TString inputFileName = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/outputDataUnfold.root";
 
+//Unfold MC or Data
+const bool isMC = true;
+
 void inversionTest()
 {
  gStyle->SetOptStat(0);
@@ -33,11 +36,14 @@ void inversionTest()
  TMatrixD unfold(nLogBins,nLogBins);
  TVectorD vData(nLogBins);
 
- //Definte matrix and vectors
+ //Define matrix and vectors
  for(int i=0;i<nLogBins;i++){
   for(int j=0;j<nLogBins;j++){
    matrix(i,j) = hMatrix->GetBinContent(i+1,j+1);
-   if(i==0) vData(j) = hData->GetBinContent(j+1);
+   if(i==0){ 
+    if(isMC) vData(j) = hMC->GetBinContent(j+1);
+    else vData(j) = hData->GetBinContent(j+1);
+   }
   }
  }
 
@@ -68,7 +74,8 @@ void inversionTest()
 
  //invert response matrix to get unfolding matrix
  unfold = response;
- unfold.Invert();
+ double det;
+ unfold.Invert(&det);
 
  //multiply tranposed unfolding matrix by input vector to get unfolded vector
  TVectorD vUnfolded = (unfold.T())*vData;
@@ -94,7 +101,10 @@ void inversionTest()
  hUnfolded->SetTitle("Unfolding: Inversion method");
  hTrue->SetMarkerStyle(20);
  histPlot(canvas,hUnfolded,"hist",hTrue,"PE,same",true,true);
- canvas->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/unfoldInversionTest.png");
+ TString unfSaveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/unfoldInversionTest";
+ if(isMC) unfSaveName += "_MC.png";
+ else unfSaveName += "_Data.png";
+ canvas->SaveAs(unfSaveName);
 
  TCanvas*canMatrix = new TCanvas("canMatrix","",0,0,1000,1000);
  hMatrix->SetTitle("Migration matrix");
