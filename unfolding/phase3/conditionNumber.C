@@ -2,7 +2,7 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
 
 const TString file1Name= "/home/hep/wrtabb/git/DY-Analysis/data/dataVsMC.root";
-const TString file2Name= "outputDataUnfold.root";
+const TString file2Name= "unfold_only2Ele.root";
 
 void conditionNumber()
 {
@@ -17,12 +17,18 @@ void conditionNumber()
   hMatrix->RebinY(2);
  hist2DPlot(0,hMatrix,"colz",true,true,true); 
  TMatrixD matrix(nLogBins,nLogBins);
+ TMatrixD response(nLogBins,nLogBins);
  for(int i=0;i<nLogBins;i++){
+  double sum = 0;
   for(int j=0;j<nLogBins;j++){
-   matrix(i,j) = hMatrix->GetBinContent(i,j);
+   matrix(i,j) = hMatrix->GetBinContent(i+1,j+1);
+   sum += matrix(i,j);
+  }
+  for(int j=0;j<nLogBins;j++){
+   response(i,j) = matrix(i,j)/sum;
   }
  }
- TDecompSVD svd(matrix);
+ TDecompSVD svd(response);
  TVectorD sig = svd.GetSig();
  double condN = sig.Max()/sig.Min();
  sig.Print();

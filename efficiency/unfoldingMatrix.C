@@ -293,12 +293,12 @@ void unfoldingMatrix()
      bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestTrackLep2);
 
      //All cuts
-     if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMass=0;
-     if(!Electron_passMediumID[closestTrackLep1]) invMass=0;
-     if(!Electron_passMediumID[closestTrackLep2]) invMass=0;
+     //if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMass=0;
+     //if(!Electron_passMediumID[closestTrackLep1]) invMass=0;
+     //if(!Electron_passMediumID[closestTrackLep2]) invMass=0;
      //if(!passNumEle) invMass = 0;;
-     if(leadEle<0||subEle<0) invMass = 0;
-     if(!passHLT) invMass = 0;
+     //if(leadEle<0||subEle<0) invMass = 0;
+     //if(!passHLT) invMass = 0;
 
      eEta1 = Electron_eta[leadEle];
      eEta2 = Electron_eta[subEle];
