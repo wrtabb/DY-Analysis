@@ -3,6 +3,7 @@
 const TString inputFileName = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/outputDataUnfold.root";
 
 //Unfold MC or Data
+//MC is a closure test
 const bool isMC = true;
 
 void inversionTest()
