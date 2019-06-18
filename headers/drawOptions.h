@@ -19,6 +19,17 @@ void ratioPlot(TCanvas*canvas,TH1*hist1,TH1*hist2,TH1*hist3)
  double chi = hist3->Chi2Test(hist1,"CHI2/NDF",res);
  TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));
 
+ hist1->SetFillColor(kRed+2);
+ hist1->SetLineColor(kRed+2);
+ hist1->SetMarkerColor(kRed+2);
+ hist2->SetMarkerStyle(20);
+ hist3->SetMarkerStyle(25);
+
+ TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
+  legend->SetTextSize(0.02);
+  legend->AddEntry(hist1,"True");
+  legend->AddEntry(hist2,"Data");
+  legend->AddEntry(hist3,"Unfolded");
  TPad*pad1 = new TPad("","",0,0.3,1.0,1.0);
  pad1->SetBottomMargin(padmargins);
  pad1->SetGrid();
@@ -35,7 +46,7 @@ void ratioPlot(TCanvas*canvas,TH1*hist1,TH1*hist2,TH1*hist3)
  hist2->Draw("PE,same");
  hist3->Draw("PE,same");
  chiLabel->Draw("same");
-
+ legend->Draw("same");
  canvas->cd();
  TPad*pad2 = new TPad("","",0,0.05,1,0.3);
  pad2->SetLogx();
@@ -81,10 +92,12 @@ void histPlot(TCanvas*canvas,TH1*hist1,Option_t*draw1,TH1*hist2,Option_t*draw2,b
 
 void hist2DPlot(TCanvas*canvas,TH2*hist,Option_t*draw,bool logX,bool logY,bool logZ)
 {
+ if(canvas==NULL) canvas = new TCanvas("canvas","",0,0,1000,1000);
  canvas->SetLeftMargin(0.12);
  canvas->SetRightMargin(0.16);
  canvas->SetGrid();
  hist->GetYaxis()->SetTitleOffset(1.8);
+
  if(logX){
   canvas->SetLogx();
   hist->GetXaxis()->SetNoExponent();
@@ -99,4 +112,10 @@ void hist2DPlot(TCanvas*canvas,TH2*hist,Option_t*draw,bool logX,bool logY,bool l
   canvas->SetLogz();
  }
  hist->Draw(draw);
+ gPad->Update();
+ TPaletteAxis*palette = (TPaletteAxis*)hist->GetListOfFunctions()->FindObject("palette");
+ palette->SetX1NDC(0.845);
+ palette->SetY1NDC(0.1);
+ palette->SetX2NDC(0.89);
+ palette->SetY2NDC(0.9);
 }

@@ -1,34 +1,16 @@
-#include "TUnfold.h"
-#include "TUnfoldSys.h"
-#include "TUnfoldDensity.h"
-#include "TUnfoldBinning.h"
-#include "TFile.h"
-#include "TCanvas.h"
-#include "TH1.h"
-#include "TH2.h"
-#include "TMath.h"
-using namespace std;
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
+const TString fileName2Ele = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_only2Ele.root";
+const TString fileNameAllEle = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_allEle.root";
+
+const int binLow = 15;
+const int binHigh = 3000;
 
 enum Reglarization {//Strength of regularization
   NO_REG,           //No regularization
   CONST_REG,        //User defined regularization
   VAR_REG           //TUnfoldDensity determines best choice of regularization strength
 };
-const int dataLumi = 35867;//data luminosity (pb)
-const int nBins = 43;
-const int binLow = 15;
-const int binHigh = 3000;
-const double massbins[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,
- 110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,
- 1500,3000};
-const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47.5,50,52.5,55,
- 57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,98.5,101,103.5,106,108,110,
- 112.5,115,117.5,120,123,126,129.5,133,137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,
- 210,220,231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,700,765,830,915,1000,
- 1250,1500,2250,3000};
-const int nLogBins2 = 86;
-//File Names
-const TString fileName = "outputDataUnfold.root";       
 
 void doUnfold()
 {
@@ -40,13 +22,13 @@ void doUnfold()
   ///////////////////////////////////////
   
   //gROOT->SetBatch(kTRUE);
-  int regType = NO_REG;
-  //int regType = VAR_REG;
+  //int regType = NO_REG;
+  int regType = VAR_REG;
   //int regType = CONST_REG;
   
   TH1::SetDefaultSumw2();
   //Load the files
-  TFile*file= new TFile(fileName);
+  TFile*file= new TFile(fileNameAllEle);
   gStyle->SetPalette(1);
   gStyle->SetOptStat(0);
 
@@ -153,11 +135,11 @@ void doUnfold()
    hUnfolded->SetMarkerSize(1);
   TH2*histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
   TH2*histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
-  TH1F*hUnfoldedE = new TH1F("Unfolded with errors",";(gen)",nBins,massbins);
+  TH1F*hUnfoldedE = new TH1F("Unfolded with errors",";(gen)",nLogBins,massbins);
    hUnfoldedE->SetMarkerStyle(25);
    hUnfoldedE->SetMarkerColor(kBlue+2);
    hUnfoldedE->SetMarkerSize(1);
-  for(int i=0;i<nBins;i++){
+  for(int i=0;i<nLogBins;i++){
     double c = hUnfolded->GetBinContent(i+1);
     hUnfoldedE->SetBinContent(i+1,c);
     hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
@@ -167,7 +149,7 @@ void doUnfold()
   TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
    ratio->Divide(hTrue);
 
-  double x[nBins],res[nBins];
+  double x[nLogBins],res[nLogBins];
   double chi = hUnfoldedE->Chi2Test(hTrue,"CHI2/NDF",res);//chi2/ndf to print on plot
   double pValues = hUnfoldedE->Chi2Test(hTrue,"P",res);//outputs chi2,prob,ndf,igood
   TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
@@ -224,7 +206,7 @@ void doUnfold()
   canvas1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/dataUnfolded_only2Ele.png");
  
   double width,nUnfold;
-  TH1D*hCross = new TH1D("hCross","",nBins,massbins);
+  TH1D*hCross = new TH1D("hCross","",nLogBins,massbins);
    hCross->SetMarkerStyle(20);
    hCross->SetMarkerColor(kBlack);
    hCross->SetTitle("Cross Section");
@@ -232,9 +214,9 @@ void doUnfold()
    hCross->GetXaxis()->SetNoExponent();
    hCross->GetXaxis()->SetTitle("mass [GeV]");
    hCross->GetYaxis()->SetTitle("d#sigma/dm [pb/GeV]");
-  for(int k=1;k<nBins+1;k++){
+  for(int k=1;k<nLogBins+1;k++){
    width = hUnfoldedE->GetXaxis()->GetBinWidth(k);
-   nUnfold = hUnfoldedE->GetBinContent(k)/(width*dataLumi);
+   nUnfold = hUnfoldedE->GetBinContent(k)/(width*dataLuminosity);
    hCross->SetBinContent(k,nUnfold);
   }
 

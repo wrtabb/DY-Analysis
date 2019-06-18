@@ -1,6 +1,7 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
-const TString inputFileName = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/outputDataUnfold.root";
+const TString fileName2Ele = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_only2Ele.root";
+const TString fileNameAllEle = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_allEle.root";
 
 //Unfold MC or Data
 //MC is a closure test
@@ -12,7 +13,7 @@ void inversionTest()
  gStyle->SetPalette(1);
 
  //Define file
- TFile*inputFile = new TFile(inputFileName);
+ TFile*inputFile = new TFile(fileName2Ele);
 
  //Initialize histograms
  TH2D*hMatrix = (TH2D*)inputFile->Get("hMatrix");
@@ -21,7 +22,7 @@ void inversionTest()
  TH1D*hData = (TH1D*)inputFile->Get("hData");
  TH1D*hTrue = (TH1D*)inputFile->Get("hTrue");
  TH1D*hBack = (TH1D*)inputFile->Get("hBack");
- TH1D*hUnfolded = (TH1D*)hTrue->Clone("hUnfolded");
+ TH1D*hUnfolded = new TH1D("hUnfolded","",nLogBins,massbins); 
 
  //Rebin so that the matrix will be square
  hData->Rebin(2);
@@ -31,6 +32,7 @@ void inversionTest()
  //Subtract background from data
  hData->Add(hBack,-1);
  
+ nLogBins = nLogBins + 1;
  //Initialize matrix and vectors
  TMatrixD matrix(nLogBins,nLogBins);
  TMatrixD response(nLogBins,nLogBins);
@@ -40,12 +42,10 @@ void inversionTest()
  //Define matrix and vectors
  for(int i=0;i<nLogBins;i++){
   for(int j=0;j<nLogBins;j++){
-   matrix(i,j) = hMatrix->GetBinContent(i+1,j+1);
-   if(i==0){ 
-    if(isMC) vData(j) = hMC->GetBinContent(j+1);
-    else vData(j) = hData->GetBinContent(j+1);
-   }
+   matrix(i,j) = hMatrix->GetBinContent(i,j);
   }
+  if(isMC) vData(i) = hMC->GetBinContent(i);
+  else vData(i) = hData->GetBinContent(i);
  }
 
  //Normalize matrix to make response matrix
@@ -61,18 +61,6 @@ void inversionTest()
   }
  }
  
-/*
- //Check that response matrix is properly normalized
- for(int i=0;i<nLogBins;i++){
-  double testSum = 0;
-  for(int j=0;j<nLogBins;j++){
-   testSum += response(i,j);
-  }
-  //each testSum must equal 1
-  cout << "The sum of column i = " << i << " is: " << testSum << endl;
- }
-*/
-
  //invert response matrix to get unfolding matrix
  unfold = response;
  double det;
@@ -82,10 +70,10 @@ void inversionTest()
  TVectorD vUnfolded = (unfold.T())*vData;
  
  //Place vUnfolded and response in histograms for plotting
- for(int i=0;i<nLogBins;i++){
-  hUnfolded->SetBinContent(i+1,vUnfolded(i));
-  for(int j=0;j<nLogBins;j++){
-   hResponse->SetBinContent(i+1,j+1,response(i,j));
+ for(int i=1;i<nLogBins;i++){
+  hUnfolded->SetBinContent(i,vUnfolded(i));
+  for(int j=1;j<nLogBins;j++){
+   hResponse->SetBinContent(i,j,response(i,j));
   }
  }
 
@@ -98,10 +86,10 @@ void inversionTest()
  c2->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/responseMatrix.png");
 
  TCanvas*canvas = new TCanvas("canvas","",0,0,1200,1000);
- hUnfolded->SetFillColor(kRed+2);
  hUnfolded->SetTitle("Unfolding: Inversion method");
  hTrue->SetMarkerStyle(20);
- histPlot(canvas,hUnfolded,"hist",hTrue,"PE,same",true,true);
+ //histPlot(canvas,hUnfolded,"hist",hTrue,"PE,same",true,true);
+ ratioPlot(canvas,hTrue,hData,hUnfolded);
  TString unfSaveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/unfoldInversionTest";
  if(isMC) unfSaveName += "_MC.png";
  else unfSaveName += "_Data.png";

@@ -155,7 +155,7 @@ void covCalc()
  hCovM->SetTitle("Unfolding covariance matrix");
  hCovM->GetXaxis()->SetTitle("mass [GeV]");
  hCovM->GetYaxis()->SetTitle("mass [GeV]");
- hist2DPlot(canvas,hCovM,true,true,true);
+ hist2DPlot(canvas,hCovM,"colz",true,true,true);
  hCovM->Draw("colz");
  TString saveName1 = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/";
  saveName1 += "000covariance_";
@@ -167,7 +167,7 @@ void covCalc()
  hCorrM->SetTitle("Unfolding correlations matrix");
  hCorrM->GetXaxis()->SetTitle("mass [GeV]");
  hCorrM->GetYaxis()->SetTitle("mass [GeV]");
- hist2DPlot(canvas2,hCorrM,true,true,true);
+ hist2DPlot(canvas2,hCorrM,"colz",true,true,true);
  hCorrM->Draw("colz");
  TString saveName2 = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/";
  saveName2 += "000correlations_";

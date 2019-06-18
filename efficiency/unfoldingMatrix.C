@@ -296,7 +296,7 @@ void unfoldingMatrix()
      if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMass=0;
      if(!Electron_passMediumID[closestTrackLep1]) invMass=0;
      if(!Electron_passMediumID[closestTrackLep2]) invMass=0;
-     if(!passNumEle) invMass = 0;;
+     //if(!passNumEle) invMass = 0;;
      if(leadEle<0||subEle<0) invMass = 0;
      if(!passHLT) invMass = 0;
 
