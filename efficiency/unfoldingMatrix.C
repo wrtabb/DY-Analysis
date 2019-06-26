@@ -193,7 +193,6 @@ void unfoldingMatrix()
       count = count+1; 
       chains[iChain]->GetEntry(i);
      
-     //Gen Loop 
      TLorentzVector hardP4;
      TLorentzVector fsrP4;
      int idxGenEle1 = -1;
@@ -201,8 +200,10 @@ void unfoldingMatrix()
      int idxGenEleFS1 = -1;
      int idxGenEleFS2 = -1;
      int nGenDielectrons = 0;
-     double invMassHard;
-     double invMassFS;
+     double invMassHard = 0;
+     double invMassFS = 0;
+    
+     //Gen loop
      for(int kLep=0;kLep<GENnPair;kLep++){
       for(int lLep=kLep+1;lLep<GENnPair;lLep++){
        if(!(abs(GENLepton_ID[kLep])==11 && abs(GENLepton_ID[lLep])==11))
