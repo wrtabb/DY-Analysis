@@ -244,7 +244,7 @@ void dataVsMC()
 
   cout << "Starting Event Loop" << endl;
   double varGenWeight, lumiEffective, nEffective, localEntry, sumGenWeight, sumRawGenWeight, 
-    totalWeight, sfWeight, weightNoPileup, xSecWeight, genWeight, pileupWeight,pvzWeight 
+    totalWeight, sfWeight, weightNoPileup, xSecWeight, genWeight, pileupWeight,pvzWeight, 
     xSecWeightAlone;
   Long64_t nentries;
   Long64_t count = 0;

@@ -1,7 +1,9 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
+
 const TString fileName2Ele = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_only2Ele.root";
 const TString fileNameAllEle = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_allEle.root";
+const TString fileName = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/outputDataUnfold.root";
 
 //Unfold MC or Data
 //MC is a closure test
@@ -13,7 +15,7 @@ void inversionTest()
  gStyle->SetPalette(1);
 
  //Define file
- TFile*inputFile = new TFile(fileName2Ele);
+ TFile*inputFile = new TFile(fileName);
 
  //Initialize histograms
  TH2D*hMatrix = (TH2D*)inputFile->Get("hMatrix");
@@ -25,6 +27,7 @@ void inversionTest()
  TH1D*hUnfolded = new TH1D("hUnfolded","",nLogBins,massbins); 
 
  //Rebin so that the matrix will be square
+ hMC->Rebin(2);
  hData->Rebin(2);
  hBack->Rebin(2);
  hMatrix->RebinY(2);
@@ -60,7 +63,7 @@ void inversionTest()
    else cout << "Could not normalize! i = " << i << ", j = " << j << endl;
   }
  }
- 
+ matrix.Draw("colz"); 
  //invert response matrix to get unfolding matrix
  unfold = response;
  double det;
@@ -78,6 +81,11 @@ void inversionTest()
  }
 
  //draw results
+ TCanvas*c3 = new TCanvas("c3","",0,0,1000,1000);
+ c3->SetGrid();
+ unfold.Draw("colz");
+ c3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/unfoldingMatrix.png");
+
  TCanvas*c2 = new TCanvas("c2","",0,0,1000,1000);
  hResponse->SetTitle("Response matrix");
  hResponse->GetXaxis()->SetTitle("True mass [GeV]");
@@ -88,7 +96,6 @@ void inversionTest()
  TCanvas*canvas = new TCanvas("canvas","",0,0,1200,1000);
  hUnfolded->SetTitle("Unfolding: Inversion method");
  hTrue->SetMarkerStyle(20);
- //histPlot(canvas,hUnfolded,"hist",hTrue,"PE,same",true,true);
  ratioPlot(canvas,hTrue,hData,hUnfolded);
  TString unfSaveName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/unfoldInversionTest";
  if(isMC) unfSaveName += "_MC.png";

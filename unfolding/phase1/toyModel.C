@@ -1,7 +1,7 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
-
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/headerFunctions.h"
 //forward declaration for counter
-void counter(Long64_t i, Long64_t N);
+//void counter(Long64_t i, Long64_t N);
 
 //strings for naming histgrams and for file locations
 const TString mcDist = "/home/hep/wrtabb/git/DY-Analysis/data/efficiencyAndMigration.root";
@@ -193,7 +193,7 @@ void toyModel()
   file2->Write();
   file2->Close();
   }
-
+/*
 void counter(Long64_t i, Long64_t N)
 {
   
@@ -205,3 +205,4 @@ void counter(Long64_t i, Long64_t N)
   }
 return;
 }
+*/

@@ -14,17 +14,13 @@ void getHists()
  TFile*fileTest = new TFile(fileTestName);
  TFile*fileCorr= new TFile(fileCorrName);
 
- //gROOT->SetBatch(true);
  gStyle->SetOptStat(0);
  gStyle->SetPalette(1);
- //TH1D*hMC = (TH1D*)file2->Get("hRecoInvMass");
  TH1D*hMC = (TH1D*)fileTest->Get("hMC");
-  hMC->Rebin(2);
   hMC->SetName("hMC");
   hMC->SetFillColor(kOrange-2);
  TH1D*hData = (TH1D*)file1->Get("hDataInvMass");
   hData->SetName("hData");
- //TH1D*hTrue = (TH1D*)file2->Get("hTrue");
  TH1D*hTrue = (TH1D*)fileTest->Get("hTrue");
   hTrue->SetName("hTrue");
  TH1D*hBack = (TH1D*)file1->Get("hFakesInvMass");
@@ -42,7 +38,6 @@ void getHists()
  hBack->Add(hEW);
  hBack->Add(hTops);
  hBack->SetName("hBack");
- //TH2D*hMatrix = (TH2D*)file2->Get("migMatrixGENisHardvsReco"); 
  TH2D*hMatrix = (TH2D*)fileTest->Get("hMatrix"); 
   hMatrix->SetName("hMatrix");
   hMatrix->GetXaxis()->SetNoExponent();
@@ -52,6 +47,8 @@ void getHists()
   hMatrix->GetXaxis()->SetTitle("True mass [GeV]");
   hMatrix->GetYaxis()->SetTitle("Reco mass [GeV]");
 
+ TH1D*hMCRebin = (TH1D*)hMC->Clone("hMCRebin");
+ hMCRebin->Rebin(2);
  TCanvas*canMatrix = new TCanvas("canMatrix","",10,10,1000,1000);
   canMatrix->SetGrid();
   canMatrix->SetLogy();
@@ -65,11 +62,11 @@ void getHists()
   hDataRebin->Rebin(2);
  THStack*hStack = new THStack("hStack","");
   hStack->Add(hBackRebin);
-  hStack->Add(hMC);
+  hStack->Add(hMCRebin);
  TH1D*hStackHist = new TH1D("hStackHist","",nLogBins,massbins);
  double stackContent;
  for(int i=1;i<nLogBins+1;i++){
-  stackContent = hBackRebin->GetBinContent(i) + hMC->GetBinContent(i); 
+  stackContent = hBackRebin->GetBinContent(i) + hMCRebin->GetBinContent(i); 
   hStackHist->SetBinContent(i,stackContent); 
  }
 

@@ -2,6 +2,7 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
 const TString fileName2Ele = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_only2Ele.root";
 const TString fileNameAllEle = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_allEle.root";
+const TString fileName = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/outputDataUnfold.root";
 
 const int binLow = 15;
 const int binHigh = 3000;
@@ -22,18 +23,24 @@ void doUnfold()
   ///////////////////////////////////////
   
   //gROOT->SetBatch(kTRUE);
-  //int regType = NO_REG;
-  int regType = VAR_REG;
+  int regType = NO_REG;
+  //int regType = VAR_REG;
   //int regType = CONST_REG;
   
+  //Set closure test
+  bool closureTest = true;
+
   TH1::SetDefaultSumw2();
   //Load the files
-  TFile*file= new TFile(fileNameAllEle);
+  TFile*file= new TFile(fileName);
   gStyle->SetPalette(1);
   gStyle->SetOptStat(0);
 
   //Define hisograms
-  TH1D*hReco = (TH1D*)file->Get("hData");//reconstructed mass
+  TH1D*hReco;
+  if(closureTest) hReco = (TH1D*)file->Get("hMC");//reconstructed mass
+  else hReco = (TH1D*)file->Get("hData");//reconstructed mass
+   hReco->SetFillColor(kWhite);
   TH1D*hTrue = (TH1D*)file->Get("hTrue");//true mass
   TH1D*hBack = (TH1D*)file->Get("hBack");//background mass
   TH2D*hMatrix = (TH2D*)file->Get("hMatrix");//migration matrix
@@ -87,7 +94,7 @@ void doUnfold()
   //////////////////////////////
   double backScale = 1.0;
   double backScaleError = 0.0;//scale error for background
-  unfold.SubtractBackground(hBack,"background",backScale,backScaleError);
+  if(!closureTest) unfold.SubtractBackground(hBack,"background",backScale,backScaleError);
 
   ////////////////////////////
   //  Add Systematic Error  //
@@ -203,7 +210,7 @@ void doUnfold()
   ratio->Draw("PE");
   line->Draw("same");
 
-  canvas1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/dataUnfolded_only2Ele.png");
+  canvas1->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/dataUnfolded.png");
  
   double width,nUnfold;
   TH1D*hCross = new TH1D("hCross","",nLogBins,massbins);
@@ -225,9 +232,8 @@ void doUnfold()
   canvas2->SetLogx();
   canvas2->SetLogz();
   canvas2->SetGrid();
-  //histEmatStat->Draw("colz");
   hCross->Draw("PE");
-  canvas2->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/xsec_only2Ele.png");
+  canvas2->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/xsec.png");
   TFile*fileXsec = new TFile("xsec.root","recreate");
   hCross->Write();
   canvas1->Write();

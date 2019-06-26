@@ -181,7 +181,7 @@ void drawDataVsMC()
       if(i==VERTICES_WEIGHTED&&j==DATA) 
         histos[i][j] = (TH1F*)file->Get(histName[j]+histTypeName[i-1]);
       else histos[i][j]=(TH1F*)file->Get(histName[j]+histTypeName[i]); 
-
+      if(i==INV_MASS||i==INV_MASS0||i==INV_MASS1||i==INV_MASS2||i==INV_MASS3||i==INV_MASS_SCALED) histos[i][j]->Rebin(2);
       //Setting negative bin content to ZERO!!!!!!!!!!!!!!!!!!!!!! 
       int maxBin = histos[i][j]->GetMaximumBin();
       double x = histos[i][j]->GetXaxis()->GetBinCenter(maxBin);

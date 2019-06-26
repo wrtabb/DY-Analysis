@@ -201,8 +201,8 @@ void unfoldingMatrix()
      int idxGenEleFS1 = -1;
      int idxGenEleFS2 = -1;
      int nGenDielectrons = 0;
-     double invMassHard = 0;
-     double invMassFS = 0;
+     double invMassHard;
+     double invMassFS;
      for(int kLep=0;kLep<GENnPair;kLep++){
       for(int lLep=kLep+1;lLep<GENnPair;lLep++){
        if(!(abs(GENLepton_ID[kLep])==11 && abs(GENLepton_ID[lLep])==11))
@@ -226,19 +226,19 @@ void unfoldingMatrix()
       cout << "Gen level produces too many or too few electron pairs" << endl;
       continue;
      }
+
      hardP4 = getDielectronP4(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
       GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],            GENLepton_phi[idxGenEle2],eMass);
      fsrP4 = getDielectronP4(GENLepton_pT[idxGenEleFS1],GENLepton_eta[idxGenEleFS1],
-      GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],GENLepton_eta[idxGenEleFS2],      GENLepton_phi[idxGenEleFS2],eMass);
-     if(passDileptonKinematics(GENLepton_pT[idxGenEle1],GENLepton_pT[idxGenEle2],
-      GENLepton_eta[idxGenEle1],GENLepton_eta[idxGenEle2])){
-       invMassHard = hardP4.M();
-     }
-     if(passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
-      GENLepton_eta[idxGenEleFS1],GENLepton_eta[idxGenEleFS2])){
-       invMassFS = hardP4.M();
-     }
+      GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],GENLepton_eta[idxGenEleFS2],
+      GENLepton_phi[idxGenEleFS2],eMass);
 
+     //calculate gen-level invariant masses
+     if(passDileptonKinematics(GENLepton_pT[idxGenEle1],GENLepton_pT[idxGenEle2],
+      GENLepton_eta[idxGenEle1],GENLepton_eta[idxGenEle2])) invMassHard = hardP4.M();
+     if(passDileptonKinematics(GENLepton_pT[idxGenEleFS1],GENLepton_pT[idxGenEleFS2],
+      GENLepton_eta[idxGenEleFS1],GENLepton_eta[idxGenEleFS2])) invMassFS = fsrP4.M();
+     
       //HLT cut
       trigNameSize = pHLT_trigName->size();
       bool passHLT = kFALSE;	  
@@ -255,7 +255,6 @@ void unfoldingMatrix()
 	}
       } 
      
-      bool passNumEle = kFALSE;
       int numDielectrons = 0;
       int subEle = -1;
       int leadEle = -1;
@@ -280,25 +279,24 @@ void unfoldingMatrix()
         }//end jEle loop
       }//end iEle loop
        
-     if(numDielectrons==1){
-        passNumEle = kTRUE;
-     }
      dielectronP4 = getDielectronP4(Electron_pT[leadEle],Electron_eta[leadEle],
        Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
        Electron_phi[subEle],eMass);
-     invMass=dielectronP4.M();
+
+     //Calculate reco invariant mass
+     invMass = dielectronP4.M();
      int closestTrackLep1, closestTrackLep2;
      closestTrackLep1 = closestTrackLep2 = -1;
      bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);
      bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestTrackLep2);
 
      //All cuts
-     //if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMass=0;
-     //if(!Electron_passMediumID[closestTrackLep1]) invMass=0;
-     //if(!Electron_passMediumID[closestTrackLep2]) invMass=0;
-     //if(!passNumEle) invMass = 0;;
-     //if(leadEle<0||subEle<0) invMass = 0;
-     //if(!passHLT) invMass = 0;
+     if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMass=0;
+     if(!Electron_passMediumID[closestTrackLep1]) invMass=0;
+     if(!Electron_passMediumID[closestTrackLep2]) invMass=0;
+     if(numDielectrons!=1) invMass = 0;
+     if(leadEle<0||subEle<0) invMass = 0;
+     if(!passHLT) invMass = 0;
 
      eEta1 = Electron_eta[leadEle];
      eEta2 = Electron_eta[subEle];
