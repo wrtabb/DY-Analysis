@@ -2,8 +2,8 @@
 
 
 const TString file1Name= "/home/hep/wrtabb/git/DY-Analysis/data/dataVsMC.root";
-const TString file2Name= "/home/hep/wrtabb/git/DY-Analysis/data/mcHists.root";
-const TString fileTestName = "/home/hep/wrtabb/git/DY-Analysis/efficiency/testMC.root";
+const TString file2Name= "/home/hep/wrtabb/git/DY-Analysis/data/efficiency.root";
+const TString fileUnfName = "/home/hep/wrtabb/git/DY-Analysis/data/unfoldIn.root";
 const TString fileCorrName = "inputCorrelations_10000Samples.root";
 
 void getHists()
@@ -11,17 +11,17 @@ void getHists()
  TH1::SetDefaultSumw2();
  TFile*file1 = new TFile(file1Name);
  TFile*file2 = new TFile(file2Name);
- TFile*fileTest = new TFile(fileTestName);
+ TFile*fileUnf = new TFile(fileUnfName);
  TFile*fileCorr= new TFile(fileCorrName);
 
  gStyle->SetOptStat(0);
  gStyle->SetPalette(1);
- TH1D*hMC = (TH1D*)fileTest->Get("hMC");
+ TH1D*hMC = (TH1D*)fileUnf->Get("hMC");
   hMC->SetName("hMC");
   hMC->SetFillColor(kOrange-2);
  TH1D*hData = (TH1D*)file1->Get("hDataInvMass");
   hData->SetName("hData");
- TH1D*hTrue = (TH1D*)fileTest->Get("hTrue");
+ TH1D*hTrue = (TH1D*)fileUnf->Get("hTrue");
   hTrue->SetName("hTrue");
  TH1D*hBack = (TH1D*)file1->Get("hFakesInvMass");
  TH1D*hEW = (TH1D*)file1->Get("hEWInvMass");
@@ -38,7 +38,7 @@ void getHists()
  hBack->Add(hEW);
  hBack->Add(hTops);
  hBack->SetName("hBack");
- TH2D*hMatrix = (TH2D*)fileTest->Get("hMatrix"); 
+ TH2D*hMatrix = (TH2D*)fileUnf->Get("hMatrix"); 
   hMatrix->SetName("hMatrix");
   hMatrix->GetXaxis()->SetNoExponent();
   hMatrix->GetXaxis()->SetMoreLogLabels();

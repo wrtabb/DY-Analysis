@@ -1,3 +1,6 @@
+//-----Header file for the Drell-Yan analysis---------------//
+//-----Contains variables that were used in many places-----//
+
 #include "TFile.h"
 #include "TROOT.h"
 #include "TTree.h"

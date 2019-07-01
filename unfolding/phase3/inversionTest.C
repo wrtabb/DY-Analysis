@@ -1,10 +1,7 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
 
-const TString fileName2Ele = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_only2Ele.root";
-const TString fileNameAllEle = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_allEle.root";
 const TString fileName = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/outputDataUnfold.root";
-
 //Unfold MC or Data
 //MC is a closure test
 const bool isMC = true;
@@ -63,7 +60,7 @@ void inversionTest()
    else cout << "Could not normalize! i = " << i << ", j = " << j << endl;
   }
  }
- matrix.Draw("colz"); 
+
  //invert response matrix to get unfolding matrix
  unfold = response;
  double det;
