@@ -36,6 +36,7 @@
 #include "TSpline.h"
 #include "TMatrixD.h"
 
+//-----Histogram binning for mass plots
 int nLogBins = 43;
 const int nLogBins2 = 2*nLogBins;
 const double massbins[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106, 
@@ -47,6 +48,7 @@ const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,4
  210,220,231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,700,765,830,915,1000,
  1250,1500,2250,3000};
 
+//-----File locations and tree name
 const TString treeName = "recoTree/DYTree";
 const TString pileupRatioName = "/home/hep/wrtabb/git/DY-Analysis/data/pileup/pileup.root";
 const TString leg2SFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Leg2_SF.root";
@@ -54,6 +56,7 @@ const TString medIDSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/MediumID_
 const TString recoSFName = "/home/hep/wrtabb/git/DY-Analysis/data/SFs/Reco_SF.root";
 const TString pvzFileName = "/home/hep/wrtabb/git/DY-Analysis/data/PVz.root";
 
+//-----Branch variables
 const int MPSIZE = 2000;
 int GENnPair, Nelectrons, HLT_ntrig, nPileUp;
 double GENEvt_weight;
@@ -67,18 +70,34 @@ bool Electron_passMediumID[MPSIZE];
 int HLT_trigType[MPSIZE],HLT_trigFired[MPSIZE];
 std::vector<std::string> HLT_trigName;
 std::vector<std::string> *pHLT_trigName = &HLT_trigName;
+
 const double pi=TMath::Pi();
 //Cross sections obtained from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
 const int numChains = 11;
 const float xSec[numChains] = {6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
  0.01042,0.00552772,0.000741613,0.000178737};
-const float etaHigh = 2.4;
-const float etaGapHigh = 1.566;
-const float etaGapLow = 1.4442;
-const float ptHigh = 28;
-const float ptLow = 17;
+//Electron mass
 const float eMass = 0.000511;
+//Muon mass
 double muMass = 0.105658;
 
-const float dRMinCut = 0.3;//max value for reco-gen matching in dR
 const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
+
+const int ptBinHigh = 499;
+const int ptBinLow = 26;
+int nVertices;
+
+enum chainNum{
+ MC10to50,
+ MC50to100,
+ MC100to200,
+ MC200to400,
+ MC400to500,
+ MC500to700,
+ MC700to800,
+ MC800to1000,
+ MC1000to1500,
+ MC1500to2000,
+ MC2000to3000
+};
+

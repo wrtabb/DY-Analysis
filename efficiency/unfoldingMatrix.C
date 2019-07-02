@@ -1,28 +1,7 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/ntupleSkimLocation.h"
-
-const int ptBinHigh = 499;
-const int ptBinLow = 26;
-int nVertices;
-void counter(Long64_t i, Long64_t N);
-bool findGenToRecoMatch(int genIndex,int &recoIndex);
-
-TLorentzVector getDielectronP4(double pt1,double eta1,double phi1,double m1,double pt2,
- double eta2,double phi2,double m2);
-bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
-enum chainNum{
- MC10to50,
- MC50to100,
- MC100to200,
- MC200to400,
- MC400to500,
- MC500to700,
- MC700to800,
- MC800to1000,
- MC1000to1500,
- MC1500to2000,
- MC2000to3000
-};
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/DrellYanCuts.h"
+#include "/home/hep/wrtabb/git/DY-Analysis/headers/Functions.h"
 
 void unfoldingMatrix()
 {
@@ -57,7 +36,6 @@ void unfoldingMatrix()
  //The names of every directory being loaded
  TString dirNames[numChains] = {EEM10to50,EEM50to100,EEM100to200,EEM200to400,EEM400to500,
   EEM500to700,EEM700to800,EEM800to1000,EEM1000to1500,EEM1500to2000,EEM2000to3000};
-
 
  TChain*chains[numChains];
  vector <TString> *subFiles[numChains];
@@ -129,10 +107,13 @@ void unfoldingMatrix()
   
  cout << "Total Events Loaded: " << totalentries << endl;
  cout << endl;
+
+ //-----Initialize histograms for unfolding distributions-----//
  TH1D*hMC = new TH1D("hMC","",nLogBins2,massbins2);
  TH1D*hTrue = new TH1D("hTrue","",nLogBins,massbins);
  TH2D*hMatrix = new TH2D("hMatrix","",nLogBins,massbins,nLogBins2,massbins2);
 
+ //-----Get histograms for pileup and SF weights-----//
  TFile*pileupRatioFile  = new TFile(pileupRatioName);
  TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
  TFile*fileLeg2SF = new TFile(leg2SFName);
@@ -156,15 +137,16 @@ void unfoldingMatrix()
 
  double binx,binWidth;   
  Long64_t nData = 0;
- //Loop over samples
- for(int iChain=0;iChain<numChains;iChain++) {
 
+ //-----Loop over samples-----//
+ for(int iChain=0;iChain<numChains;iChain++) {
   cout << endl;
   cout << "Processing chain: " << dirNames[iChain] << endl;
   cout << endl;
   
   nentries = chains[iChain]->GetEntries();
   cout << "Number of Entries: " << nentries << endl; 
+
   //Finding normalized genWeights,sums,variances
   sumGenWeight = 0.0;
   sumRawGenWeight = 0.0;
@@ -251,7 +233,7 @@ void unfoldingMatrix()
    int subEle = -1;
    int leadEle = -1;
    double invMass = 0;
-   TLorentzVector dielectronP4;
+   TLorentzVector recoP4;
 
    //Reco Electron loop
    for(int iEle = 0; iEle < Nelectrons; iEle++) {
@@ -273,12 +255,12 @@ void unfoldingMatrix()
     }//end jEle loop
    }//end iEle loop
     
-   dielectronP4 = getDielectronP4(Electron_pT[leadEle],Electron_eta[leadEle],
+   recoP4 = getDielectronP4(Electron_pT[leadEle],Electron_eta[leadEle],
     Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
     Electron_phi[subEle],eMass);
 
    //Calculate reco invariant mass
-   invMass = dielectronP4.M();
+   invMass = recoP4.M();
    int closestTrackLep1, closestTrackLep2;
    closestTrackLep1 = closestTrackLep2 = -1;
    bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);
@@ -307,7 +289,6 @@ void unfoldingMatrix()
    xSecWeightAlone = lumi*(xSec[iChain]/nentries);//xSecWeight when used without genWeight
    pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
    genWeight = (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
-
    sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
    sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta2,ePt2));
    sfID1=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta1,ePt1));
@@ -347,63 +328,5 @@ void unfoldingMatrix()
   cout << "**************************************************************************" << endl;
   cout << endl;
   
-}//end main function
-
-//Counter for tracking program progress
-void counter(Long64_t i, Long64_t N)
-{
-  int P = 100*(i)/(N);  
-  TTimeStamp eventTimeStamp;
-  if(i%(N/100)==0) {
-    cout << "dataVsMC.C " << "[Time: " << eventTimeStamp.AsString("s") << "] " << P 
-      << "%" << endl;
-  }
-  return;
 }
 
-//Kinematic cuts
-bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)
-{
-  if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return kFALSE;
-  if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return kFALSE; 
-  if(abs(eta1)>etaHigh||abs(eta2)>etaHigh) return kFALSE; 
-  if(!((pt1>ptLow && pt2>ptHigh)||(pt1>ptHigh && pt2>ptLow))) return kFALSE;
-  return kTRUE;
-}
-
-TLorentzVector getDielectronP4(double pt1,double eta1,double phi1,double m1,double pt2,
-  double eta2,double phi2,double m2)
-{
-  TLorentzVector vElectron1;
-  TLorentzVector vElectron2;
-  vElectron1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
-  vElectron2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
-  return vElectron1+vElectron2;
-}
-
-bool findGenToRecoMatch(int genIndex, int &recoIndex)
-{
-  double dR,deta,dphi;
-  float dRMin = 100000;
-  recoIndex=-1;
-  for(int iEle=0;iEle<Nelectrons;iEle++)
-    {
-      deta=Electron_eta[iEle]-GENLepton_eta[genIndex];
-      dphi=abs(Electron_phi[iEle]-GENLepton_phi[genIndex]);
-      if(dphi>pi) dphi=2*pi-dphi;
-      dR=sqrt(deta*deta+dphi*dphi);
-
-      if(dR<dRMin)
-        { 
-          recoIndex=iEle;
-          dRMin=dR;
-        }
-    }
-  bool matchFound = kTRUE;
-  if(dRMin>=dRMinCut)
-    {
-      recoIndex=-1;
-      matchFound=kFALSE;
-    }
-  return matchFound;
-}
