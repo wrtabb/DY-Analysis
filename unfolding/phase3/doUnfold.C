@@ -23,12 +23,12 @@ void doUnfold()
   ///////////////////////////////////////
   
   //gROOT->SetBatch(kTRUE);
-  int regType = NO_REG;
-  //int regType = VAR_REG;
+  //int regType = NO_REG;
+  int regType = VAR_REG;
   //int regType = CONST_REG;
   
   //Set closure test
-  bool closureTest = true;
+  bool closureTest = false;
 
   TH1::SetDefaultSumw2();
   //Load the files

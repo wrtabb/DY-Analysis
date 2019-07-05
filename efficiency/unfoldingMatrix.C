@@ -5,6 +5,7 @@
 
 void unfoldingMatrix()
 {
+ TH1::SetDefaultSumw2();
  TTimeStamp ts_start;
  cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
  TStopwatch totaltime;
@@ -124,6 +125,7 @@ void unfoldingMatrix()
  TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
  
  cout << "Starting Event Loop" << endl;
+ //-----Initialize important variables-----//
  double varGenWeight,lumiEffective,nEffective,localEntry,sumGenWeight,sumRawGenWeight, 
   totalWeight,sfWeight,weightNoPileup,xSecWeight,genWeight,pileupWeight,xSecWeightAlone;
  Long64_t nentries;
@@ -143,11 +145,10 @@ void unfoldingMatrix()
   cout << endl;
   cout << "Processing chain: " << dirNames[iChain] << endl;
   cout << endl;
-  
   nentries = chains[iChain]->GetEntries();
   cout << "Number of Entries: " << nentries << endl; 
 
-  //Finding normalized genWeights,sums,variances
+  //-----Find normalized genWeights,sums,variances-----//
   sumGenWeight = 0.0;
   sumRawGenWeight = 0.0;
   varGenWeight = 0.0;
@@ -162,7 +163,7 @@ void unfoldingMatrix()
   nEffective = (sumRawGenWeight*sumRawGenWeight)/varGenWeight;
   lumiEffective = nEffective/xSec[iChain];
    
-  //Event loop
+  //-----Event loop-----//
   for(Long64_t i=0;i<nentries;i++) {      
    counter(count,totalentries);
    count = count+1; 
@@ -176,9 +177,8 @@ void unfoldingMatrix()
    int idxGenEleFS2 = -1;
    int nGenDielectrons = 0;
    double invMassHard = 0;
-   double invMassFS = 0;
   
-   //Gen loop
+   //-----Gen loop-----//
    for(int kLep=0;kLep<GENnPair;kLep++){
     for(int lLep=kLep+1;lLep<GENnPair;lLep++){
      if(!(abs(GENLepton_ID[kLep])==11 && abs(GENLepton_ID[lLep])==11))
@@ -193,31 +193,33 @@ void unfoldingMatrix()
       GENLepton_fromHardProcessFinalState[lLep]==1){
       idxGenEleFS1 = kLep;
       idxGenEleFS2 = lLep;
-     }
+     }//end if FSR
     }//end lLep loop
    }//end kLep loop
+   
+   //-----Make sure there are only two gen-level electrons-----//
    if(nGenDielectrons!=1){
     cout << "!!!!!!!!!!WARNING!!!!!!!!!!" << endl;
     cout << "Gen level produces too many or too few electron pairs" << endl;
     continue;
    }
+
+   //-----Make sure all events are within acceptance-----//
    bool passAcceptance = true;
-   //Make sure all events are within acceptance region
    if(!passDileptonKinematics(GENLepton_pT[idxGenEle1],GENLepton_pT[idxGenEle2],
     GENLepton_eta[idxGenEle1],GENLepton_eta[idxGenEle2])) passAcceptance = false;
 
-   //Get 4-momentum for gen-level electron pairs
+   //-----Get 4-momentum for gen-level electron pairs-----//
    hardP4 = getDielectronP4(GENLepton_pT[idxGenEle1],GENLepton_eta[idxGenEle1],
     GENLepton_phi[idxGenEle1],eMass,GENLepton_pT[idxGenEle2],GENLepton_eta[idxGenEle2],            GENLepton_phi[idxGenEle2],eMass);
    fsrP4 = getDielectronP4(GENLepton_pT[idxGenEleFS1],GENLepton_eta[idxGenEleFS1],
     GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],GENLepton_eta[idxGenEleFS2],
     GENLepton_phi[idxGenEleFS2],eMass);
 
-   //calculate gen-level invariant masses
+   //i-----calculate gen-level invariant masses-----//
    if(passAcceptance) invMassHard = hardP4.M();
-   invMassFS = fsrP4.M();
 
-   //HLT cut
+   //-----HLT criteria-----//
    trigNameSize = pHLT_trigName->size();
    bool passHLT = kFALSE;	  
    for(int iHLT=0;iHLT<trigNameSize;iHLT++) {
@@ -235,7 +237,9 @@ void unfoldingMatrix()
    double invMass = 0;
    TLorentzVector recoP4;
 
-   //Reco Electron loop
+   //-----Reco Electron loop-----//
+   //Find reconstructed electrons within acceptance passing medium ID criteria
+   //Determine which is leading and which is subleading
    for(int iEle = 0; iEle < Nelectrons; iEle++) {
     if(!Electron_passMediumID[iEle]) continue;
     for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
@@ -255,18 +259,22 @@ void unfoldingMatrix()
     }//end jEle loop
    }//end iEle loop
     
+   //reconstructed dielectron 4-momentum
    recoP4 = getDielectronP4(Electron_pT[leadEle],Electron_eta[leadEle],
     Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
     Electron_phi[subEle],eMass);
 
    //Calculate reco invariant mass
    invMass = recoP4.M();
+
+   //Gen to reco matching
    int closestTrackLep1, closestTrackLep2;
    closestTrackLep1 = closestTrackLep2 = -1;
    bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);
    bool genToRecoMatchedLep2 = findGenToRecoMatch(idxGenEleFS2,closestTrackLep2);
 
-   //All cuts
+   //-----All cuts-----//
+   //place cut events into underflow bins
    if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMass=0;
    if(!Electron_passMediumID[closestTrackLep1]) invMass=0;
    if(!Electron_passMediumID[closestTrackLep2]) invMass=0;
@@ -274,17 +282,19 @@ void unfoldingMatrix()
    if(leadEle<0||subEle<0) invMass = 0;
    if(!passHLT) invMass = 0;
 
+   //Defining eta and pt for SF calculation
    eEta1 = Electron_eta[leadEle];
    eEta2 = Electron_eta[subEle];
    ePt1 = Electron_pT[leadEle];
    ePt2 = Electron_pT[subEle];
-  
+ 
+   //Moves pt on the edge of the SF histograms to just inside
    if(ePt1<ptBinLow) ePt1 = ptBinLow;
    if(ePt2<ptBinLow) ePt2 = ptBinLow;
    if(ePt1>ptBinHigh) ePt1 = ptBinHigh;
    if(ePt2>ptBinHigh) ePt2 = ptBinHigh;
 
-   //Determining weighting factors
+   //-----Determining weighting factors-----//
    xSecWeight=lumi*(xSec[iChain]/1.0);//xSecWeight when used with genWeight 
    xSecWeightAlone = lumi*(xSec[iChain]/nentries);//xSecWeight when used without genWeight
    pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
@@ -298,7 +308,7 @@ void unfoldingMatrix()
    sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
    totalWeight = genWeight*xSecWeight*pileupWeight;
 
-   //Fill the histograms
+   //-----Fill histograms-----//
    hMC->Fill(invMass,totalWeight*sfWeight);
    hTrue->Fill(invMassHard,totalWeight);
    hMatrix->Fill(invMassHard,invMass,totalWeight*sfWeight);
@@ -306,27 +316,26 @@ void unfoldingMatrix()
   }//end event loop   
  }//end chain loop 
   
-  TFile *rootFile = new TFile("/home/hep/wrtabb/git/DY-Analysis/data/unfoldIn.root","RECREATE");
-  rootFile->cd();
-  hMC->Write();
-  hTrue->Write();
-  hMatrix->Write();
-  rootFile->Write();
-  rootFile->Close();
-  
-  totaltime.Stop();
-  Double_t TotalCPURunTime = totaltime.CpuTime();
-  Double_t TotalRunTime = totaltime.RealTime();
-  TTimeStamp ts_end;
-  cout << endl;
-  cout << "**************************************************************************" << endl;
-  cout << "Total CPU RunTime: " << TotalCPURunTime/60 << " minutes" << endl;
-  cout << "Total Real RunTime: " << TotalRunTime/60 << " minutes" << endl;
-  cout << "[End Time(local time): " << ts_end.AsString("l") << "]" << endl;   
-  cout << "Number of Events Processed: " << count << endl;
-  cout << "Number of data events Processed: " << nData << endl;
-  cout << "**************************************************************************" << endl;
-  cout << endl;
-  
+ //-----Save histograms to file-----//
+ TString saveName = "/home/hep/wrtabb/git/DY-Analysis/data/unfoldIn.root";
+ TFile *rootFile = new TFile(saveName,"RECREATE");
+ rootFile->cd();
+ hMC->Write();
+ hTrue->Write();
+ hMatrix->Write();
+ rootFile->Write();
+ rootFile->Close();
+ 
+ totaltime.Stop();
+ Double_t TotalCPURunTime = totaltime.CpuTime();
+ Double_t TotalRunTime = totaltime.RealTime();
+ TTimeStamp ts_end;
+ cout << endl;
+ cout << "**************************************************************************" << endl;
+ cout << "Total CPU RunTime: " << TotalCPURunTime/60 << " minutes" << endl;
+ cout << "Total Real RunTime: " << TotalRunTime/60 << " minutes" << endl;
+ cout << "[End Time(local time): " << ts_end.AsString("l") << "]" << endl;   
+ cout << "**************************************************************************" << endl;
+ cout << endl;
 }
 

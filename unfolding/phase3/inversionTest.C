@@ -65,6 +65,7 @@ void inversionTest()
  unfold = response;
  double det;
  unfold.Invert(&det);
+ cout << "Determinant of unfolding matrix: " << det << endl;
 
  //multiply tranposed unfolding matrix by input vector to get unfolded vector
  TVectorD vUnfolded = (unfold.T())*vData;
@@ -73,7 +74,7 @@ void inversionTest()
  for(int i=1;i<nLogBins;i++){
   hUnfolded->SetBinContent(i,vUnfolded(i));
   for(int j=1;j<nLogBins;j++){
-   hResponse->SetBinContent(i,j,response(i,j));
+   hResponse->SetBinContent(i,j,response(i-1,j-1));
   }
  }
 

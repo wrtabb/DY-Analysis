@@ -1,6 +1,6 @@
 
-const TString pileupFileName = "./plots/MyDataPileupHistogram64000.root";
-const TString dataFileName = "./plots/dataVsMC.root";
+const TString pileupFileName = "/home/hep/wrtabb/git/DY-Analysis/data/pileup/MyDataPileupHistogram64000.root";
+const TString dataFileName = "/home/hep/wrtabb/git/DY-Analysis/data/dataVsMC.root";
 const TString treeName = "recoTree/DYTree";
 const int nPileupBins = 100;
 const float pileupBinLow = 0;

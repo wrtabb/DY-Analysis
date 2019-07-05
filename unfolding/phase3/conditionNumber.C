@@ -28,10 +28,14 @@ void conditionNumber()
    hResponse->SetBinContent(i+1,j+1,response(i,j));
   }
  }
+ TMatrixD responseInv = response;
+ double det;
+ responseInv.Invert(&det);
  TDecompSVD svd(response);
  TVectorD sig = svd.GetSig();
  double condN = sig.Max()/sig.Min();
  hist2DPlot(0,hResponse,"colz",true,true,true); 
  sig.Print();
  cout << "Condition number = " << condN << endl;
+ cout << "Determinant = " << det << endl;
 }
