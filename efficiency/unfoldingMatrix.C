@@ -10,9 +10,10 @@ void unfoldingMatrix()
  cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
  TStopwatch totaltime;
  totaltime.Start();
- bool isMC; //is Monte Carlo
+ bool isMC;//is Monte Carlo
  gStyle->SetOptStat(0);
- //Defining branches
+
+ //-----Defining branches-----//
  TBranch*b_Nelectrons;
  TBranch*b_Electron_pT;
  TBranch*b_Electron_eta;
@@ -32,7 +33,7 @@ void unfoldingMatrix()
  TBranch*b_GENLepton_isHardProcess;
  TBranch*b_GENLepton_fromHardProcessFinalState;
  
- //Loading ntuples
+ //-----Loading ntuples-----//
  cout << "Loading ntuples" << endl;
  //The names of every directory being loaded
  TString dirNames[numChains] = {EEM10to50,EEM50to100,EEM100to200,EEM200to400,EEM400to500,
@@ -80,7 +81,7 @@ void unfoldingMatrix()
   }//end loop over files
   totalentries=totalentries+chains[iChain]->GetEntries();
 
-  //Setting addresses for branches
+  //-----Setting addresses for branches-----//
   chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
   chains[iChain]->SetBranchAddress("nVertices", &nVertices, &b_nVertices);
   chains[iChain]->SetBranchAddress("nPileUp", &nPileUp, &b_nPileUp);
@@ -126,8 +127,8 @@ void unfoldingMatrix()
  
  cout << "Starting Event Loop" << endl;
  //-----Initialize important variables-----//
- double varGenWeight,lumiEffective,nEffective,localEntry,sumGenWeight,sumRawGenWeight, 
-  totalWeight,sfWeight,weightNoPileup,xSecWeight,genWeight,pileupWeight,xSecWeightAlone;
+ double varGenWeight,localEntry,sumGenWeight,sumRawGenWeight,totalWeight,sfWeight,xSecWeight,
+  genWeight,pileupWeight;
  Long64_t nentries;
  Long64_t count = 0;
  TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
@@ -135,10 +136,7 @@ void unfoldingMatrix()
  int trigNameSize;
  double lumi = dataLuminosity;//luminosity for xsec weighting
  double sfReco1,sfReco2,sfID1,sfID2,sfHLT;//efficiency scale factors
- double eEta1, eEta2, ePt1, ePt2;
-
- double binx,binWidth;   
- Long64_t nData = 0;
+ double eEta1, eEta2, ePt1, ePt2;//eta and pt of the electrons in each event
 
  //-----Loop over samples-----//
  for(int iChain=0;iChain<numChains;iChain++) {
@@ -155,13 +153,11 @@ void unfoldingMatrix()
   for(Long64_t i=0;i<nentries;i++){
    localEntry = chains[iChain]->LoadTree(i);
    b_GENEvt_weight->GetEntry(localEntry);
-   genWeight = GENEvt_weight/fabs(GENEvt_weight);	//normalized genweight
+   genWeight = GENEvt_weight/fabs(GENEvt_weight);//normalized genweight
    sumGenWeight += genWeight;
-   varGenWeight += GENEvt_weight*GENEvt_weight; //variance of genweights
+   varGenWeight += GENEvt_weight*GENEvt_weight;//variance of genweights
    sumRawGenWeight += GENEvt_weight; 
   }          
-  nEffective = (sumRawGenWeight*sumRawGenWeight)/varGenWeight;
-  lumiEffective = nEffective/xSec[iChain];
    
   //-----Event loop-----//
   for(Long64_t i=0;i<nentries;i++) {      
@@ -216,7 +212,7 @@ void unfoldingMatrix()
     GENLepton_phi[idxGenEleFS1],eMass,GENLepton_pT[idxGenEleFS2],GENLepton_eta[idxGenEleFS2],
     GENLepton_phi[idxGenEleFS2],eMass);
 
-   //i-----calculate gen-level invariant masses-----//
+   //-----Calculate gen-level invariant masses-----//
    if(passAcceptance) invMassHard = hardP4.M();
 
    //-----HLT criteria-----//
@@ -264,10 +260,10 @@ void unfoldingMatrix()
     Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
     Electron_phi[subEle],eMass);
 
-   //Calculate reco invariant mass
+   //-----Calculate reconstructed invariant mass-----//
    invMass = recoP4.M();
 
-   //Gen to reco matching
+   //-----Gen to reco matching-----//
    int closestTrackLep1, closestTrackLep2;
    closestTrackLep1 = closestTrackLep2 = -1;
    bool genToRecoMatchedLep1 = findGenToRecoMatch(idxGenEleFS1,closestTrackLep1);
@@ -282,13 +278,13 @@ void unfoldingMatrix()
    if(leadEle<0||subEle<0) invMass = 0;
    if(!passHLT) invMass = 0;
 
-   //Defining eta and pt for SF calculation
+   //-----Defining eta and pt for SF calculation-----//
    eEta1 = Electron_eta[leadEle];
    eEta2 = Electron_eta[subEle];
    ePt1 = Electron_pT[leadEle];
    ePt2 = Electron_pT[subEle];
  
-   //Moves pt on the edge of the SF histograms to just inside
+   //-----Moves pt on the edge of the SF histograms to just inside-----//
    if(ePt1<ptBinLow) ePt1 = ptBinLow;
    if(ePt2<ptBinLow) ePt2 = ptBinLow;
    if(ePt1>ptBinHigh) ePt1 = ptBinHigh;
@@ -296,7 +292,6 @@ void unfoldingMatrix()
 
    //-----Determining weighting factors-----//
    xSecWeight=lumi*(xSec[iChain]/1.0);//xSecWeight when used with genWeight 
-   xSecWeightAlone = lumi*(xSec[iChain]/nentries);//xSecWeight when used without genWeight
    pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
    genWeight = (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
    sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
@@ -313,8 +308,8 @@ void unfoldingMatrix()
    hTrue->Fill(invMassHard,totalWeight);
    hMatrix->Fill(invMassHard,invMass,totalWeight*sfWeight);
    hMatrix->Fill(invMassHard,0.0,totalWeight*(1-sfWeight));
-  }//end event loop   
- }//end chain loop 
+  }//end event loop
+ }//end chain loop
   
  //-----Save histograms to file-----//
  TString saveName = "/home/hep/wrtabb/git/DY-Analysis/data/unfoldIn.root";
