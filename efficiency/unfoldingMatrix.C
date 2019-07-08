@@ -105,7 +105,7 @@ void unfoldingMatrix()
   chains[iChain]->SetBranchAddress
    ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState,
    &b_GENLepton_fromHardProcessFinalState);
-  }//end iChain loop
+ }//end iChain loop
   
  cout << "Total Events Loaded: " << totalentries << endl;
  cout << endl;
@@ -148,7 +148,9 @@ void unfoldingMatrix()
   nentries = chains[iChain]->GetEntries();
   cout << "Number of Entries: " << nentries << endl; 
 
+  //-----Get gen weights saved to a txt file-----//
   genWeightFile >> sumGenWeight;
+
 /*
   //-----Find normalized genWeights,sums,variances-----//
   sumGenWeight = 0.0;
