@@ -32,8 +32,7 @@ void unfoldingMatrix()
  TBranch*b_GENLepton_ID;
  TBranch*b_GENLepton_isHardProcess;
  TBranch*b_GENLepton_fromHardProcessFinalState;
- 
- //-----Loading ntuples-----//
+
  cout << "Loading ntuples" << endl;
  //The names of every directory being loaded
  TString dirNames[numChains] = {EEM10to50,EEM50to100,EEM100to200,EEM200to400,EEM400to500,
@@ -79,6 +78,7 @@ void unfoldingMatrix()
     return;
    }
   }//end loop over files
+
   totalentries=totalentries+chains[iChain]->GetEntries();
 
   //-----Setting addresses for branches-----//
@@ -138,6 +138,8 @@ void unfoldingMatrix()
  double sfReco1,sfReco2,sfID1,sfID2,sfHLT;//efficiency scale factors
  double eEta1, eEta2, ePt1, ePt2;//eta and pt of the electrons in each event
 
+ ifstream genWeightFile("genWeightSum.txt");//read gen weight sums
+
  //-----Loop over samples-----//
  for(int iChain=0;iChain<numChains;iChain++) {
   cout << endl;
@@ -146,6 +148,8 @@ void unfoldingMatrix()
   nentries = chains[iChain]->GetEntries();
   cout << "Number of Entries: " << nentries << endl; 
 
+  genWeightFile >> sumGenWeight;
+/*
   //-----Find normalized genWeights,sums,variances-----//
   sumGenWeight = 0.0;
   sumRawGenWeight = 0.0;
@@ -158,7 +162,7 @@ void unfoldingMatrix()
    varGenWeight += GENEvt_weight*GENEvt_weight;//variance of genweights
    sumRawGenWeight += GENEvt_weight; 
   }          
-   
+*/ 
   //-----Event loop-----//
   for(Long64_t i=0;i<nentries;i++) {      
    counter(count,totalentries);

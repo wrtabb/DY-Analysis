@@ -1,7 +1,5 @@
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
-const TString fileName2Ele = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_only2Ele.root";
-const TString fileNameAllEle = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/unfold_allEle.root";
 const TString fileName = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/outputDataUnfold.root";
 
 const int binLow = 15;
@@ -23,12 +21,14 @@ void doUnfold()
   ///////////////////////////////////////
   
   //gROOT->SetBatch(kTRUE);
-  //int regType = NO_REG;
-  int regType = VAR_REG;
+  int regType = NO_REG;
+  //int regType = VAR_REG;
   //int regType = CONST_REG;
   
   //Set closure test
   bool closureTest = false;
+  //Set input covariance matrix
+  bool inputCov = true;
 
   TH1::SetDefaultSumw2();
   //Load the files
@@ -86,8 +86,8 @@ void doUnfold()
   //  Constructor for TUnfoldDensity  //
   //////////////////////////////////////
   TUnfoldDensity unfold(hMatrix,outputMap,regMode,constraintMode,densityFlags);
-  //unfold.SetInput(hReco,0.0,0.0,hCovM,hCovMinv);//the measured distribution
-  unfold.SetInput(hReco);//the measured distribution
+  if(inputCov) unfold.SetInput(hReco,0.0,0.0,hCovM,hCovMinv);//the measured distribution
+  else unfold.SetInput(hReco);//the measured distribution
 
   //////////////////////////////
   //  Background Subtraction  //

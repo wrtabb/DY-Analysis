@@ -141,6 +141,8 @@ void getHists()
  hTrue->Write();
  hBack->Write();
  hMatrix->Write();
+ hCovM->Write();
+ hCovMinv->Write();
  outputFile->Write();
  outputFile->Close();
 }

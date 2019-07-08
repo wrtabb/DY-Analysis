@@ -74,7 +74,7 @@ void inversionTest()
  for(int i=1;i<nLogBins;i++){
   hUnfolded->SetBinContent(i,vUnfolded(i));
   for(int j=1;j<nLogBins;j++){
-   hResponse->SetBinContent(i,j,response(i-1,j-1));
+   hResponse->SetBinContent(i,j,response(i,j));
   }
  }
 
