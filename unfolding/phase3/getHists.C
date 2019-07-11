@@ -145,4 +145,23 @@ void getHists()
  hCovMinv->Write();
  outputFile->Write();
  outputFile->Close();
+
+ double data,back,mc,err,diff;
+ double sum = 0;
+ ofstream out("dataVsMCValues.txt");
+ out << "bin, data, mc, mc error, diff(data - mc), error/diff" << endl;
+ for(int i=1;i<=nLogBins;i++){
+  data = hData->GetBinContent(i);
+  back = hBack->GetBinContent(i);
+  data = data - back;
+  mc = hMC->GetBinContent(i);
+  err = hMC->GetBinError(i);
+  diff = abs(data-mc);
+  //out << i << ", " << data << ", " << mc << ", " << err << ", " << diff << ", " << err/diff << endl;
+  out << err/diff << endl;
+  sum += err/diff;
+ }
+ double avg = sum/(nLogBins);
+ out << "Average variation: " << avg << endl;
+ out.close();
 }
