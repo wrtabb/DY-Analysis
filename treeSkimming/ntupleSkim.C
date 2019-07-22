@@ -4,17 +4,15 @@ double _prefiringweight;
 
 void ntupleSkim()
 {
- int nFiles = 1;
  ifstream fileList("file_list.txt");
  TString suffix = "_skim";
  TString rootFile;
- for(int i=0;i<nFiles;i++){
+ while(!fileList.eof()){
   fileList >> rootFile;
   TString fileName = "./data/";
   fileName += rootFile;
   skimFile(rootFile,suffix);
  }
-
 }
 
 void skimFile(TString fileName, TString suffix){
