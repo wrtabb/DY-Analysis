@@ -26,9 +26,9 @@ void doUnfold()
   //int regType = CONST_REG;
   
   //Set closure test
-  bool closureTest = false;
+  bool closureTest = true;
   //Set input covariance matrix
-  bool inputCov = true;
+  bool inputCov = false;
 
   TH1::SetDefaultSumw2();
   //Load the files

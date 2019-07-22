@@ -278,11 +278,17 @@ void unfoldingMatrix()
    //-----All cuts-----//
    //place cut events into underflow bins
 //   if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMass=0;
-//   if(!Electron_passMediumID[closestTrackLep1]) invMass=0;
-//   if(!Electron_passMediumID[closestTrackLep2]) invMass=0;
-//   if(numDielectrons!=1) invMass = 0;
-//   if(leadEle<0||subEle<0) invMass = 0;
-//   if(!passHLT) invMass = 0;
+//   if(!Electron_passMediumID[closestTrackLep1])        invMass=0;
+//   if(!Electron_passMediumID[closestTrackLep2])        invMass=0;
+//   if(numDielectrons!=1)                               invMass=0;
+//   if(leadEle<0||subEle<0)                             invMass=0;
+//   if(!passHLT)                                        invMass=0;
+   if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) continue;
+   if(!Electron_passMediumID[closestTrackLep1])        continue;
+   if(!Electron_passMediumID[closestTrackLep2])        continue;
+   if(numDielectrons!=1)                               continue;
+   if(leadEle<0||subEle<0)                             continue;
+   if(!passHLT)                                        continue;
 
    //-----Defining eta and pt for SF calculation-----//
    eEta1 = Electron_eta[leadEle];

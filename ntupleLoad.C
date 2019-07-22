@@ -15,47 +15,23 @@ void ntupleLoad()
 
  ofstream output("ntupleEntries.txt");
 
- //-----Defining branches-----//
- TBranch*b_Nelectrons;
- TBranch*b_Electron_pT;
- TBranch*b_Electron_eta;
- TBranch*b_Electron_phi;
- TBranch*b_Electron_passMediumID;
- TBranch*b_HLT_ntrig;
- TBranch*b_HLT_trigType;
- TBranch*b_HLT_trigFired;
- TBranch*b_GENEvt_weight;
- TBranch*b_nVertices;
- TBranch*b_nPileUp;
- TBranch*b_GENnPair;
- TBranch*b_GENLepton_eta;
- TBranch*b_GENLepton_phi;
- TBranch*b_GENLepton_pT;
- TBranch*b_GENLepton_ID;
- TBranch*b_GENLepton_isHardProcess;
- TBranch*b_GENLepton_fromHardProcessFinalState;
-
  cout << "Loading ntuples" << endl;
  //The names of every directory being loaded
- TString dirNames[numChains] = {LLM10to50,LLM50toInf,LLM100to200,LLM200to400,LLM400to500,
-  LLM500to700,LLM700to800,LLM800to1000,LLM1000to1500,LLM1500to2000,LLM2000to3000};
+ TString dirNames[numChains] = {DYLL_M10to50,DYLL_M50toInf,DYLL_M100to200,DYLL_M200to400,
+  DYLL_M400to500,DYLL_M500to700,DYLL_M700to800,DYLL_M800to1000,DYLL_M1000to1500,
+  DYLL_M1500to2000,DYLL_M2000to3000};
 
  TChain*chains[numChains];
  vector <TString> *subFiles[numChains];
  for(int iChain=0;iChain<numChains;iChain++){
   subFiles[iChain] = new vector<TString>;
   if(iChain==MC10to50){
-   subFiles[iChain]->push_back(dirNames[iChain]+"v1/");
-   subFiles[iChain]->push_back(dirNames[iChain]+"v2/");
-   subFiles[iChain]->push_back(dirNames[iChain]+"ext1v1/");
+   subFiles[iChain]->push_back(dirNames[iChain]+"/v1/");
+   subFiles[iChain]->push_back(dirNames[iChain]+"/v2/");
+   subFiles[iChain]->push_back(dirNames[iChain]+"/ext1v1/");
   }
-  else if(iChain==MC50to100){
-   subFiles[iChain]->push_back(dirNames[iChain]+"base/");
-   //subFiles[iChain]->push_back(dirNames[iChain]+"madgraph/");
-   //subFiles[iChain]->push_back(dirNames[iChain]+"madgraph_ext/");
-  }
-  else subFiles[iChain]->push_back(dirNames[iChain]);
- }//end loop over chains 
+ else subFiles[iChain]->push_back(dirNames[iChain]);
+ }
 
  TString files;
  Long64_t subDirectorySize;
@@ -84,31 +60,6 @@ void ntupleLoad()
   }//end loop over files
 
   totalentries=totalentries+chains[iChain]->GetEntries();
-
-  //-----Setting addresses for branches-----//
-  chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
-  chains[iChain]->SetBranchAddress("nVertices", &nVertices, &b_nVertices);
-  chains[iChain]->SetBranchAddress("nPileUp", &nPileUp, &b_nPileUp);
-  chains[iChain]->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
-  chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
-  chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
-  chains[iChain]->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,
-    &b_Electron_passMediumID);
-  chains[iChain]->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
-  chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
-  chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
-  chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);   
-  chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
-  chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
-  chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
-  chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
-  chains[iChain]->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
-  chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
-  chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess,
-   &b_GENLepton_isHardProcess);
-  chains[iChain]->SetBranchAddress
-   ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState,
-   &b_GENLepton_fromHardProcessFinalState);
 
  }//end iChain loop
   

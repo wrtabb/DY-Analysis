@@ -28,6 +28,7 @@ void getHists()
  TH1D*hTops = (TH1D*)file1->Get("hTopsInvMass");
  TH2D*hCovM = (TH2D*)fileCorr->Get("hCovM");
  TH2D*hCovMinv = (TH2D*)fileCorr->Get("hCovMinv");
+
  //Set any negative bin values to 0
  for(int i=1;i<nLogBins2+1;i++){
   if(hBack->GetBinContent(i)<0) hBack->SetBinContent(i,0);
