@@ -1,0 +1,91 @@
+void getList(TString directory);
+void GetFileList(TString directory);
+const int nDir = 53;
+const TString baseDir = "/mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/user/wtabb/DrellYan_13TeV_2016/v2p6/";
+TString directory[nDir] = {
+"DYLL_M1000to1500/",
+"DYLL_M100to200/",
+"DYLL_M10to50/ext1v1/",
+"DYLL_M10to50/v1/",
+"DYLL_M10to50/v2/",
+"DYLL_M1500to2000/",
+"DYLL_M2000to3000/",
+"DYLL_M200to400/",
+"DYLL_M400to500/",
+"DYLL_M500to700/",
+"DYLL_M50toInf/base/",
+"DYLL_M50toInf/madgraph/",
+"DYLL_M50toInf/madgraph_ext/",
+"DYLL_M700to800/",
+"DYLL_M800to1000/",
+"ST_tW/",
+"ST_tbarW/",
+"SingleMuon_Run2016B/",
+"SingleMuon_Run2016C/",
+"SingleMuon_Run2016D/",
+"SingleMuon_Run2016E/",
+"SingleMuon_Run2016F/",
+"SingleMuon_Run2016G/",
+"SingleMuon_Run2016Hver2/",
+"SingleMuon_Run2016Hver3/",
+"WJetsToLNu_amcatnlo/",
+"WJetsToLNu_amcatnlo_ext/",
+"WJetsToLNu_amcatnlo_ext2v5/",
+"WW/",
+"WZ/",
+"ZZ/",
+"ZToEE_M120to200/",
+"ZToEE_M1400to2300/",
+"ZToEE_M200to400/",
+"ZToEE_M2300to3500/",
+"ZToEE_M3500to4500/",
+"ZToEE_M400to800/",
+"ZToEE_M4500to6000/",
+"ZToEE_M50to120/",
+"ZToEE_M6000toInf/",
+"ZToEE_M800to1400/",
+"crab_DoubleEG_RunB/",
+"crab_DoubleEG_RunC/",
+"crab_DoubleEG_RunD/",
+"crab_DoubleEG_RunE/",
+"crab_DoubleEG_RunF/",
+"crab_DoubleEG_RunG/",
+"crab_DoubleEG_RunHver2/",
+"crab_DoubleEG_RunHver3/",
+"ttbar/",
+"ttbarBackup/",
+"ttbar_M1000toInf/",
+"ttbar_M700to1000/"
+};
+void makeDirectoryList()
+{ 
+ for(int i=0;i<nDir;i++){
+  directory[i] = baseDir+directory[i];
+  cout << "Processing directory: " << directory[i] << endl;
+  GetFileList(directory[i]);
+  //-----System sleep for 0.5 seconds-----//
+  //Without this pause between functions, the second function does not work//
+  gSystem->Sleep(500);
+  getList(directory[i]);
+  gSystem->Exec("rm "+directory[i]+"temp_file.txt");
+ }
+}
+
+void getList(TString directory){
+ ifstream inFile(directory+"temp_file.txt");
+ ofstream outFile(directory+"skim_file.txt");
+ TString contents;
+ 
+ while(true){
+  inFile >> contents;
+  if(inFile.eof()) break;
+  outFile << directory+contents << endl;
+ }
+ inFile.close();
+ outFile.close();
+}
+
+void GetFileList(TString directory){
+ gSystem->Exec("cat "+directory+"file_list.txt | awk -F '/' '{print $NF}' > "+directory+"temp_file.txt");
+
+}
