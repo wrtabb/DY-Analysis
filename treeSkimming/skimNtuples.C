@@ -1,20 +1,52 @@
+//This script opens the v2.6 ntuples from hadoop
+//Then it takes only the branches I need to keep
+//Saves them to a new tree
+//Saves the tree to my working area
+//
+//After saving all root files in a particular directory
+//It then copies them to hadoop
+//And deletes the files from the working directory
+//It is done this way to avoid copying huge numbers
+//Of files, taking up lots of hard drive space,
+//To the working directory
+
 #include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
-void skimFile(TString fileName,TString suffix);
+#include "header.h"
+
+void skimFile(TString fileName,TString fileNameNoDir,TString subdirectory,TString suffix);
+void skim(TString directory,TString subdirectory);
+
 double _prefiringweight;
 
 void skimNtuples()
 {
- ifstream fileList("skimFile.txt");
- TString suffix = "_skim";
- TString rootFile;
- while(!fileList.eof()){
-  fileList >> rootFile;
-  TString fileName = rootFile;
-  skimFile(fileName,suffix);
+ TString directory[nDir];
+ for(int i=0;i<2;i++){
+  directory[i] = baseDir+subdirectory[i];
+  //-----Open root files, create skimmed versions, save to working dorectory-----//
+  skim(directory[i],subdirectory[i]);
+  //-----Copy newly created files to hadoop-----//
+  gSystem->Exec("cp -r ./skimmed_files/"+subdirectory[i]+"skim1 "+directory[i]);
+  //-----Delete newly created files from working directory-----//
+  gSystem->Exec("rm -r ./skimmed_files/"+subdirectory[i]+"skim1/*.root");
  }
 }
 
-void skimFile(TString fileName, TString suffix){
+void skim(TString directory,TString subdirectory){
+ ifstream fileList(directory+"skim_file.txt");
+ ifstream fileListNoDir(directory+"temp_file.txt");
+ TString suffix = "_skim";
+ TString fileName;
+ TString fileNameNoDir;
+ while(true){
+  fileList >> fileName;
+  fileListNoDir >> fileNameNoDir;
+  if(fileList.eof()) break;
+  skimFile(fileName,fileNameNoDir,subdirectory,suffix);
+ }
+}
+
+void skimFile(TString fileName,TString fileNameNoDir,TString subdirectory,TString suffix){
  TFile*file = new TFile(fileName);
  TTree*tree = (TTree*)file->Get(treeName);
  TChain*chain = new TChain(treeName);
@@ -62,8 +94,9 @@ void skimFile(TString fileName, TString suffix){
  chain->SetBranchStatus("GENLepton_fromHardProcessFinalState",1);
  chain->SetBranchStatus("_prefiringweight",1);
 
- TString newFileName = "./skim1/";
- newFileName += fileName.ReplaceAll(".root","")+suffix+TString(".root");
+ TString newFileName = "./skimmed_files/"+subdirectory+"skim1/";
+ newFileName += fileNameNoDir.ReplaceAll(".root","")+suffix+TString(".root");
+ cout << newFileName << endl;
  TFile*newFile = new TFile(newFileName,"recreate");
  TTree*newTree = chain->CloneTree(0);
 

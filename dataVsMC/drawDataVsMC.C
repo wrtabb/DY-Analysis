@@ -303,4 +303,10 @@ void drawDataVsMC()
     canvas[i]->SaveAs(saveName);     
   }
 
+ hMCSum[0]->SetName("mass15to3000");
+ hMCSum[1]->SetName("mass60to120");
+ TFile*saveFile = new TFile("backgroundAndSignal.root","recreate");
+ hMCSum[0]->Write();
+ hMCSum[1]->Write();
+ saveFile->Close(); 
 }//end invMassDraw
