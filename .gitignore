@@ -2,9 +2,12 @@
 *.jpg
 *.gif
 *.pdf
+
 *.root
 .nsf*
 *.swp
 *.swo
 index.php
-
+*.pcm
+*.so
+*.d
