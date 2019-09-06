@@ -1,0 +1,7 @@
+/src/*.d
+/src/*.so
+/src/*.pcm
+/data
+/macros/*.d
+/macros/*.so
+/macros/*.pcm

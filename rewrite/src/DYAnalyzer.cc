@@ -83,36 +83,16 @@ Long64_t DYAnalyzer::LoadTrees()
  cout << "**************************************************************************" << endl;
  cout << endl;
 
+ //--Initialize branches-----//
+ InitBranches();
+ //-----Open all needed files and load histograms-----//
+ LoadHistograms();
+
  return totalentries;
 }//end LoadTrees()
 
 void DYAnalyzer::InitBranches()
 {
- TTimeStamp ts_start;
- cout << "Begin initializing branches:" << endl;
- cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
- TStopwatch totaltime;
- totaltime.Start();
-
- TBranch*b_Nelectrons;
- TBranch*b_Electron_pT;
- TBranch*b_Electron_eta;
- TBranch*b_Electron_phi;
- TBranch*b_Electron_passMediumID;
- TBranch*b_HLT_ntrig;
- TBranch*b_HLT_trigType;
- TBranch*b_HLT_trigFired;
- TBranch*b_GENEvt_weight;
- TBranch*b_nVertices;
- TBranch*b_nPileUp;
- TBranch*b_GENnPair;
- TBranch*b_GENLepton_eta;
- TBranch*b_GENLepton_phi;
- TBranch*b_GENLepton_pT;
- TBranch*b_GENLepton_ID;
- TBranch*b_GENLepton_isHardProcess;
- TBranch*b_GENLepton_fromHardProcessFinalState;
-
  for(int iChain=0;iChain<numChains;iChain++){
 
   //-----HLT Branches-----//
@@ -144,18 +124,6 @@ void DYAnalyzer::InitBranches()
    ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState,
    &b_GENLepton_fromHardProcessFinalState);
  }
- totaltime.Stop();
- Double_t TotalCPURunTime = totaltime.CpuTime();
- Double_t TotalRunTime = totaltime.RealTime();
- TTimeStamp ts_end;
- cout << endl;
- cout << "End initializing branches:" << endl;
- cout << "**************************************************************************" << endl;
- cout << "Total CPU RunTime: " << TotalCPURunTime/60 << " minutes" << endl;
- cout << "Total Real RunTime: " << TotalRunTime/60 << " minutes" << endl;
- cout << "[End Time(local time): " << ts_end.AsString("l") << "]" << endl;
- cout << "**************************************************************************" << endl;
- cout << endl;
 }//end InitBranches()
 
 //-----Return simple values-----//
@@ -174,7 +142,8 @@ double DYAnalyzer::CalcInvMass(TLorentzVector v1,TLorentzVector v2)
  return (v1+v2).M();
 }
 
-//-----Event selection-----//
+//-----Lepton selection-----//
+//-----Get exactly two leptons from hard process and FSR-----//
 int DYAnalyzer::GetGenLeptons(LepType lepType,int &idxHardEle1,int &idxHardEle2,
                               int &idxFSREle1,int &idxFSREle2)
 {
@@ -187,7 +156,7 @@ int DYAnalyzer::GetGenLeptons(LepType lepType,int &idxHardEle1,int &idxHardEle2,
   cout << "ERROR: Appropriate lepton not selected" << endl;
   return 0;
  }
- int nLeptons = 0;
+ int nDileptons = 0;
  for(int iLep=0;iLep<GENnPair;iLep++){
   for(int jLep=iLep+1;jLep<GENnPair;jLep++){
    //lepton ID selection
@@ -197,7 +166,7 @@ int DYAnalyzer::GetGenLeptons(LepType lepType,int &idxHardEle1,int &idxHardEle2,
    if(GENLepton_isHardProcess[iLep]==1 & GENLepton_isHardProcess[jLep]==1){
     idxHardEle1 = iLep;
     idxHardEle2 = jLep;
-    nLeptons++;
+    nDileptons++;
    }//end if hard process
    if(GENLepton_fromHardProcessFinalState[iLep]==1 && 
     GENLepton_fromHardProcessFinalState[jLep]==1){
@@ -206,7 +175,7 @@ int DYAnalyzer::GetGenLeptons(LepType lepType,int &idxHardEle1,int &idxHardEle2,
    }//end if FSR
   }//end jLep loop
  }//end iLep loop
- return nLeptons;
+ return nDileptons;
 }
 
 bool DYAnalyzer::CutOnKinematics(double pt1,double pt2,double eta1,double eta2)
@@ -243,6 +212,95 @@ bool DYAnalyzer::FindGenToRecoMatch(int genIndex,int &recoIndex)
  return matchFound;
 }
 
+//-----Load files and get histograms from them-----//
+void DYAnalyzer::LoadHistograms()
+{
+ //-----For pileup weights-----//
+ pileupRatioFile  = new TFile(pileupRatioName);
+ hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
+ //-----For Scale Factors-----//
+ fileLeg2SF  = new TFile(leg2SFName);
+ fileMedIDSF = new TFile(medIDSFName);
+ fileRecoSF  = new TFile(recoSFName);
+ hLeg2SF  = (TH2F*) fileLeg2SF->Get("EGamma_SF2D");
+ hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
+ hRecoSF  = (TH2F*) fileRecoSF->Get("EGamma_SF2D"); 
+}
+
+
+//-----Adding weights to events-----//
+double DYAnalyzer::GetTotalWeight(int iChain,double genWeight,double xSecWeight,
+                                  double eta1,double eta2,double pt1,double pt2)
+{
+
+ //Taking care of edge cases
+ if(pt1<ptBinLow)  pt1 = ptBinLow;
+ if(pt2<ptBinLow)  pt2 = ptBinLow;
+ if(pt1>ptBinHigh) pt1 = ptBinHigh;
+ if(pt2>ptBinHigh) pt2 = ptBinHigh;
+ 
+ //Initialize weights to 1.0
+ sfWeight = 1.0;
+ pileupWeight = 1.0;
+ totalWeight = 1.0;
+
+ pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
+
+ sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eta1,pt1));
+ sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eta2,pt2));
+ sfID1=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eta1,pt1));
+ sfID2=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eta2,pt2));
+ sfHLT=(hLeg2SF->GetBinContent(hLeg2SF ->FindBin(eta1,pt1)))*
+              (hLeg2SF->GetBinContent(hLeg2SF ->FindBin(eta2,pt2)));
+ sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
+
+ totalWeight = genWeight*xSecWeight*pileupWeight;
+ return totalWeight;
+}
+
+double DYAnalyzer::GetGenWeight(int iChain)
+{
+ TTimeStamp ts_start;
+ cout << "Begin getting gen weights:" << endl;
+ cout << "[Start Time(local time): " << ts_start.AsString("l") << "]" << endl;
+ TStopwatch totaltime;
+ totaltime.Start();
+
+ sumGenWeight = 0.0;
+ sumRawGenWeight = 0.0;
+ varGenWeight = 0.0;
+ Long64_t localEntry;
+ for(Long64_t i=0;i<GetDYEntries(iChain);i++){
+  localEntry = chains[iChain]->LoadTree(i);
+  b_GENEvt_weight->GetEntry(localEntry);
+  genWeight = GENEvt_weight/fabs(GENEvt_weight);//normalized genweight
+  sumGenWeight += genWeight;
+  varGenWeight += GENEvt_weight*GENEvt_weight;//variance of genweights
+  sumRawGenWeight += GENEvt_weight; 
+ }  
+
+ totaltime.Stop();
+ Double_t TotalCPURunTime = totaltime.CpuTime();
+ Double_t TotalRunTime = totaltime.RealTime();
+ TTimeStamp ts_end;
+ cout << endl;
+ cout << "End Getting Gen Weights:" << endl;
+ cout << "**************************************************************************" << endl;
+ cout << "Total CPU RunTime: " << TotalCPURunTime/60 << " minutes" << endl;
+ cout << "Total Real RunTime: " << TotalRunTime/60 << " minutes" << endl;
+ cout << "[End Time(local time): " << ts_end.AsString("l") << "]" << endl;
+ cout << "**************************************************************************" << endl;
+ cout << endl;
+
+ return (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
+}//end GetGenWeight
+
+double DYAnalyzer::GetXsecWeight(int iChain,bool useGenWeight)
+{
+ if(useGenWeight) return dataLuminosity*(xSec[iChain]/1.0);
+ else return dataLuminosity*(xSec[iChain]/GetDYEntries(iChain));
+}//end GetXsecWeight
+
 //-----Other functions-----//
 void DYAnalyzer::Counter(Long64_t i,Long64_t N,TString name)
 {
@@ -254,8 +312,3 @@ void DYAnalyzer::Counter(Long64_t i,Long64_t N,TString name)
  return;
 }
 
-//-----Adding weights to events-----//
-double DYAnalyzer::AddWeights()
-{
-
-}
