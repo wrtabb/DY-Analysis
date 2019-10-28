@@ -20,7 +20,7 @@ void test()
   nentries = 100000; 
   //-----Chain-level weights-----//
   xSecWeight = dy->GetXsecWeight(iChain,true);
-  //genWeight = dy->GetGenWeight(iChain);
+  genWeight = dy->GetGenWeight(iChain);
 
   Long64_t event;
   //-----Event loop-----//
