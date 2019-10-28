@@ -178,7 +178,7 @@ int DYAnalyzer::GetGenLeptons(LepType lepType,int &idxHardEle1,int &idxHardEle2,
  return nDileptons;
 }
 
-bool DYAnalyzer::CutOnKinematics(double pt1,double pt2,double eta1,double eta2)
+bool DYAnalyzer::AcceptanceCut(double pt1,double pt2,double eta1,double eta2)
 {
   if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return false;
   if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return false;
@@ -187,7 +187,7 @@ bool DYAnalyzer::CutOnKinematics(double pt1,double pt2,double eta1,double eta2)
   return true;
 }
 
-bool DYAnalyzer::FindGenToRecoMatch(int genIndex,int &recoIndex)
+bool DYAnalyzer::GenToRecoMatchCut(int genIndex,int &recoIndex)
 {
  double dR,deta,dphi;
  float dRMin = 100000;
@@ -254,7 +254,7 @@ double DYAnalyzer::GetTotalWeight(int iChain,double genWeight,double xSecWeight,
               (hLeg2SF->GetBinContent(hLeg2SF ->FindBin(eta2,pt2)));
  sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
 
- totalWeight = genWeight*xSecWeight*pileupWeight;
+ totalWeight = genWeight*xSecWeight*pileupWeight*sfWeight;
  return totalWeight;
 }
 
@@ -312,3 +312,21 @@ void DYAnalyzer::Counter(Long64_t i,Long64_t N,TString name)
  return;
 }
 
+void DYAnalyzer::GetEfficiencies(TH1*hist0,TH1*hist1)
+{
+ //Having counts in the underflow bin causes issues with TEfficiency
+ //So remove them first
+ hist0->SetBinContent(0,0);
+ hist1->SetBinContent(0,0);
+
+ TEfficiency* acceptance = new TEfficiency((*hist1),(*hist0));
+ acceptance->SetTitle("Acceptance");
+ acceptance->SetMarkerStyle(20);
+ acceptance->SetMarkerSize(0.5);
+ acceptance->SetName("Acceptance");  
+ acceptance->SetStatisticOption(TEfficiency::kFNormal);
+ 
+ TFile*saveFile = new TFile("data/efficiencies.root","recreate");
+ acceptance->Write();
+ saveFile->Close();
+}

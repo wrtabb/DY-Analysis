@@ -1,7 +1,9 @@
 /src/*.d
 /src/*.so
 /src/*.pcm
+/src/nfs*
 /data
 /macros/*.d
 /macros/*.so
 /macros/*.pcm
+/macros/nfs*

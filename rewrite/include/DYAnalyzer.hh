@@ -8,6 +8,7 @@
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TH2F.h>
+#include <TEfficiency.h>
 #include <TCanvas.h>
 #include <iostream>
 #include "SharedVariableNames.h"
@@ -29,9 +30,10 @@ public:
  int GetGenLeptons(LepType lepType,int &idxHardEle1,int &idxHardEle2,
                                    int &idxFSREle1, int &idxFSREle2);
  //-----Cuts-----//
- bool CutOnKinematics(double pt1,double pt2,double eta1,double eta2);
- bool FindGenToRecoMatch(int genIndex,int &recoIndex);
+ bool AcceptanceCut(double pt1,double pt2,double eta1,double eta2);
+ bool GenToRecoMatchCut(int genIndex,int &recoIndex);
 
+ void GetEfficiencies(TH1*hist0,TH1*hist1);
  void Counter(Long64_t i,Long64_t N,TString name);
 
  //-----Weights-----//
