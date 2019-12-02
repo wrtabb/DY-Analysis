@@ -14,28 +14,34 @@ void test()
  double genWeight = 1.0;
  double weight = 1.0;
  double mass;
+  bool useGenWeights = true;
  Long64_t count = 0;
+ ofstream saveWeight("data/genWeights.txt");
  for(int iChain=0;iChain<numChains;iChain++){
   nentries = dy->GetDYEntries(iChain);
-  nentries = 100000; 
+  //nentries = 1000; 
   //-----Chain-level weights-----//
-  xSecWeight = dy->GetXsecWeight(iChain,true);
-  genWeight = dy->GetGenWeight(iChain);
+  //genWeight = dy->GetGenWeight(iChain);
+  
+  //cross section weights are different if gen weights are being used
+  if(genWeight==1.0) useGenWeights = false;
+  xSecWeight = dy->GetXsecWeight(iChain,useGenWeights);
+  saveWeight << genWeight << endl;
 
   Long64_t event;
   //-----Event loop-----//
   for(Long64_t i=0;i<nentries;i++){
    event = dy->GetDYEntry(iChain,i);
-  //-----Indices for leptons-----//
-  int iHard1 = -1;
-  int iHard2 = -1;
-  int iFSR1 = -1;
-  int iFSR2 = -1;
-  int nDileptons = -1;
+   //-----Indices for leptons-----//
+   int iHard1 = -1;
+   int iHard2 = -1;
+   int iFSR1 = -1;
+   int iFSR2 = -1;
+   int nDileptons = -1;
    dy->Counter(count,totalentries,"Looping over events: ");
    count++;
    nDileptons = dy->GetGenLeptons(ELE,iHard1,iHard2,iFSR1,iFSR2);   
-   if(nDileptons!=1) continue;
+   //if(nDileptons!=1) continue;
 
    bool passAcceptance = dy->AcceptanceCut(GENLepton_pT[iHard1],GENLepton_pT[iHard2],
                                            GENLepton_eta[iHard2],GENLepton_eta[iHard2]);
@@ -61,6 +67,8 @@ void test()
    hMassHardProcess->Fill(mass,weight);
   }//end event loop
  }//end chain loop
+
+ saveWeight.close();
  TCanvas*canvas = new TCanvas("camvas","",0,0,1200,1000);
  canvas->SetGrid();
  canvas->SetLogx();
@@ -70,4 +78,5 @@ void test()
  hMassHardProcess->SetFillColor(kYellow-2);
  hMassHardProcess->Draw("hist");
  dy->GetEfficiencies(hMass0,hMass1);
+ canvas->SaveAs("data/invMassHardProcess.png");
 }

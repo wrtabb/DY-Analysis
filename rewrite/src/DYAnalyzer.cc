@@ -212,7 +212,7 @@ bool DYAnalyzer::GenToRecoMatchCut(int genIndex,int &recoIndex)
  return matchFound;
 }
 
-//-----Load files and get histograms from them-----//
+//-----Load files and histograms-----//
 void DYAnalyzer::LoadHistograms()
 {
  //-----For pileup weights-----//
@@ -292,6 +292,9 @@ double DYAnalyzer::GetGenWeight(int iChain)
  cout << "**************************************************************************" << endl;
  cout << endl;
 
+
+ //Big problem here - GENEvt_weight should come from the entry being processed in the main
+ //script, but in this case it comes from the last entry loaded in this loop
  return (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
 }//end GetGenWeight
 
@@ -319,7 +322,7 @@ void DYAnalyzer::GetEfficiencies(TH1*hist0,TH1*hist1)
  hist0->SetBinContent(0,0);
  hist1->SetBinContent(0,0);
 
- TEfficiency* acceptance = new TEfficiency((*hist1),(*hist0));
+ TEfficiency*acceptance = new TEfficiency((*hist1),(*hist0));
  acceptance->SetTitle("Acceptance");
  acceptance->SetMarkerStyle(20);
  acceptance->SetMarkerSize(0.5);
