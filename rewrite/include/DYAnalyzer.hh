@@ -24,22 +24,26 @@ public:
  double weight;
 
  Long64_t LoadTrees();
- double CalcInvMass(TLorentzVector v1,TLorentzVector v2);
+ double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,
+                    double eta2,double phi2,double m2);
  Long64_t GetDYEntries(int iChain);
  Long64_t GetDYEntry(int iChain,Long64_t iEntry);
+
  int GetGenLeptons(LepType lepType,int &idxHardEle1,int &idxHardEle2,
-                                   int &idxFSREle1, int &idxFSREle2);
+                   int &idxFSREle1, int &idxFSREle2);
+ int GetRecoElectrons(int &leadEle, int &subEle);
+
  //-----Cuts-----//
  bool AcceptanceCut(double pt1,double pt2,double eta1,double eta2);
  bool GenToRecoMatchCut(int genIndex,int &recoIndex);
 
- void GetEfficiencies(TH1*hist0,TH1*hist1);
+ void GetEfficiencies(TH1*hist0,TH1*hist1,TString name);
  void Counter(Long64_t i,Long64_t N,TString name);
 
  //-----Weights-----//
- double GetTotalWeight(int iChain,double genWeight,double xSecWeight,
-                   double eta1,double eta2,double pt1,double pt2);
- double GetGenWeight(int iChain);
+ double GetTotalWeight(bool isReco,int iChain,double genWeight,double xSecWeight,
+                       double eta1,double eta2,double pt1,double pt2);
+ double GetGenWeightSum(int iChain);
  double GetXsecWeight(int iChain,bool useGenWeight);
 
 private:
