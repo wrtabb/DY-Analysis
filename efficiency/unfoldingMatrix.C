@@ -1,7 +1,7 @@
-#include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
-#include "/home/hep/wrtabb/git/DY-Analysis/headers/ntupleSkimLocation.h"
-#include "/home/hep/wrtabb/git/DY-Analysis/headers/DrellYanCuts.h"
-#include "/home/hep/wrtabb/git/DY-Analysis/headers/Functions.h"
+#include "/home/hep/wrtabb/DY-Analysis/headers/header1.h"
+#include "/home/hep/wrtabb/DY-Analysis/headers/ntupleSkimLocation.h"
+#include "/home/hep/wrtabb/DY-Analysis/headers/DrellYanCuts.h"
+#include "/home/hep/wrtabb/DY-Analysis/headers/Functions.h"
 
 void unfoldingMatrix()
 {
@@ -138,7 +138,7 @@ void unfoldingMatrix()
  double sfReco1,sfReco2,sfID1,sfID2,sfHLT;//efficiency scale factors
  double eEta1, eEta2, ePt1, ePt2;//eta and pt of the electrons in each event
 
- ifstream genWeightFile("genWeightSum.txt");//read gen weight sums
+ ofstream genWeightFile("genWeightSum.txt");//read gen weight sums
 
  //-----Loop over samples-----//
  for(int iChain=0;iChain<numChains;iChain++) {
@@ -149,13 +149,13 @@ void unfoldingMatrix()
   cout << "Number of Entries: " << nentries << endl; 
 
   //-----Get gen weights saved to a txt file-----//
-  genWeightFile >> sumGenWeight;
+  //genWeightFile >> sumGenWeight;
 
-/*
   //-----Find normalized genWeights,sums,variances-----//
   sumGenWeight = 0.0;
   sumRawGenWeight = 0.0;
   varGenWeight = 0.0;
+  nentries = 100;
   for(Long64_t i=0;i<nentries;i++){
    localEntry = chains[iChain]->LoadTree(i);
    b_GENEvt_weight->GetEntry(localEntry);
@@ -164,7 +164,7 @@ void unfoldingMatrix()
    varGenWeight += GENEvt_weight*GENEvt_weight;//variance of genweights
    sumRawGenWeight += GENEvt_weight; 
   }          
-*/ 
+  
   //-----Event loop-----//
   for(Long64_t i=0;i<nentries;i++) {      
    counter(count,totalentries);
@@ -321,8 +321,10 @@ void unfoldingMatrix()
    hMatrix->Fill(invMassHard,invMass,totalWeight*sfWeight);
    hMatrix->Fill(invMassHard,0.0,totalWeight*(1-sfWeight));
   }//end event loop
+
+   genWeightFile << genWeight << endl;
  }//end chain loop
-  
+ genWeightFile.close(); 
  //-----Save histograms to file-----//
  TString saveName = "/home/hep/wrtabb/git/DY-Analysis/data/unfoldIn.root";
  TFile *rootFile = new TFile(saveName,"RECREATE");

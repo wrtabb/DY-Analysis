@@ -15,11 +15,15 @@
   765,830,915,1000,1250,1500,2250,3000};
 
  const int numChains = 11;
+ //need to create two xSec arrays: each will include all samples (so far this is just the 
+ //DYtoLL samples
+ //One will be for v2p3 and one for v2p6
  const float xSec[numChains] = {6016.88,1873.52,76.2401,2.67606,0.139728,0.0792496,0.0123176,
   0.01042,0.00552772,0.000741613,0.000178737};
 
- const float eMass = 0.000511;
- double muMass = 0.105658;
+ const double eMass = 0.000511;
+ const double muMass = 0.105658;
+ const double tauMass = 1.77686;
 
  const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
 //-----File locations and tree name

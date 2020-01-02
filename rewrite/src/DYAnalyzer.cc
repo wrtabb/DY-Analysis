@@ -1,3 +1,16 @@
+////////////////////////////////////////////////////
+//  Here is a list of things that need to be done
+//  -Rename LoadTrees() to something like LoadTreesV2P3
+//  -Create LoadTreesV2P6() to load the new version of nutples
+//  I could maybe write one LoadTrees function and specify which sample to load
+//  The file structure is a little different though
+//  One workaround for this would be to create a text file which is just a list of all
+//  directories for a given ntuple version
+//  Then in the LoadTrees function, you would specify the version and this would
+//  determine which text file you would load
+//
+//
+
 #include "../include/DYAnalyzer.hh"
 #include <TBranch.h>
 #include <iostream>
