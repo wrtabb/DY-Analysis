@@ -48,6 +48,8 @@ bool Electron_passMediumID[MPSIZE];
 int HLT_trigType[MPSIZE],HLT_trigFired[MPSIZE];
 std::vector<std::string> HLT_trigName;
 std::vector<std::string> *pHLT_trigName = &HLT_trigName;
+TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
+TString trigName;
 
 const double pi=TMath::Pi();
 
@@ -83,5 +85,16 @@ enum LepType{
  MUON,
  TAU
 };
-
+enum SampleType{
+ DYLL,
+ DYLLandBKG
+};
+enum NtupleVersion{
+ V2P3,
+ V2P6
+};
+enum BinType{
+ LOG,
+ LINEAR
+};
 #endif

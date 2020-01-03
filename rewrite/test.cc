@@ -12,12 +12,29 @@ void test()
  //nentries will be number of entries in a given sample
  Long64_t nentries;
  //Define histograms
- TH1D*hMassHardProcess=new TH1D("hMassHardProcess","",nLogBins,massbins);
- TH1D*hMassReco=new TH1D("hMassReco","",nLogBins,massbins);
- TH1D*hMassFSR=new TH1D("hMassFSR","",nLogBins,massbins);
- TH1D*hist0=new TH1D("hist0","",nLogBins,massbins);
- TH1D*hist1=new TH1D("hist1","",nLogBins,massbins);
- TH1D*hist2=new TH1D("hist2","",nLogBins,massbins);
+ TH1D*hHardProcess[numChains];
+ TString histbasename = "hHardProcess";
+ TString histname;
+ for(int jChain=0;jChain<numChains;jChain++){
+  histname = histbasename;
+  histname+=jChain;
+  hHardProcess[jChain] = dy->DefineMassHist(LINEAR,histname);
+  hHardProcess[jChain]->SetFillColor(jChain+1);
+  hHardProcess[jChain]->GetXaxis()->
+   SetTitle("Gen-Level Dielectron Mass (isHardProcess) [GeV]"); 
+  hHardProcess[jChain]->GetYaxis()->SetRangeUser(0.000001,1000000000);
+  hHardProcess[jChain]->GetXaxis()->SetNoExponent();
+  hHardProcess[jChain]->GetXaxis()->SetMoreLogLabels();
+ }//end loop to define hard process histograms
+
+ TH1D*hMassReco = dy->DefineMassHist(LOG,"hMassReco");
+ TH1D*hMassFSR = dy->DefineMassHist(LOG,"hMassFSR");
+
+ TH1D*hist0 = dy->DefineMassHist(LOG,"hist0");
+ TH1D*hist1 = dy->DefineMassHist(LOG,"hist1");
+ TH1D*hist2 = dy->DefineMassHist(LOG,"hist2");
+ TH1D*hist3 = dy->DefineMassHist(LOG,"hist3");
+ TH1D*hist4 = dy->DefineMassHist(LOG,"hist4");
 
  //Weighting factors are all initialized to 1
  //If a weighting factor is to be used, it is redefined later
@@ -28,10 +45,6 @@ void test()
 
  double genWeightSum;
  
- //invariant mass for hard process and for reconstructed
- double massHard;
- double massFSR;
- double massReco;
 
  //Specify lepton type
  LepType lepType = ELE;
@@ -47,6 +60,11 @@ void test()
  //cross section weighting is different if gen weights are used
  bool useGenWeights = true;
  Long64_t count = 0;
+
+ TCanvas*canvas1 = new TCanvas("cInvMassHardProcess","",10,10,1000,1000);
+ canvas1->SetLogx();
+ canvas1->SetLogy();
+ canvas1->cd();
 
  //Begin looping over samples
  //Each separate sample gets placed in an array of chains
@@ -66,6 +84,9 @@ void test()
   for(Long64_t i=0;i<nentries;i++){
    //get event i from chain chains[iChain]
    event = dy->GetDYEntry(iChain,i);
+   double massHard = -1;
+   double massFSR = -1;
+   double massReco = -1;
    
    //gen weights are calculated
    genWeight = (GENEvt_weight/fabs(GENEvt_weight))/genWeightSum;
@@ -92,6 +113,7 @@ void test()
 
    //Function to find two leptons from hard process
    nGenDileptons = dy->GetGenLeptons(lepType,iHard1,iHard2,iFSR1,iFSR2);   
+   if(nGenDileptons!=1) continue;
 
    //Function to find two reconstructed electrons
    //I need to redo this to make it more general so that one function can handle
@@ -107,25 +129,32 @@ void test()
    bool passRecoMatch1 = dy->GenToRecoMatchCut(iFSR1,closestTrack1);
    bool passRecoMatch2 = dy->GenToRecoMatchCut(iFSR2,closestTrack2);
 
+   //Do reco electrons which match up with gen electrons pass medium ID cuts?
+   bool passMediumID = dy->MediumIDCut(Electron_passMediumID[closestTrack1],
+                                       Electron_passMediumID[closestTrack2]);
+
    //Determine if both leptons pass reco gen match cut
    //It only passes the cut if both pass
    bool passRecoMatch = passRecoMatch1 && passRecoMatch2;
 
    //Calculate invariant mass from hard process
-   massHard = dy->CalcInvMass(GENLepton_pT[iHard1],GENLepton_eta[iHard1],
-                              GENLepton_phi[iHard1],lepMass,GENLepton_pT[iHard2],
-                              GENLepton_eta[iHard2],GENLepton_phi[iHard2],lepMass);
-
+   if(iHard1>=0 && iHard2>=0){
+    massHard = dy->CalcInvMass(GENLepton_pT[iHard1],GENLepton_eta[iHard1],
+                               GENLepton_phi[iHard1],lepMass,GENLepton_pT[iHard2],
+                               GENLepton_eta[iHard2],GENLepton_phi[iHard2],lepMass);
+   }
    //Calculate invariant mass from FSR
-   massFSR = dy->CalcInvMass(GENLepton_pT[iFSR1],GENLepton_eta[iFSR1],
-                              GENLepton_phi[iFSR1],lepMass,GENLepton_pT[iFSR2],
-                              GENLepton_eta[iFSR2],GENLepton_phi[iFSR2],lepMass);
-
+   if(iFSR1>=0 && iFSR2>=0){
+    massFSR = dy->CalcInvMass(GENLepton_pT[iFSR1],GENLepton_eta[iFSR1],
+                               GENLepton_phi[iFSR1],lepMass,GENLepton_pT[iFSR2],
+                               GENLepton_eta[iFSR2],GENLepton_phi[iFSR2],lepMass);
+   }
    //Calculate invariant mass for reconstructed electrons
-   massReco = dy->CalcInvMass(Electron_pT[leadEle],Electron_eta[leadEle],
-                              Electron_phi[leadEle],lepMass,Electron_pT[subEle],
-                              Electron_eta[subEle],Electron_phi[subEle],lepMass);
-
+   if(leadEle>=0 && subEle>=0){
+    massReco = dy->CalcInvMass(Electron_pT[leadEle],Electron_eta[leadEle],
+                               Electron_phi[leadEle],lepMass,Electron_pT[subEle],
+                               Electron_eta[subEle],Electron_phi[subEle],lepMass);
+   }
    //-----Get weights-----//
    //The first argument in the function is whether the weight is for reco or not
    //This distinction is important because reco events get scale factor weighting
@@ -138,9 +167,9 @@ void test()
                                    GENLepton_pT[iHard2]); 
 
    //Fill histograms
-   hMassHardProcess->Fill(massHard,weight);
-   hMassReco->Fill(massReco,weightReco);
-   hMassFSR->Fill(massFSR,weight);
+   if(massReco>=0) hMassReco->Fill(massReco,weightReco);
+   if(massFSR>=0)  hMassFSR->Fill(massFSR,weight);
+   if(massHard>=0) hHardProcess[iChain]->Fill(massHard,weight);
 
    //This structure is temporary with these generic looking names just to test how the cuts 
    //are working
@@ -152,29 +181,27 @@ void test()
    hist1->Fill(massHard,weight);
    if(!passRecoMatch) massHard = 0;
    hist2->Fill(massHard,weight);
-
+   if(!passMediumID) massHard = 0;
+   hist3->Fill(massHard,weight);
+   //if(!passHLT) massHard = 0;
+   //hist4->Fill(massHard,weight);
   }//end event loop
+  if(iChain==0) hHardProcess[iChain]->Draw("Bar");      
+  else hHardProcess[iChain]->Draw("Barsame");
  }//end chain loop
 
- TCanvas*canvas = new TCanvas("camvas","",0,0,1200,1000);
- canvas->SetGrid();
- canvas->SetLogx();
- canvas->SetLogy();
- hMassHardProcess->GetXaxis()->SetNoExponent();
- hMassHardProcess->GetXaxis()->SetMoreLogLabels();
- hMassHardProcess->SetFillColor(kYellow-2);
- hMassHardProcess->Draw("hist");
- canvas->SaveAs("data/invMassHardProcess.png");
-
+ canvas1->SaveAs("plots/hardProcessBySample.png");
  TFile*histSave = new TFile("data/histograms.root","recreate");
  hist0->Write();
  hist1->Write();
  hist2->Write();
+ hist3->Write();
+ canvas1->Write();
  hMassReco->Write();
- hMassHardProcess->Write();
  hMassFSR->Write();
  histSave->Close();
 
  dy->GetEfficiencies(hist0,hist1,"Acceptance");
  dy->GetEfficiencies(hist1,hist2,"RecoGenEfficiency");
+ dy->GetEfficiencies(hist2,hist3,"MediumIDEfficiency");
 }

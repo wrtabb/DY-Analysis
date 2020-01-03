@@ -20,6 +20,7 @@
 using namespace std;
 
 TString dirNames[numChains] = {
+ //Electrons
  EEM10to50,
  EEM50to100,
  EEM100to200,
@@ -31,8 +32,55 @@ TString dirNames[numChains] = {
  EEM1000to1500,
  EEM1500to2000,
  EEM2000to3000
+ //Electrons: Reco only
+/* EEM10to50Reco,
+ EEM50to100Reco,
+ EEM100to200Reco,
+ EEM200to400Reco,
+ EEM400to500Reco,
+ EEM500to700Reco,
+ EEM700to800Reco,
+ EEM800to1000Reco,
+ EEM1000to1500Reco,
+ EEM1500to2000Reco,
+ EEM2000to3000Reco,
+ //EW
+ WJetsReco,
+ WWReco,
+ WWtoLnuReco,
+ ZZtoLReco,
+ WZReco,
+ WZtoLNuReco,
+ //Tops
+ TT0to700Reco,
+ TT700to1000Reco,
+ TT1000andUpReco,
+ tWReco,
+ tWantiReco,
+ //Data
+ runB,
+ runC,
+ runD,
+ runE,
+ runF,
+ runG,
+ runH
+*/
 };
 
+//Constructor
+//Want to set the ntuple version being used
+//And which lepton is being analyzed
+//And which samples to load
+//For samples, choose one of these:
+//     DYLL (MC Signal only)
+//     DYLLandBKG (MC Signal with backgrounds and data)
+//DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType)
+//{
+  
+//}
+
+//Load all trees
 Long64_t DYAnalyzer::LoadTrees()
 {
  TTimeStamp ts_start;
@@ -246,6 +294,28 @@ bool DYAnalyzer::GenToRecoMatchCut(int genIndex,int &recoIndex)
  return matchFound;
 }
 
+//-----Medium ID Cuts-----//
+bool DYAnalyzer::MediumIDCut(bool passID1,bool passID2)
+{
+ if(passID1 && passID2) return true;
+ else return false;
+}
+
+//-----HLT Cuts-----//
+bool DYAnalyzer::HLTCut()
+{
+ int trigNameSize = pHLT_trigName->size();
+ bool passHLT = false;
+ for(int iHLT=0;iHLT<trigNameSize;iHLT++) {
+  trigName = pHLT_trigName->at(iHLT);
+  if(trigName.CompareTo(compareHLT)==0) {
+   if(HLT_trigFired[iHLT]==1) passHLT = true;
+   break;
+  }
+ }
+ return passHLT;
+}
+
 //-----Load files and histograms-----//
 void DYAnalyzer::LoadHistograms()
 {
@@ -374,4 +444,24 @@ void DYAnalyzer::GetEfficiencies(TH1*hist0,TH1*hist1,TString name)
  TFile*saveFile = new TFile(saveFileName,"update");
  eff->Write();
  saveFile->Close();
+}
+
+//Define invariant mass histograms
+//Default linear binning of 598 corresponds to 5 GeV per bin
+TH1D*DYAnalyzer::DefineMassHist(BinType type,TString histName,int nBins = 598)
+{
+ float lowBin = 10;
+ float highBin = 3000;
+ TH1D*hist;
+ if(type==LOG){ 
+  hist = new TH1D(histName,"",nLogBins,massbins);
+ }
+ else if(type==LINEAR){
+  hist = new TH1D(histName,"",nBins,lowBin,highBin);
+ }
+ else{
+  hist = new TH1D("INVALID","",0,0,0);
+  cout << "ERROR: Histogram binning not defined!!!!!!!!!!!" << endl;
+ }
+ return hist;
 }

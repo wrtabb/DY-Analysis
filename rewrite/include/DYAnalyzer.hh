@@ -19,10 +19,12 @@ class DYAnalyzer
 {
 public:
  double xSecWeight;
- double genWeight;
- double invMass;
- double weight;
+ double genWeight; 
+ double invMass;   
+ double weight;    
 
+ //DYAnalyzer();
+ //DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType);
  Long64_t LoadTrees();
  double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,
                     double eta2,double phi2,double m2);
@@ -36,10 +38,13 @@ public:
  //-----Cuts-----//
  bool AcceptanceCut(double pt1,double pt2,double eta1,double eta2);
  bool GenToRecoMatchCut(int genIndex,int &recoIndex);
+ bool MediumIDCut(bool passID1, bool passID2);
+ bool HLTCut();
 
+ //-----Functions-----//
  void GetEfficiencies(TH1*hist0,TH1*hist1,TString name);
  void Counter(Long64_t i,Long64_t N,TString name);
-
+ TH1D*DefineMassHist(BinType type,TString histName,int nBins);
  //-----Weights-----//
  double GetTotalWeight(bool isReco,int iChain,double genWeight,double xSecWeight,
                        double eta1,double eta2,double pt1,double pt2);
