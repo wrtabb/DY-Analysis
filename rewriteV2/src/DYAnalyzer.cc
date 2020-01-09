@@ -1,16 +1,3 @@
-////////////////////////////////////////////////////
-//  Here is a list of things that need to be done
-//  -Rename LoadTrees() to something like LoadTreesV2P3
-//  -Create LoadTreesV2P6() to load the new version of nutples
-//  I could maybe write one LoadTrees function and specify which sample to load
-//  The file structure is a little different though
-//  One workaround for this would be to create a text file which is just a list of all
-//  directories for a given ntuple version
-//  Then in the LoadTrees function, you would specify the version and this would
-//  determine which text file you would load
-//
-//
-
 #include "../include/DYAnalyzer.hh"
 #include <TBranch.h>
 #include <iostream>
@@ -19,7 +6,7 @@
 
 using namespace std;
 
-TString dirNames[numChains] = {
+std::vector<TString> dirNamesEE = {
  //Electrons
  EEM10to50,
  EEM50to100,
@@ -32,8 +19,11 @@ TString dirNames[numChains] = {
  EEM1000to1500,
  EEM1500to2000,
  EEM2000to3000
+};
+
+std::vector<TString> dirNamesEEReco = {
  //Electrons: Reco only
-/* EEM10to50Reco,
+ EEM10to50Reco,
  EEM50to100Reco,
  EEM100to200Reco,
  EEM200to400Reco,
@@ -43,20 +33,43 @@ TString dirNames[numChains] = {
  EEM800to1000Reco,
  EEM1000to1500Reco,
  EEM1500to2000Reco,
- EEM2000to3000Reco,
+ EEM2000to3000Reco
+};
+
+std::vector<TString> dirNamesTAUTAU = {
+ //TauTau
+ Taus10to50Reco,
+ Taus50to100Reco,
+ Taus100to200Reco,
+ Taus200to400Reco,
+ Taus400to500Reco,
+ Taus500to700Reco,
+ Taus700to800Reco,
+ Taus800to1000Reco,
+ Taus1000to1500Reco,
+ Taus1500to2000Reco,
+ Taus2000to3000Reco
+};
+std::vector<TString> dirNamesEW = {
  //EW
  WJetsReco,
  WWReco,
- WWtoLnuReco,
+ WWtoLNuReco,
  ZZtoLReco,
  WZReco,
- WZtoLNuReco,
+ WZtoLNuReco
+};
+
+std::vector<TString> dirNamesTT = {
  //Tops
  TT0to700Reco,
  TT700to1000Reco,
  TT1000andUpReco,
  tWReco,
- tWantiReco,
+ tWantiReco
+};
+
+std::vector<TString> dirNamesData = {
  //Data
  runB,
  runC,
@@ -65,7 +78,6 @@ TString dirNames[numChains] = {
  runF,
  runG,
  runH
-*/
 };
 
 //Constructor
@@ -73,15 +85,29 @@ TString dirNames[numChains] = {
 //And which lepton is being analyzed
 //And which samples to load
 //For samples, choose one of these:
-//     DYLL (MC Signal only)
-//     DYLLandBKG (MC Signal with backgrounds and data)
-//DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType)
-//{
-  
-//}
+//    EE 	: Electrons
+//    EE_RECO	: Electrson reco only
+//    TAUTAU	: Taus
+//    EW	: Electroweak
+//    TT	: Tops
+//    DATA	: Data
+DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType)
+{
+ std::vector<TString> dirNames;
+ if(sampleType==EE) dirNames = dirNamesEE;
+ else if(sampleType==EE_RECO) dirNames = dirNamesEEReco;
+ else if(sampleType==TAUTAU) dirNames = dirNamesTAUTAU;
+ else if(sampleType==EW) dirNames = dirNamesEW;
+ else if(sampleType==TT) dirNames = dirNamesTT;
+ else if (sampleType==DATA) dirNames = dirNamesData;
+
+ //Calling an instance of this class automatically begins loading trees which can take
+ //up to several minutes
+ LoadTrees(ntup,dirNames,sampleType);
+}
 
 //Load all trees
-Long64_t DYAnalyzer::LoadTrees()
+Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,SampleType sampleType)
 {
  TTimeStamp ts_start;
  cout << "Begin loading trees:" << endl;
@@ -89,45 +115,64 @@ Long64_t DYAnalyzer::LoadTrees()
  TStopwatch totaltime;
  totaltime.Start();
 
- vector <TString> *subFiles[numChains];
- for(int iChain=0;iChain<numChains;iChain++){
-  subFiles[iChain] = new vector<TString>;
-  if(iChain==MC10to50){
-   subFiles[iChain]->push_back(dirNames[iChain]+"ext1v1");
-   subFiles[iChain]->push_back(dirNames[iChain]+"v1");
-   subFiles[iChain]->push_back(dirNames[iChain]+"v2");
-  }
-  else if(iChain==MC100to200){
-   subFiles[iChain]->push_back(dirNames[iChain]);
-   subFiles[iChain]->push_back(dirNames[iChain]+"_ext");
-  }
-  else subFiles[iChain]->push_back(dirNames[iChain]);
- }//end loop over chains 
-
+ const int numChains = dirNames.size();
  TString files;
  Long64_t subDirectorySize;
- Long64_t totalentries = 0;
- for(int iChain=0;iChain<numChains;iChain++){
-  chains[iChain] = new TChain(treeName);
-  subDirectorySize = subFiles[iChain]->size();
-  for(int k=0;k<subDirectorySize;k++){
-   files=subFiles[iChain]->at(k);
-   files+="/*.root";
-   chains[iChain]->Add(files);
-   cout << files << endl;
-   cout << chains[iChain]->GetEntries() << " events loaded" << endl;
-   if(chains[iChain]->GetEntries()==0){
-    cout << endl;
-    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-    cout << "ERROR: Broken files or files not found in: " << endl;
-    cout << files << endl;
-    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-    cout << endl;
-    return 0;
+ Long64_t totalentries = -1;
+ //The loading process is different for different ntuples versions because there are slightly
+ //different samples included as well as different directory structure
+ if(ntup==V2P3){
+  vector <TString> *subFiles[numChains];
+  for(int iChain=0;iChain<numChains;iChain++){
+   subFiles[iChain] = new vector<TString>;
+   if(((sampleType==EE || sampleType==EE_RECO) && iChain==EE10to50) || 
+      (sampleType==TAUTAU && iChain==TAUTAU10to50)) {
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext1v1");
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"_v1");
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"_v2");
    }
-  }//end loop over files
- totalentries=totalentries+chains[iChain]->GetEntries();
- }
+   else if((sampleType==EE && iChain==EE100to200) ||
+           (sampleType==TAUTAU && iChain==TAUTAU100to200) ||
+           (sampleType==EW && iChain==WJETS)) {
+    subFiles[iChain]->push_back(dirNames.at(iChain));
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext");
+   }
+   else if(sampleType==DATA && iChain==RUNH) {
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"ver2");
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"ver3");
+   }
+   else if(sampleType==TT && iChain==TT0to700) {
+    subFiles[iChain]->push_back(dirNames.at(iChain));
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"Backup");
+   }
+   else subFiles[iChain]->push_back(dirNames[iChain]);
+
+  }//end loop over chains 
+
+  totalentries = 0;
+  for(int iChain=0;iChain<numChains;iChain++){
+   chains[iChain] = new TChain(treeName);
+   subDirectorySize = subFiles[iChain]->size();
+   for(int k=0;k<subDirectorySize;k++){
+    files=subFiles[iChain]->at(k);
+    files+="/*.root";
+    chains[iChain]->Add(files);
+    cout << files << endl;
+    cout << chains[iChain]->GetEntries() << " events loaded" << endl;
+    if(chains[iChain]->GetEntries()==0){
+     cout << endl;
+     cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+     cout << "ERROR: Broken files or files not found in: " << endl;
+     cout << files << endl;
+     cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+     cout << endl;
+     return 0;
+    }
+   }//end loop over files
+  totalentries=totalentries+chains[iChain]->GetEntries();
+  }
+ }//end if ntup==V2P3
+
  cout << "Total Events Loaded: " << totalentries << endl;
  cout << endl;
 
@@ -145,9 +190,9 @@ Long64_t DYAnalyzer::LoadTrees()
  cout << endl;
 
  //--Initialize branches-----//
- InitBranches();
+ //InitBranches();
  //-----Open all needed files and load histograms-----//
- LoadHistograms();
+ //LoadHistograms();
 
  return totalentries;
 }//end LoadTrees()

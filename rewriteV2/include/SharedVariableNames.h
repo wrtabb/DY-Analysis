@@ -62,18 +62,55 @@ const double ptHigh = 28;
 const float dRMinCut = 0.3;
 
 //-----Enums-----//
-enum chainNum{
- MC10to50,
- MC50to100,
- MC100to200,
- MC200to400,
- MC400to500,
- MC500to700,
- MC700to800,
- MC800to1000,
- MC1000to1500,
- MC1500to2000,
- MC2000to3000
+enum chainNumEE{
+ EE10to50,
+ EE50to100,
+ EE100to200,
+ EE200to400,
+ EE400to500,
+ EE500to700,
+ EE700to800,
+ EE800to1000,
+ EE1000to1500,
+ EE1500to2000,
+ EE2000to3000
+};
+enum chainNumTAUTAU{
+ TAUTAU10to50,
+ TAUTAU50to100,
+ TAUTAU100to200,
+ TAUTAU200to400,
+ TAUTAU400to500,
+ TAUTAU500to700,
+ TAUTAU700to800,
+ TAUTAU800to1000,
+ TAUTAU1000to1500,
+ TAUTAU1500to2000,
+ TAUTAU2000to3000
+};
+enum chainNumEW{
+ WJETS,
+ WW,
+ WWTOLNU,
+ ZZTOL,
+ WZ,
+ WZTOLNU
+};
+enum chainNumTT{
+ TT0to700,
+ TT700to1000,
+ TT1000ANDUP,
+ TW,
+ TWANTI
+};
+enum chainNumDATA{
+ RUNB,
+ RUNC,
+ RUND,
+ RUNE,
+ RUNF,
+ RUNG,
+ RUNH
 };
 enum LepType{
  UNDEF = 0,
@@ -82,8 +119,12 @@ enum LepType{
  TAU
 };
 enum SampleType{
- DYLL,
- DYLLandBKG
+ EE,
+ EE_RECO,
+ TAUTAU,
+ EW,
+ TT,
+ DATA
 };
 enum NtupleVersion{
  V2P3,

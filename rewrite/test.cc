@@ -137,6 +137,9 @@ void test()
    //It only passes the cut if both pass
    bool passRecoMatch = passRecoMatch1 && passRecoMatch2;
 
+   //Determine if event passes HLT cut
+   bool passHLT = dy->HLTCut();
+
    //Calculate invariant mass from hard process
    if(iHard1>=0 && iHard2>=0){
     massHard = dy->CalcInvMass(GENLepton_pT[iHard1],GENLepton_eta[iHard1],
@@ -183,8 +186,8 @@ void test()
    hist2->Fill(massHard,weight);
    if(!passMediumID) massHard = 0;
    hist3->Fill(massHard,weight);
-   //if(!passHLT) massHard = 0;
-   //hist4->Fill(massHard,weight);
+   if(!passHLT) massHard = 0;
+   hist4->Fill(massHard,weight);
   }//end event loop
   if(iChain==0) hHardProcess[iChain]->Draw("Bar");      
   else hHardProcess[iChain]->Draw("Barsame");
@@ -204,4 +207,5 @@ void test()
  dy->GetEfficiencies(hist0,hist1,"Acceptance");
  dy->GetEfficiencies(hist1,hist2,"RecoGenEfficiency");
  dy->GetEfficiencies(hist2,hist3,"MediumIDEfficiency");
+ dy->GetEfficiencies(hist3,hist4,"HLTEfficiency");
 }
