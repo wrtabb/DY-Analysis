@@ -96,8 +96,9 @@ private:
 
  //Functions
  Long64_t LoadTrees(NtupleVersion ntup,std::vector<TString> dirNames,SampleType sampleType);
- void InitBranches();
+ void InitBranches(bool isMC,bool isReco);
  void LoadHistograms();
+ vector<vector<double>> GetVars(SampleType sampleType);
 };
 
 #endif

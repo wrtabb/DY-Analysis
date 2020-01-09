@@ -91,6 +91,9 @@ std::vector<TString> dirNamesData = {
 //    EW	: Electroweak
 //    TT	: Tops
 //    DATA	: Data
+//
+//    NOTE:	EE is for trees with gen and reco level
+//    		EE_RECO are skimmed to only contain reco events
 DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType)
 {
  std::vector<TString> dirNames;
@@ -104,7 +107,8 @@ DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleTyp
  //Calling an instance of this class automatically begins loading trees which can take
  //up to several minutes
  LoadTrees(ntup,dirNames,sampleType);
-}
+ //GetVars(sampleType);
+} 
 
 //Load all trees
 Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,SampleType sampleType)
@@ -115,13 +119,25 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
  TStopwatch totaltime;
  totaltime.Start();
 
+ bool isMC = true;
+ bool isReco = true;//this refers to the reco only samples
+ if(sampleType==DATA) isMC = false;
+ if(sampleType==EE || sampleType==DATA) isReco = false;
  const int numChains = dirNames.size();
  TString files;
  Long64_t subDirectorySize;
  Long64_t totalentries = -1;
  //The loading process is different for different ntuples versions because there are slightly
  //different samples included as well as different directory structure
- if(ntup==V2P3){
+ if(ntup==V2P6){
+  cout << "V2P6 is not yet implemented" << endl;
+  return 0;
+ }
+
+ else if(ntup==V2P3){
+  TString fileNames;
+  if(isMC && !isReco) fileNames = "/*.root";
+  else fileNames = "/skims_0002/*.root";
   vector <TString> *subFiles[numChains];
   for(int iChain=0;iChain<numChains;iChain++){
    subFiles[iChain] = new vector<TString>;
@@ -145,17 +161,18 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
     subFiles[iChain]->push_back(dirNames.at(iChain));
     subFiles[iChain]->push_back(dirNames.at(iChain)+"Backup");
    }
-   else subFiles[iChain]->push_back(dirNames[iChain]);
+   else subFiles[iChain]->push_back(dirNames.at(iChain));
 
   }//end loop over chains 
 
   totalentries = 0;
   for(int iChain=0;iChain<numChains;iChain++){
+   cout << "Chain: " << iChain << endl;
    chains[iChain] = new TChain(treeName);
    subDirectorySize = subFiles[iChain]->size();
    for(int k=0;k<subDirectorySize;k++){
     files=subFiles[iChain]->at(k);
-    files+="/*.root";
+    files+=fileNames;
     chains[iChain]->Add(files);
     cout << files << endl;
     cout << chains[iChain]->GetEntries() << " events loaded" << endl;
@@ -172,6 +189,11 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
   totalentries=totalentries+chains[iChain]->GetEntries();
   }
  }//end if ntup==V2P3
+
+ else{
+  cout << "ERROR: Ntuple version not correctly chosen!" << endl;
+  return 0;
+ }
 
  cout << "Total Events Loaded: " << totalentries << endl;
  cout << endl;
@@ -190,14 +212,14 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
  cout << endl;
 
  //--Initialize branches-----//
- //InitBranches();
+ InitBranches(isMC,isReco);
  //-----Open all needed files and load histograms-----//
- //LoadHistograms();
+ LoadHistograms();
 
  return totalentries;
 }//end LoadTrees()
 
-void DYAnalyzer::InitBranches()
+void DYAnalyzer::InitBranches(bool isMC,bool isReco)
 {
  for(int iChain=0;iChain<numChains;iChain++){
 
@@ -218,30 +240,22 @@ void DYAnalyzer::InitBranches()
   chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
   chains[iChain]->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,
     &b_Electron_passMediumID);
-  //-----Gen-level branches-----//
-  chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
-  chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
-  chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
-  chains[iChain]->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
-  chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
-  chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess,
-   &b_GENLepton_isHardProcess);
-  chains[iChain]->SetBranchAddress
-   ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState,
-   &b_GENLepton_fromHardProcessFinalState);
+ 
+  if(!isReco && isMC){
+   //-----Gen-level branches-----//
+   chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
+   chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
+   chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
+   chains[iChain]->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
+   chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
+   chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess,
+    &b_GENLepton_isHardProcess);
+   chains[iChain]->SetBranchAddress
+    ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState,
+    &b_GENLepton_fromHardProcessFinalState);
+  }
  }
 }//end InitBranches()
-
-//-----Return simple values-----//
-Long64_t DYAnalyzer::GetDYEntries(int iChain)
-{
- return chains[iChain]->GetEntries();
-}
-
-Long64_t DYAnalyzer::GetDYEntry(int iChain,Long64_t iEntry)
-{
- return chains[iChain]->GetEntry(iEntry);
-}
 
 //-----Lepton selection-----//
 //-----Get exactly two leptons from hard process and FSR-----//
@@ -252,9 +266,9 @@ int DYAnalyzer::GetGenLeptons(LepType lepType,int &idxHardLep1,int &idxHardLep2,
  int lepID = 0;
  if      (lepType==ELE)  lepID = 11;
  else if (lepType==MUON) lepID = 13;
- else if (lepType==TAU)  lepID = 15;
  else {
-  cout << "ERROR: Appropriate lepton not selected" << endl;
+  cout << "ERROR: Appropriate lepton not selected." << endl;
+  cout << "NOTE: This analysis does not handle taus." << endl;
   return 0;
  }
  int nDileptons = 0;
@@ -510,4 +524,38 @@ TH1D*DYAnalyzer::DefineMassHist(BinType type,TString histName,int nBins = 598)
   cout << "ERROR: Histogram binning not defined!!!!!!!!!!!" << endl;
  }
  return hist;
+}
+/*
+vector<vector<double>> GetVars(LepType lepType,TChain chains)
+{
+ int iHard1 = -1;
+ int iHard2 = -1;
+ int iFSR1 = -1; 
+ int iFSR2 = -1;
+
+ double lepMass;
+ double pt1,pt2,eta1,eta2,phi1,phi2,invMass;
+
+ std::vector<std::vector<double>> vars;
+ if(lepType==ELE) lepMass = eMass;
+ else if(lepType==MUON) lepMass = muMass;
+ for(int iChain=0;iChain<numchains;iChain++){
+  for(Long64_t iEvent=0;iEvent<chains[iChain]->GetEntries();iEvent++){
+   if(isMC && !isReco){  
+    chains[iChain]->GetEntry(iEvent);
+    pt1  = GENLepton_pT[iHard1];
+    pt2  = GENLepton_pT[iHard2];
+    eta1 = GENLepton_eta[iHard1];
+    eta2 = GENLepton_eta[iHard2];
+    phi1 = GENLepton_phi[iHard1];
+    phi2 = GENLepton_phi[iHard2];
+
+    invMass = -1;
+    GetGenLeptons(lepType,iHard1,iHard2,iFSR1,iFSR2);
+    invMass = CalcInvMass(pt1,eta1,phi1,lepMass,pt2,eta2,phi2,lepMass);
+
+    vars.at(iEvent) = {pt1,pt2,eta1,eta2,phi1,phi2,invMass};
+   }//end if isMC && !isReco
+  }//end event loop
+ }//end chain loop
 }
