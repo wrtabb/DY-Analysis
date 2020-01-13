@@ -19,69 +19,34 @@
 
 using namespace std;
 
-TString dirNames[numChains] = {
- //Electrons
- EEM10to50,
- EEM50to100,
- EEM100to200,
- EEM200to400,
- EEM400to500,
- EEM500to700,
- EEM700to800,
- EEM800to1000,
- EEM1000to1500,
- EEM1500to2000,
- EEM2000to3000
- //Electrons: Reco only
-/* EEM10to50Reco,
- EEM50to100Reco,
- EEM100to200Reco,
- EEM200to400Reco,
- EEM400to500Reco,
- EEM500to700Reco,
- EEM700to800Reco,
- EEM800to1000Reco,
- EEM1000to1500Reco,
- EEM1500to2000Reco,
- EEM2000to3000Reco,
- //EW
- WJetsReco,
- WWReco,
- WWtoLnuReco,
- ZZtoLReco,
- WZReco,
- WZtoLNuReco,
- //Tops
- TT0to700Reco,
- TT700to1000Reco,
- TT1000andUpReco,
- tWReco,
- tWantiReco,
- //Data
- runB,
- runC,
- runD,
- runE,
- runF,
- runG,
- runH
-*/
-};
-
 //Constructor
 //Want to set the ntuple version being used
 //And which lepton is being analyzed
 //And which samples to load
 //For samples, choose one of these:
-//     DYLL (MC Signal only)
-//     DYLLandBKG (MC Signal with backgrounds and data)
-//DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType)
-//{
-  
-//}
+// EE		: electrons
+// EE_RECO	: electrons, reco only
+// MUMU		: muons
+// TAUTAU	: taus (used for background)
+// EW		: electroweak (background)
+// TT		: tops (background)
+// DATA		: data
+DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType)
+{
+ std::vector<TString> dirNames;
+ if(sampleType==EE) dirNames = dirNamesEE;
+ else if(sampleType==EE_RECO) dirNames = dirNamesEEReco;
+ else if(sampleType==TAUTAU) dirNames = dirNamesTAUTAU;
+ else if(sampleType==EW) dirNames = dirNamesEW;
+ else if(sampleType==TT) dirNames = dirNamesTT;
+ else if (sampleType==DATA) dirNames = dirNamesData;
 
-//Load all trees
-Long64_t DYAnalyzer::LoadTrees()
+ //Calling an instance of this class automatically begins loading trees which can take
+ //up to several minutes
+ LoadTrees(ntup,dirNames,sampleType,lepType);
+}
+ 
+Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,SampleType sampleType,LepType lepType)
 {
  TTimeStamp ts_start;
  cout << "Begin loading trees:" << endl;
@@ -89,45 +54,79 @@ Long64_t DYAnalyzer::LoadTrees()
  TStopwatch totaltime;
  totaltime.Start();
 
- vector <TString> *subFiles[numChains];
- for(int iChain=0;iChain<numChains;iChain++){
-  subFiles[iChain] = new vector<TString>;
-  if(iChain==MC10to50){
-   subFiles[iChain]->push_back(dirNames[iChain]+"ext1v1");
-   subFiles[iChain]->push_back(dirNames[iChain]+"v1");
-   subFiles[iChain]->push_back(dirNames[iChain]+"v2");
-  }
-  else if(iChain==MC100to200){
-   subFiles[iChain]->push_back(dirNames[iChain]);
-   subFiles[iChain]->push_back(dirNames[iChain]+"_ext");
-  }
-  else subFiles[iChain]->push_back(dirNames[iChain]);
- }//end loop over chains 
-
+ bool isMC = true;
+ bool isReco = true;//this refers to the reco only samples
+ if(sampleType==DATA) isMC = false;
+ if(sampleType==EE || sampleType==DATA) isReco = false;
+ const int numChains = dirNames.size();
  TString files;
  Long64_t subDirectorySize;
- Long64_t totalentries = 0;
- for(int iChain=0;iChain<numChains;iChain++){
-  chains[iChain] = new TChain(treeName);
-  subDirectorySize = subFiles[iChain]->size();
-  for(int k=0;k<subDirectorySize;k++){
-   files=subFiles[iChain]->at(k);
-   files+="/*.root";
-   chains[iChain]->Add(files);
-   cout << files << endl;
-   cout << chains[iChain]->GetEntries() << " events loaded" << endl;
-   if(chains[iChain]->GetEntries()==0){
-    cout << endl;
-    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-    cout << "ERROR: Broken files or files not found in: " << endl;
-    cout << files << endl;
-    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-    cout << endl;
-    return 0;
-   }
-  }//end loop over files
- totalentries=totalentries+chains[iChain]->GetEntries();
+ Long64_t totalentries = -1;
+ if(ntup==V2P6){
+  cout << "V2P6 is not yet implemented" << endl;
+  return 0;
  }
+
+ else if(ntup==V2P3){
+  TString fileNames;
+  if(isMC && !isReco) fileNames = "/*.root";
+  else fileNames = "/skims_0002/*.root";
+  vector <TString> *subFiles[numChains];
+  for(int iChain=0;iChain<numChains;iChain++){
+   subFiles[iChain] = new vector<TString>;
+   if(((sampleType==EE || sampleType==EE_RECO) && iChain==EE10to50) ||
+      (sampleType==TAUTAU && iChain==TAUTAU10to50)) {
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext1v1");
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"_v1");
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"_v2");
+   }
+   else if((sampleType==EE && iChain==EE100to200) ||
+           (sampleType==TAUTAU && iChain==TAUTAU100to200) ||
+           (sampleType==EW && iChain==WJETS)) {
+    subFiles[iChain]->push_back(dirNames.at(iChain));
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext");
+   }
+   else if(sampleType==DATA && iChain==RUNH) {
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"ver2");
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"ver3");
+   }
+   else if(sampleType==TT && iChain==TT0to700) {
+    subFiles[iChain]->push_back(dirNames.at(iChain));
+    subFiles[iChain]->push_back(dirNames.at(iChain)+"Backup");
+   }
+   else subFiles[iChain]->push_back(dirNames.at(iChain));
+
+  }//end loop over iChains 
+
+  totalentries = 0;
+  for(int iChain=0;iChain<numChains;iChain++){
+   chains[iChain] = new TChain(treeName);
+   subDirectorySize = subFiles[iChain]->size();
+   for(int k=0;k<subDirectorySize;k++){
+    files=subFiles[iChain]->at(k);
+    files+=fileNames;
+    chains[iChain]->Add(files);
+    cout << files << endl;
+    cout << chains[iChain]->GetEntries() << " events loaded" << endl;
+    if(chains[iChain]->GetEntries()==0){
+     cout << endl;
+     cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+     cout << "ERROR: Broken files or files not found in: " << endl;
+     cout << files << endl;
+     cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+     cout << endl;
+     return 0;
+    }
+   }//end loop over files
+  totalentries=totalentries+chains[iChain]->GetEntries();
+  }
+ }//end if ntup==V2P3
+
+ else{
+  cout << "ERROR: Ntuple version not correctly chosen!" << endl;
+  return 0;
+ }
+
  cout << "Total Events Loaded: " << totalentries << endl;
  cout << endl;
 
@@ -144,15 +143,13 @@ Long64_t DYAnalyzer::LoadTrees()
  cout << "**************************************************************************" << endl;
  cout << endl;
 
- //--Initialize branches-----//
- InitBranches();
- //-----Open all needed files and load histograms-----//
+ InitBranches(isMC,isReco);
  LoadHistograms();
 
  return totalentries;
 }//end LoadTrees()
 
-void DYAnalyzer::InitBranches()
+void DYAnalyzer::InitBranches(bool isMC,bool isReco)
 {
  for(int iChain=0;iChain<numChains;iChain++){
 
@@ -173,17 +170,20 @@ void DYAnalyzer::InitBranches()
   chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
   chains[iChain]->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,
     &b_Electron_passMediumID);
-  //-----Gen-level branches-----//
-  chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
-  chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
-  chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
-  chains[iChain]->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
-  chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
-  chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess,
-   &b_GENLepton_isHardProcess);
-  chains[iChain]->SetBranchAddress
-   ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState,
-   &b_GENLepton_fromHardProcessFinalState);
+
+  if(!isReco && isMC){
+   //-----Gen-level branches-----//
+   chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
+   chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
+   chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
+   chains[iChain]->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
+   chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
+   chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess,
+    &b_GENLepton_isHardProcess);
+   chains[iChain]->SetBranchAddress
+    ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState,
+    &b_GENLepton_fromHardProcessFinalState);
+  }
  }
 }//end InitBranches()
 

@@ -2,6 +2,7 @@
 #define SharedVariableNames_H
 
 #include <TMath.h>
+#include "NtuplesV2P3Location.h"
 
  const int nLogBins = 43;
  const int nLogBins2 = 2*nLogBins;
@@ -62,28 +63,69 @@ const double ptHigh = 28;
 const float dRMinCut = 0.3;
 
 //-----Enums-----//
-enum chainNum{
- MC10to50,
- MC50to100,
- MC100to200,
- MC200to400,
- MC400to500,
- MC500to700,
- MC700to800,
- MC800to1000,
- MC1000to1500,
- MC1500to2000,
- MC2000to3000
+enum chainNumEE{
+ EE10to50,
+ EE50to100,
+ EE100to200,
+ EE200to400,
+ EE400to500,
+ EE500to700,
+ EE700to800,
+ EE800to1000,
+ EE1000to1500,
+ EE1500to2000,
+ EE2000to3000
+};
+enum chainNumTAUTAU{
+ TAUTAU10to50,
+ TAUTAU50to100,
+ TAUTAU100to200,
+ TAUTAU200to400,
+ TAUTAU400to500,
+ TAUTAU500to700,
+ TAUTAU700to800,
+ TAUTAU800to1000,
+ TAUTAU1000to1500,
+ TAUTAU1500to2000,
+ TAUTAU2000to3000
+};
+enum chainNumEW{
+ WJETS,
+ WW,
+ WWTOLNU,
+ ZZTOL,
+ WZ,
+ WZTOLNU
+};
+enum chainNumTT{
+ TT0to700,
+ TT700to1000,
+ TT1000ANDUP,
+ TW,
+ TWANTI
+};
+enum chainNumDATA{
+ RUNB,
+ RUNC,
+ RUND,
+ RUNE,
+ RUNF,
+ RUNG,
+ RUNH
+};
+enum SampleType{
+ EE,
+ EE_RECO,
+ TAUTAU,
+ EW,
+ TT,
+ DATA
 };
 enum LepType{
  UNDEF = 0,
  ELE,
  MUON,
  TAU
-};
-enum SampleType{
- DYLL,
- DYLLandBKG
 };
 enum NtupleVersion{
  V2P3,
@@ -93,4 +135,74 @@ enum BinType{
  LOG,
  LINEAR
 };
+
+//Vectors of directory locations
+std::vector<TString> dirNamesEE = {
+ EEM10to50,
+ EEM50to100,
+ EEM100to200,
+ EEM200to400,
+ EEM400to500,
+ EEM500to700,
+ EEM700to800,
+ EEM800to1000,
+ EEM1000to1500,
+ EEM1500to2000,
+ EEM2000to3000
+};
+
+std::vector<TString> dirNamesEEReco = {
+ EEM10to50Reco,
+ EEM50to100Reco,
+ EEM100to200Reco,
+ EEM200to400Reco,
+ EEM400to500Reco,
+ EEM500to700Reco,
+ EEM700to800Reco,
+ EEM800to1000Reco,
+ EEM1000to1500Reco,
+ EEM1500to2000Reco,
+ EEM2000to3000Reco
+};
+
+std::vector<TString> dirNamesTAUTAU = {
+ Taus10to50Reco,
+ Taus50to100Reco,
+ Taus100to200Reco,
+ Taus200to400Reco,
+ Taus400to500Reco,
+ Taus500to700Reco,
+ Taus700to800Reco,
+ Taus800to1000Reco,
+ Taus1000to1500Reco,
+ Taus1500to2000Reco,
+ Taus2000to3000Reco
+};
+std::vector<TString> dirNamesEW = {
+ WJetsReco,
+ WWReco,
+ WWtoLNuReco,
+ ZZtoLReco,
+ WZReco,
+ WZtoLNuReco
+};
+
+std::vector<TString> dirNamesTT = {
+ TT0to700Reco,
+ TT700to1000Reco,
+ TT1000andUpReco,
+ tWReco,
+ tWantiReco
+};
+
+std::vector<TString> dirNamesData = {
+ runB,
+ runC,
+ runD,
+ runE,
+ runF,
+ runG,
+ runH
+};
+
 #endif

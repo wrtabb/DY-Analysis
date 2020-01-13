@@ -106,12 +106,12 @@ DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleTyp
 
  //Calling an instance of this class automatically begins loading trees which can take
  //up to several minutes
- LoadTrees(ntup,dirNames,sampleType);
- //GetVars(sampleType);
+ LoadTrees(ntup,dirNames,sampleType,lepType);
+ //ReturnAllParametersAllEvents();
 } 
 
 //Load all trees
-Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,SampleType sampleType)
+Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,SampleType sampleType,LepType lepType)
 {
  TTimeStamp ts_start;
  cout << "Begin loading trees:" << endl;
@@ -163,7 +163,7 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
    }
    else subFiles[iChain]->push_back(dirNames.at(iChain));
 
-  }//end loop over chains 
+  }//end loop over iChains 
 
   totalentries = 0;
   for(int iChain=0;iChain<numChains;iChain++){
@@ -215,6 +215,25 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
  InitBranches(isMC,isReco);
  //-----Open all needed files and load histograms-----//
  LoadHistograms();
+
+ vector<double> var1 = ReturnAllParameters(lepType,chains[4],0);
+ vector<double> var2 = ReturnAllParameters(lepType,chains[4],1);
+ vector<double> var3 = ReturnAllParameters(lepType,chains[4],2);
+
+ cout << "var1 = (";
+ for(int i=0;i<11;i++){
+  cout << var1.at(i) << ", ";
+ }
+
+ cout << "var2 = (";
+ for(int i=0;i<11;i++){
+  cout << var2.at(i) << ", ";
+ }
+
+ cout << "var3 = (";
+ for(int i=0;i<11;i++){
+  cout << var3.at(i) << ", ";
+ }
 
  return totalentries;
 }//end LoadTrees()
@@ -525,37 +544,64 @@ TH1D*DYAnalyzer::DefineMassHist(BinType type,TString histName,int nBins = 598)
  }
  return hist;
 }
-/*
-vector<vector<double>> GetVars(LepType lepType,TChain chains)
+
+vector<double> DYAnalyzer::ReturnAllParameters(LepType lepType,TChain*chain,Long64_t iEvent)
 {
+ double lepMass = 0;
  int iHard1 = -1;
  int iHard2 = -1;
  int iFSR1 = -1; 
  int iFSR2 = -1;
-
- double lepMass;
- double pt1,pt2,eta1,eta2,phi1,phi2,invMass;
-
- std::vector<std::vector<double>> vars;
+ double pt1 = -1;
+ double pt2 = -1;
+ double eta1 = -1;
+ double eta2 = -1;
+ double phi1 = -1;
+ double phi2 = -1;
+ double invMass = -1;
+ bool passAcceptance = true;
+ bool passGentoRecoMatch = true;
+ bool passMediumID = true;
+ bool passHLT = true;
+ //chain->GetEntry(iEvent);
+ 
  if(lepType==ELE) lepMass = eMass;
  else if(lepType==MUON) lepMass = muMass;
+ else {
+  cout << "ERROR: Lepton type not properly defined!!!" << endl;
+  cout << "Must be ELE or MUON" << endl;
+ }
+for(Long64_t i=0;i<chain->GetEntries();i++){
+ GetGenLeptons(lepType,iHard1,iHard2,iFSR1,iFSR2);
+ pt1  = GENLepton_pT[iHard1];
+ pt2  = GENLepton_pT[iHard2];
+ eta1 = GENLepton_eta[iHard1];
+ eta2 = GENLepton_eta[iHard2];
+ phi1 = GENLepton_phi[iHard1];
+ phi2 = GENLepton_phi[iHard2];
+ invMass = CalcInvMass(pt1,eta1,phi1,lepMass,pt2,eta2,phi2,lepMass);
+ cout << invMass << endl;
+}
+ std::vector<double> vars = {pt1,pt2,eta1,eta2,phi1,phi2};
+ vars.push_back(invMass);
+ vars.push_back(passAcceptance);
+ vars.push_back(passGentoRecoMatch);
+ vars.push_back(passMediumID);
+ vars.push_back(passHLT);
+ return vars;
+}
+
+vector<vector<double>> DYAnalyzer::ReturnAllParametersAllEvents()
+{
+ std::vector<std::vector<double>> allvars;
+ return allvars;
+}
+
+void DYAnalyzer::EventLoop(LepType lepType,TChain*chains,int numchains)
+{
  for(int iChain=0;iChain<numchains;iChain++){
-  for(Long64_t iEvent=0;iEvent<chains[iChain]->GetEntries();iEvent++){
-   if(isMC && !isReco){  
-    chains[iChain]->GetEntry(iEvent);
-    pt1  = GENLepton_pT[iHard1];
-    pt2  = GENLepton_pT[iHard2];
-    eta1 = GENLepton_eta[iHard1];
-    eta2 = GENLepton_eta[iHard2];
-    phi1 = GENLepton_phi[iHard1];
-    phi2 = GENLepton_phi[iHard2];
+  for(Long64_t iEvent=0;iEvent<chains->GetEntries();iEvent++){
 
-    invMass = -1;
-    GetGenLeptons(lepType,iHard1,iHard2,iFSR1,iFSR2);
-    invMass = CalcInvMass(pt1,eta1,phi1,lepMass,pt2,eta2,phi2,lepMass);
-
-    vars.at(iEvent) = {pt1,pt2,eta1,eta2,phi1,phi2,invMass};
-   }//end if isMC && !isReco
   }//end event loop
  }//end chain loop
 }

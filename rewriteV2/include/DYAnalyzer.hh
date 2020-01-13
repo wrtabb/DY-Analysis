@@ -20,10 +20,9 @@ class DYAnalyzer
 public:
  double xSecWeight;
  double genWeight; 
- double invMass;   
+ double invMass;
  double weight;    
 
- //DYAnalyzer();
  DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType);
  double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,
                     double eta2,double phi2,double m2);
@@ -95,10 +94,13 @@ private:
  TBranch*b_GENLepton_fromHardProcessFinalState;
 
  //Functions
- Long64_t LoadTrees(NtupleVersion ntup,std::vector<TString> dirNames,SampleType sampleType);
+ Long64_t LoadTrees(NtupleVersion ntup,std::vector<TString> dirNames,SampleType sampleType,
+                    LepType lepType);
  void InitBranches(bool isMC,bool isReco);
  void LoadHistograms();
- vector<vector<double>> GetVars(SampleType sampleType);
+ void EventLoop(LepType lepType,TChain*chain,int numchains);
+ vector<vector<double>> ReturnAllParametersAllEvents(); 
+ vector<double> ReturnAllParameters(LepType lepType,TChain*chain,Long64_t iEvent);
 };
 
 #endif

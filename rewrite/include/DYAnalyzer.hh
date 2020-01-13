@@ -23,9 +23,7 @@ public:
  double invMass;   
  double weight;    
 
- //DYAnalyzer();
- //DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType);
- Long64_t LoadTrees();
+ DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType);
  double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,
                     double eta2,double phi2,double m2);
  Long64_t GetDYEntries(int iChain);
@@ -45,6 +43,7 @@ public:
  void GetEfficiencies(TH1*hist0,TH1*hist1,TString name);
  void Counter(Long64_t i,Long64_t N,TString name);
  TH1D*DefineMassHist(BinType type,TString histName,int nBins);
+
  //-----Weights-----//
  double GetTotalWeight(bool isReco,int iChain,double genWeight,double xSecWeight,
                        double eta1,double eta2,double pt1,double pt2);
@@ -69,8 +68,6 @@ private:
  TFile*fileLeg2SF; 
  TFile*fileMedIDSF;
  TFile*fileRecoSF;
- void InitBranches();
- void LoadHistograms();
  
  TH1F*hPileupRatio;
  TH2F*hLeg2SF;  
@@ -95,6 +92,13 @@ private:
  TBranch*b_GENLepton_ID;
  TBranch*b_GENLepton_isHardProcess;
  TBranch*b_GENLepton_fromHardProcessFinalState;
+
+ //Functions
+ Long64_t LoadTrees(NtupleVersion ntup,std::vector<TString> dirNames,SampleType sampleType,
+                    LepType lepType);
+ void InitBranches(bool isMC,bool isReco);
+ void LoadHistograms();
+ 
 };
 
 #endif
