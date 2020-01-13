@@ -181,10 +181,7 @@ std::vector<TString> dirNamesTAUTAU = {
 std::vector<TString> dirNamesEW = {
  WJetsReco,
  WWReco,
- WWtoLNuReco,
- ZZtoLReco,
  WZReco,
- WZtoLNuReco
 };
 
 std::vector<TString> dirNamesTT = {
@@ -192,7 +189,7 @@ std::vector<TString> dirNamesTT = {
  TT700to1000Reco,
  TT1000andUpReco,
  tWReco,
- tWantiReco
+ tbarWReco
 };
 
 std::vector<TString> dirNamesData = {

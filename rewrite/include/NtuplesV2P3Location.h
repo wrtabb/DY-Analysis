@@ -69,7 +69,7 @@ const TString TT0to700Reco = baseReco + "/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8
 const TString TT700to1000Reco = baseReco + "/TT_Mtt-700to1000_TuneCUETP8M2T4_13TeV-powheg-pythia8";
 const TString TT1000andUpReco = baseReco + "/TT_Mtt-1000toInf_TuneCUETP8M2T4_13TeV-powheg-pythia8";
 const TString tWReco = baseReco + "/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1";
-const TString tWantiReco = baseReco + "/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1";
+const TString tbarWReco = baseReco + "/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1";
 
 //Electrons: Data
 const TString runB = baseReco + "/DoubleEG/crab_DoubleEG_RunB";

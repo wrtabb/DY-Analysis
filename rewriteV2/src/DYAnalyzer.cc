@@ -212,7 +212,7 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
  cout << endl;
 
  //--Initialize branches-----//
- InitBranches(isMC,isReco);
+ InitBranches(numChains,isMC,isReco);
  //-----Open all needed files and load histograms-----//
  LoadHistograms();
 
@@ -224,12 +224,12 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
  for(int i=0;i<11;i++){
   cout << var1.at(i) << ", ";
  }
-
+ cout << endl;
  cout << "var2 = (";
  for(int i=0;i<11;i++){
   cout << var2.at(i) << ", ";
  }
-
+ cout << endl;
  cout << "var3 = (";
  for(int i=0;i<11;i++){
   cout << var3.at(i) << ", ";
@@ -238,7 +238,7 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
  return totalentries;
 }//end LoadTrees()
 
-void DYAnalyzer::InitBranches(bool isMC,bool isReco)
+void DYAnalyzer::InitBranches(const int numChains,bool isMC,bool isReco)
 {
  for(int iChain=0;iChain<numChains;iChain++){
 
@@ -563,7 +563,8 @@ vector<double> DYAnalyzer::ReturnAllParameters(LepType lepType,TChain*chain,Long
  bool passGentoRecoMatch = true;
  bool passMediumID = true;
  bool passHLT = true;
- //chain->GetEntry(iEvent);
+ std::vector<double> vars = {0,0,0,0,0,0};
+ chain->GetEntry(iEvent);
  
  if(lepType==ELE) lepMass = eMass;
  else if(lepType==MUON) lepMass = muMass;
@@ -571,8 +572,14 @@ vector<double> DYAnalyzer::ReturnAllParameters(LepType lepType,TChain*chain,Long
   cout << "ERROR: Lepton type not properly defined!!!" << endl;
   cout << "Must be ELE or MUON" << endl;
  }
-for(Long64_t i=0;i<chain->GetEntries();i++){
+
  GetGenLeptons(lepType,iHard1,iHard2,iFSR1,iFSR2);
+ if(iHard1 < 0 || iHard2 < 0 || iFSR1 < 0 || iFSR2 < 0){
+  cout << "!!!!!Index or indices are not assigned!!!!!" << endl;
+  cout << "iHard1 = " << iHard1 << ", iHard2 = " << iHard2 << 
+          ", iFSR1 = " << iFSR1 << ", iFSR2 = " << iFSR2 << endl;
+  return vars;  
+ }
  pt1  = GENLepton_pT[iHard1];
  pt2  = GENLepton_pT[iHard2];
  eta1 = GENLepton_eta[iHard1];
@@ -581,8 +588,8 @@ for(Long64_t i=0;i<chain->GetEntries();i++){
  phi2 = GENLepton_phi[iHard2];
  invMass = CalcInvMass(pt1,eta1,phi1,lepMass,pt2,eta2,phi2,lepMass);
  cout << invMass << endl;
-}
- std::vector<double> vars = {pt1,pt2,eta1,eta2,phi1,phi2};
+
+ vars = {pt1,pt2,eta1,eta2,phi1,phi2};
  vars.push_back(invMass);
  vars.push_back(passAcceptance);
  vars.push_back(passGentoRecoMatch);

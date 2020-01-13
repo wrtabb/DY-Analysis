@@ -1,6 +1,5 @@
 ////////////////////////////////////////////////////
 //  Here is a list of things that need to be done
-//  -Rename LoadTrees() to something like LoadTreesV2P3
 //  -Create LoadTreesV2P6() to load the new version of nutples
 //  I could maybe write one LoadTrees function and specify which sample to load
 //  The file structure is a little different though
@@ -26,7 +25,7 @@ using namespace std;
 //For samples, choose one of these:
 // EE		: electrons
 // EE_RECO	: electrons, reco only
-// MUMU		: muons
+// MUMU		: muons (!!!!!not included yet!!!!!!)
 // TAUTAU	: taus (used for background)
 // EW		: electroweak (background)
 // TT		: tops (background)
@@ -39,7 +38,7 @@ DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleTyp
  else if(sampleType==TAUTAU) dirNames = dirNamesTAUTAU;
  else if(sampleType==EW) dirNames = dirNamesEW;
  else if(sampleType==TT) dirNames = dirNamesTT;
- else if (sampleType==DATA) dirNames = dirNamesData;
+ else if(sampleType==DATA) dirNames = dirNamesData;
 
  //Calling an instance of this class automatically begins loading trees which can take
  //up to several minutes
@@ -56,8 +55,13 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
 
  bool isMC = true;
  bool isReco = true;//this refers to the reco only samples
- if(sampleType==DATA) isMC = false;
- if(sampleType==EE || sampleType==DATA) isReco = false;
+ if(sampleType==DATA){
+  isMC = false;
+  isReco = false;
+ }
+ if(sampleType==EE) isReco = false;
+ cout << "isReco = " << isReco << endl;
+
  const int numChains = dirNames.size();
  TString files;
  Long64_t subDirectorySize;
@@ -69,7 +73,7 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
 
  else if(ntup==V2P3){
   TString fileNames;
-  if(isMC && !isReco) fileNames = "/*.root";
+  if(!isReco && isMC) fileNames = "/*.root";
   else fileNames = "/skims_0002/*.root";
   vector <TString> *subFiles[numChains];
   for(int iChain=0;iChain<numChains;iChain++){
@@ -143,14 +147,18 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
  cout << "**************************************************************************" << endl;
  cout << endl;
 
- InitBranches(isMC,isReco);
+ //-----Initialize branches-----//
+ InitBranches(numChains,isMC,isReco,lepType);
+
+ //-----Open all needed files and load historams-----//
  LoadHistograms();
 
  return totalentries;
 }//end LoadTrees()
 
-void DYAnalyzer::InitBranches(bool isMC,bool isReco)
+void DYAnalyzer::InitBranches(int numChains,bool isMC,bool isReco,LepType lepType)
 {
+ cout << "numChains = " << numChains << endl;
  for(int iChain=0;iChain<numChains;iChain++){
 
   //-----HLT Branches-----//
@@ -158,8 +166,6 @@ void DYAnalyzer::InitBranches(bool isMC,bool isReco)
   chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
   chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
   chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);
-
-  chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
 
   //-----Reco-level branches-----//
   chains[iChain]->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
@@ -169,22 +175,27 @@ void DYAnalyzer::InitBranches(bool isMC,bool isReco)
   chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
   chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
   chains[iChain]->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,
-    &b_Electron_passMediumID);
+                                   &b_Electron_passMediumID);
 
-  if(!isReco && isMC){
-   //-----Gen-level branches-----//
-   chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
-   chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
-   chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
-   chains[iChain]->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
-   chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
-   chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess,
-    &b_GENLepton_isHardProcess);
-   chains[iChain]->SetBranchAddress
-    ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState,
-    &b_GENLepton_fromHardProcessFinalState);
-  }
- }
+  //only MC samples get gen weights
+  if(isMC){
+   chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
+   //samples that are reco only do not get gen level branches
+   if(!isReco){
+    //-----Gen-level branches-----//
+    chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
+    chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
+    chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
+    chains[iChain]->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
+    chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
+    chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess,
+                                     &b_GENLepton_isHardProcess);
+    chains[iChain]->SetBranchAddress("GENLepton_fromHardProcessFinalState",
+                                     &GENLepton_fromHardProcessFinalState,
+                                     &b_GENLepton_fromHardProcessFinalState);
+   }//end if !isReco   
+  }//end isMC
+ }//end loop over chains
 }//end InitBranches()
 
 //-----Return simple values-----//

@@ -96,7 +96,7 @@ private:
  //Functions
  Long64_t LoadTrees(NtupleVersion ntup,std::vector<TString> dirNames,SampleType sampleType,
                     LepType lepType);
- void InitBranches(bool isMC,bool isReco);
+ void InitBranches(const int numChains,bool isMC,bool isReco);
  void LoadHistograms();
  void EventLoop(LepType lepType,TChain*chain,int numchains);
  vector<vector<double>> ReturnAllParametersAllEvents(); 
