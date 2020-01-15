@@ -1,6 +1,7 @@
 #include "../include/DYAnalyzer.hh"
 #include <TBranch.h>
 #include <iostream>
+#include <fstream>
 #include <TStopwatch.h>
 #include <TTimeStamp.h>
 
@@ -94,7 +95,7 @@ std::vector<TString> dirNamesData = {
 //
 //    NOTE:	EE is for trees with gen and reco level
 //    		EE_RECO are skimmed to only contain reco events
-DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType)
+DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType,EventType eventType)
 {
  std::vector<TString> dirNames;
  if(sampleType==EE) dirNames = dirNamesEE;
@@ -106,12 +107,12 @@ DYAnalyzer::DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleTyp
 
  //Calling an instance of this class automatically begins loading trees which can take
  //up to several minutes
- LoadTrees(ntup,dirNames,sampleType,lepType);
+ LoadTrees(ntup,dirNames,sampleType,lepType,eventType);
  //ReturnAllParametersAllEvents();
 } 
 
 //Load all trees
-Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,SampleType sampleType,LepType lepType)
+Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,SampleType sampleType,LepType lepType,EventType eventType)
 {
  TTimeStamp ts_start;
  cout << "Begin loading trees:" << endl;
@@ -167,7 +168,6 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
 
   totalentries = 0;
   for(int iChain=0;iChain<numChains;iChain++){
-   cout << "Chain: " << iChain << endl;
    chains[iChain] = new TChain(treeName);
    subDirectorySize = subFiles[iChain]->size();
    for(int k=0;k<subDirectorySize;k++){
@@ -215,27 +215,26 @@ Long64_t DYAnalyzer::LoadTrees(NtupleVersion ntup,std::vector<TString>dirNames,S
  InitBranches(numChains,isMC,isReco);
  //-----Open all needed files and load histograms-----//
  LoadHistograms();
-
- vector<double> var1 = ReturnAllParameters(lepType,chains[4],0);
- vector<double> var2 = ReturnAllParameters(lepType,chains[4],1);
- vector<double> var3 = ReturnAllParameters(lepType,chains[4],2);
-
- cout << "var1 = (";
- for(int i=0;i<11;i++){
-  cout << var1.at(i) << ", ";
- }
- cout << endl;
- cout << "var2 = (";
- for(int i=0;i<11;i++){
-  cout << var2.at(i) << ", ";
- }
- cout << endl;
- cout << "var3 = (";
- for(int i=0;i<11;i++){
-  cout << var3.at(i) << ", ";
- }
-
+ std::vector<vector<double>> vars[numChains];
+ int varSize = 0;
+ ofstream vectorOut("data/dyEEM50to100HardProcess.txt");
+ vectorOut << "event,pt1,pt2,eta1,eta2,phi1,phi2,invMass,passAcceptance,passGentoRecoMatch,passMediumID,passHLT" << endl;
+ int iChain = 1;
+ //for(int iChain=0;iChain<numChains;iChain++)
+ {
+  vars[iChain] = ReturnAllParametersAllEvents(eventType,lepType,chains[iChain]);
+  varSize = vars[iChain].size();
+  for(int i=0;i<varSize;i++){
+   if(i>0) vectorOut << endl;
+   vectorOut << i << ", ";
+   for(int j=0;j<11;j++){
+    if(j<10) vectorOut << vars[iChain].at(i).at(j) << ", ";
+    else vectorOut << vars[iChain].at(i).at(j);
+   }//end j loop
+  }//end i loop
+ }//end chain loop
  return totalentries;
+ vectorOut.close();
 }//end LoadTrees()
 
 void DYAnalyzer::InitBranches(const int numChains,bool isMC,bool isReco)
@@ -311,32 +310,45 @@ int DYAnalyzer::GetGenLeptons(LepType lepType,int &idxHardLep1,int &idxHardLep2,
   }//end jLep loop
  }//end iLep loop
  return nDileptons;
-}
+}//end GetGenLeptons()
 
-int DYAnalyzer::GetRecoElectrons(int &leadEle,int &subEle)
+int DYAnalyzer::GetRecoLeptons(LepType lepType,int &leadLep,int &subLep)
 {
  int numDileptons = 0;
-
- for(int iEle = 0; iEle < Nelectrons; iEle++) {
-  if(!Electron_passMediumID[iEle]) continue;
-  for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
-   if(!Electron_passMediumID[jEle]) continue;
-   if(AcceptanceCut(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
-    Electron_eta[jEle])){
-    numDileptons++;
-    if(Electron_pT[iEle]>Electron_pT[jEle]){
-     leadEle = iEle;
-     subEle = jEle;
+ if(lepType==MUON){
+  cout << "*****************************************" <<endl;
+  cout << "Muons not yet implemented in this package" << endl;
+  cout << "*****************************************" <<endl;
+  return 0;
+ }
+ else if(lepType==ELE){
+  for(int iEle = 0; iEle < Nelectrons; iEle++) {
+   if(!Electron_passMediumID[iEle]) continue;
+   for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
+    if(!Electron_passMediumID[jEle]) continue;
+    if(AcceptanceCut(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
+     Electron_eta[jEle])){
+     numDileptons++;
+     if(Electron_pT[iEle]>Electron_pT[jEle]){
+      leadLep = iEle;
+      subLep = jEle;
+     }
+     else {
+      leadLep= jEle;
+      subLep = iEle;
+     }
     }
-    else {
-     leadEle = jEle;
-     subEle = iEle;
-    }
-   }
-  }//end jEle loop
- }//end iEle loop
- return numDileptons;
-}
+   }//end jEle loop
+  }//end iEle loop
+  return numDileptons;
+ }
+ else{
+  cout << "***************************************" << endl;
+  cout << "Only electrons or muons may be selected" << endl;
+  cout << "***************************************" << endl;
+  return 0;
+ }
+}//end GetRecoLeptons()
 
 bool DYAnalyzer::AcceptanceCut(double pt1,double pt2,double eta1,double eta2)
 {
@@ -345,7 +357,7 @@ bool DYAnalyzer::AcceptanceCut(double pt1,double pt2,double eta1,double eta2)
   if(abs(eta1)>etaHigh||abs(eta2)>etaHigh) return false;
   if(!((pt1>ptLow && pt2>ptHigh)||(pt1>ptHigh && pt2>ptLow))) return false;
   return true;
-}
+}//end AcceptanceCut()
 
 bool DYAnalyzer::GenToRecoMatchCut(int genIndex,int &recoIndex)
 {
@@ -370,14 +382,14 @@ bool DYAnalyzer::GenToRecoMatchCut(int genIndex,int &recoIndex)
  }
   
  return matchFound;
-}
+}//end GenToRecoMatchCut()
 
 //-----Medium ID Cuts-----//
 bool DYAnalyzer::MediumIDCut(bool passID1,bool passID2)
 {
  if(passID1 && passID2) return true;
  else return false;
-}
+}//end MediumIDCut()
 
 //-----HLT Cuts-----//
 bool DYAnalyzer::HLTCut()
@@ -393,7 +405,7 @@ bool DYAnalyzer::HLTCut()
   }
  }
  return passHLT;
-}
+}//end HLTCut()
 
 //-----Load files and histograms-----//
 void DYAnalyzer::LoadHistograms()
@@ -408,8 +420,7 @@ void DYAnalyzer::LoadHistograms()
  hLeg2SF  = (TH2F*) fileLeg2SF->Get("EGamma_SF2D");
  hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
  hRecoSF  = (TH2F*) fileRecoSF->Get("EGamma_SF2D"); 
-}
-
+}//end LoadHistograms()
 
 //-----Adding weights to events-----//
 double DYAnalyzer::GetTotalWeight(bool isReco,int iChain,double genWeight,double xSecWeight,
@@ -439,7 +450,7 @@ double DYAnalyzer::GetTotalWeight(bool isReco,int iChain,double genWeight,double
 
  totalWeight = genWeight*xSecWeight*pileupWeight*sfWeight;
  return totalWeight;
-}
+}//end GetTotalWeight()
 
 double DYAnalyzer::GetGenWeightSum(int iChain)
 {
@@ -493,7 +504,7 @@ void DYAnalyzer::Counter(Long64_t i,Long64_t N,TString name)
   cout << name << ": [Time: " << eventTimeStamp.AsString("s") << "] " << P << "%" << endl;
  }
  return;
-}
+}//end Counter()
 
 double DYAnalyzer::CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,
                              double eta2,double phi2,double m2)
@@ -503,7 +514,7 @@ double DYAnalyzer::CalcInvMass(double pt1,double eta1,double phi1,double m1,doub
  v1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
  v2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
  return (v1+v2).M();
-}
+}//end CalcInvMass()
 
 void DYAnalyzer::GetEfficiencies(TH1*hist0,TH1*hist1,TString name)
 {
@@ -523,7 +534,7 @@ void DYAnalyzer::GetEfficiencies(TH1*hist0,TH1*hist1,TString name)
  TFile*saveFile = new TFile(saveFileName,"update");
  eff->Write();
  saveFile->Close();
-}
+}//end GetEfficiencies()
 
 //Define invariant mass histograms
 //Default linear binning of 598 corresponds to 5 GeV per bin
@@ -543,22 +554,27 @@ TH1D*DYAnalyzer::DefineMassHist(BinType type,TString histName,int nBins = 598)
   cout << "ERROR: Histogram binning not defined!!!!!!!!!!!" << endl;
  }
  return hist;
-}
+}//end DefineMassHist()
 
-vector<double> DYAnalyzer::ReturnAllParameters(LepType lepType,TChain*chain,Long64_t iEvent)
+//This function returns various parameters
+vector<double> DYAnalyzer::ReturnAllParameters(EventType eventType,LepType lepType,TChain*chain,Long64_t iEvent)
 {
- double lepMass = 0;
- int iHard1 = -1;
- int iHard2 = -1;
- int iFSR1 = -1; 
- int iFSR2 = -1;
- double pt1 = -1;
- double pt2 = -1;
- double eta1 = -1;
- double eta2 = -1;
- double phi1 = -1;
- double phi2 = -1;
+ double lepMass = -1;
+ int iHard1     = -1;
+ int iHard2     = -1;
+ int iFSR1      = -1; 
+ int iFSR2      = -1;
+ int leadLep    = -1;
+ int subLep     = -1;
+ int recoIndex  = -1;
+ double pt1     = -1;
+ double pt2     = -1;
+ double eta1    = -1;
+ double eta2    = -1;
+ double phi1    = -1;
+ double phi2    = -1;
  double invMass = -1;
+
  bool passAcceptance = true;
  bool passGentoRecoMatch = true;
  bool passMediumID = true;
@@ -573,22 +589,56 @@ vector<double> DYAnalyzer::ReturnAllParameters(LepType lepType,TChain*chain,Long
   cout << "Must be ELE or MUON" << endl;
  }
 
- GetGenLeptons(lepType,iHard1,iHard2,iFSR1,iFSR2);
- if(iHard1 < 0 || iHard2 < 0 || iFSR1 < 0 || iFSR2 < 0){
-  cout << "!!!!!Index or indices are not assigned!!!!!" << endl;
-  cout << "iHard1 = " << iHard1 << ", iHard2 = " << iHard2 << 
-          ", iFSR1 = " << iFSR1 << ", iFSR2 = " << iFSR2 << endl;
-  return vars;  
- }
- pt1  = GENLepton_pT[iHard1];
- pt2  = GENLepton_pT[iHard2];
- eta1 = GENLepton_eta[iHard1];
- eta2 = GENLepton_eta[iHard2];
- phi1 = GENLepton_phi[iHard1];
- phi2 = GENLepton_phi[iHard2];
- invMass = CalcInvMass(pt1,eta1,phi1,lepMass,pt2,eta2,phi2,lepMass);
- cout << invMass << endl;
+ if(eventType==GEN_HARD){
+  GetGenLeptons(lepType,iHard1,iHard2,iFSR1,iFSR2);
+  if(iHard1 < 0 || iHard2 < 0){
+   cout << "!!!!!Index or indices are not assigned!!!!!" << endl;
+   cout << "iHard1 = " << iHard1 << ", iHard2 = " << iHard2 << endl;
+   return vars;
+  }
+  pt1  = GENLepton_pT[iHard1];
+  pt2  = GENLepton_pT[iHard2];
+  eta1 = GENLepton_eta[iHard1];
+  eta2 = GENLepton_eta[iHard2];
+  phi1 = GENLepton_phi[iHard1];
+  phi2 = GENLepton_phi[iHard2];
+  passAcceptance = AcceptanceCut(pt1,pt2,eta1,eta2);
+  passGentoRecoMatch = GenToRecoMatchCut(iHard1,closestReco1) && 
+                       GenToRecoMatchCut(iHard2,closestReco2);
+  passMediumID = MediumIDCut(Electron_passMediumID[closestReco1],
+                             Electron_passMediumID[closestReco2])
+  passHLT = 
+ }//end if gen_hard
 
+ if(eventType==GEN_FSR){
+  GetGenLeptons(lepType,iHard1,iHard2,iFSR1,iFSR2);
+  if(iFSR1 < 0 || iFSR2 < 0){
+   cout << "!!!!!Index or indices are not assigned!!!!!" << endl;
+   cout << "iFSR1 = " << iHard1 << ", iFSR2 = " << iHard2 << endl;
+   return vars;
+  }
+  pt1  = GENLepton_pT[iFSR1];
+  pt2  = GENLepton_pT[iFSR2];
+  eta1 = GENLepton_eta[iFSR1];
+  eta2 = GENLepton_eta[iFSR2];
+  phi1 = GENLepton_phi[iFSR1];
+  phi2 = GENLepton_phi[iFSR2];
+ }//end if gen_fsr
+
+ if(eventType==RECO){
+  GetRecoLeptons(lepType,leadLep,subLep);
+  if(leadLep < 0 || subLep < 0){
+   return vars;
+  }
+  pt1  = Electron_pT[leadLep]; 
+  pt2  = Electron_pT[subLep];
+  eta1 = Electron_eta[leadLep];
+  eta2 = Electron_eta[subLep];
+  phi1 = Electron_phi[leadLep];
+  phi2 = Electron_phi[subLep];
+ }//end if reco
+
+ invMass = CalcInvMass(pt1,eta1,phi1,lepMass,pt2,eta2,phi2,lepMass);
  vars = {pt1,pt2,eta1,eta2,phi1,phi2};
  vars.push_back(invMass);
  vars.push_back(passAcceptance);
@@ -596,19 +646,16 @@ vector<double> DYAnalyzer::ReturnAllParameters(LepType lepType,TChain*chain,Long
  vars.push_back(passMediumID);
  vars.push_back(passHLT);
  return vars;
-}
+}//end ReturnAllParameters()
 
-vector<vector<double>> DYAnalyzer::ReturnAllParametersAllEvents()
+vector<vector<double>> DYAnalyzer::ReturnAllParametersAllEvents(EventType eventType,
+                                                                LepType lepType,TChain*chain)
 {
  std::vector<std::vector<double>> allvars;
+ Long64_t nentries = chain->GetEntries();
+ for(Long64_t iEvent=0;iEvent<nentries;iEvent++){
+  allvars.push_back(ReturnAllParameters(eventType,lepType,chain,iEvent));
+ }
  return allvars;
-}
+}//end ReturnAllParametersAllEvents()
 
-void DYAnalyzer::EventLoop(LepType lepType,TChain*chains,int numchains)
-{
- for(int iChain=0;iChain<numchains;iChain++){
-  for(Long64_t iEvent=0;iEvent<chains->GetEntries();iEvent++){
-
-  }//end event loop
- }//end chain loop
-}

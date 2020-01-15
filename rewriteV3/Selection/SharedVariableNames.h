@@ -2,6 +2,7 @@
 #define SharedVariableNames_H
 
 #include <TMath.h>
+#include "NtuplesV2P3Location.h"
 
  const int nLogBins = 43;
  const int nLogBins2 = 2*nLogBins;
@@ -101,7 +102,7 @@ enum chainNumTT{
  TT700to1000,
  TT1000ANDUP,
  TW,
- TBARW
+ TWANTI
 };
 enum chainNumDATA{
  RUNB,
@@ -112,19 +113,19 @@ enum chainNumDATA{
  RUNG,
  RUNH
 };
+enum SampleType{
+ LL,
+ LL_RECO,
+ TAUTAU,
+ EW,
+ TT,
+ DATA
+};
 enum LepType{
  UNDEF = 0,
  ELE,
  MUON,
  TAU
-};
-enum SampleType{
- EE,
- EE_RECO,
- TAUTAU,
- EW,
- TT,
- DATA
 };
 enum NtupleVersion{
  V2P3,
@@ -134,9 +135,71 @@ enum BinType{
  LOG,
  LINEAR
 };
-enum EventType{
- GEN_HARD,
- GEN_FSR,
- RECO
+
+//Vectors of directory locations
+std::vector<TString> dirNamesEE = {
+ EEM10to50,
+ EEM50to100,
+ EEM100to200,
+ EEM200to400,
+ EEM400to500,
+ EEM500to700,
+ EEM700to800,
+ EEM800to1000,
+ EEM1000to1500,
+ EEM1500to2000,
+ EEM2000to3000
 };
+
+std::vector<TString> dirNamesEEReco = {
+ EEM10to50Reco,
+ EEM50to100Reco,
+ EEM100to200Reco,
+ EEM200to400Reco,
+ EEM400to500Reco,
+ EEM500to700Reco,
+ EEM700to800Reco,
+ EEM800to1000Reco,
+ EEM1000to1500Reco,
+ EEM1500to2000Reco,
+ EEM2000to3000Reco
+};
+
+std::vector<TString> dirNamesTAUTAU = {
+ Taus10to50Reco,
+ Taus50to100Reco,
+ Taus100to200Reco,
+ Taus200to400Reco,
+ Taus400to500Reco,
+ Taus500to700Reco,
+ Taus700to800Reco,
+ Taus800to1000Reco,
+ Taus1000to1500Reco,
+ Taus1500to2000Reco,
+ Taus2000to3000Reco
+};
+std::vector<TString> dirNamesEW = {
+ WJetsReco,
+ WWReco,
+ WZReco,
+};
+
+std::vector<TString> dirNamesTT = {
+ TT0to700Reco,
+ TT700to1000Reco,
+ TT1000andUpReco,
+ tWReco,
+ tbarWReco
+};
+
+std::vector<TString> dirNamesData = {
+ runB,
+ runC,
+ runD,
+ runE,
+ runF,
+ runG,
+ runH
+};
+
 #endif

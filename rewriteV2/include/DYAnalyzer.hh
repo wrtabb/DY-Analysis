@@ -23,15 +23,15 @@ public:
  double invMass;
  double weight;    
 
- DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType);
+ DYAnalyzer(NtupleVersion ntup, LepType lepType, SampleType sampleType,EventType eventType);
  double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,
                     double eta2,double phi2,double m2);
  Long64_t GetDYEntries(int iChain);
  Long64_t GetDYEntry(int iChain,Long64_t iEntry);
 
- int GetGenLeptons(LepType lepType,int &idxHardEle1,int &idxHardEle2,
-                   int &idxFSREle1, int &idxFSREle2);
- int GetRecoElectrons(int &leadEle, int &subEle);
+ int GetGenLeptons(LepType lepType,int &idxHard1,int &idxHard2,
+                   int &idxFSR1, int &idxFSR2);
+ int GetRecoLeptons(LepType lepType,int &leadLep, int &subLep);
 
  //-----Cuts-----//
  bool AcceptanceCut(double pt1,double pt2,double eta1,double eta2);
@@ -95,12 +95,11 @@ private:
 
  //Functions
  Long64_t LoadTrees(NtupleVersion ntup,std::vector<TString> dirNames,SampleType sampleType,
-                    LepType lepType);
+                    LepType lepType,EventType eventType);
  void InitBranches(const int numChains,bool isMC,bool isReco);
  void LoadHistograms();
- void EventLoop(LepType lepType,TChain*chain,int numchains);
- vector<vector<double>> ReturnAllParametersAllEvents(); 
- vector<double> ReturnAllParameters(LepType lepType,TChain*chain,Long64_t iEvent);
+ vector<vector<double>> ReturnAllParametersAllEvents(EventType eventType,LepType lepType,TChain*chain); 
+ vector<double> ReturnAllParameters(EventType eventType,LepType lepType,TChain*chain,Long64_t iEvent);
 };
 
 #endif
