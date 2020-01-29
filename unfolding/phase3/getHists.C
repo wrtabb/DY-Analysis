@@ -1,9 +1,9 @@
-#include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
+#include "/home/hep/wrtabb/DY-Analysis/headers/header1.h"
 
 
-const TString file1Name= "/home/hep/wrtabb/git/DY-Analysis/data/dataVsMC.root";
-const TString file2Name= "/home/hep/wrtabb/git/DY-Analysis/data/efficiency.root";
-const TString fileUnfName = "/home/hep/wrtabb/git/DY-Analysis/data/unfoldIn.root";
+const TString file1Name= "/home/hep/wrtabb/DY-Analysis/data/dataVsMC.root";
+const TString file2Name= "/home/hep/wrtabb/DY-Analysis/data/efficiency.root";
+const TString fileUnfName = "/home/hep/wrtabb/DY-Analysis/data/unfoldIn.root";
 const TString fileCorrName = "inputCorrelations_10000Samples.root";
 
 void getHists()
@@ -12,7 +12,7 @@ void getHists()
  TFile*file1 = new TFile(file1Name);
  TFile*file2 = new TFile(file2Name);
  TFile*fileUnf = new TFile(fileUnfName);
- TFile*fileCorr= new TFile(fileCorrName);
+ //TFile*fileCorr= new TFile(fileCorrName);
 
  gStyle->SetOptStat(0);
  gStyle->SetPalette(1);
@@ -26,8 +26,8 @@ void getHists()
  TH1D*hBack = (TH1D*)file1->Get("hFakesInvMass");
  TH1D*hEW = (TH1D*)file1->Get("hEWInvMass");
  TH1D*hTops = (TH1D*)file1->Get("hTopsInvMass");
- TH2D*hCovM = (TH2D*)fileCorr->Get("hCovM");
- TH2D*hCovMinv = (TH2D*)fileCorr->Get("hCovMinv");
+ //TH2D*hCovM = (TH2D*)fileCorr->Get("hCovM");
+ //TH2D*hCovMinv = (TH2D*)fileCorr->Get("hCovMinv");
 
  //Set any negative bin values to 0
  for(int i=1;i<nLogBins2+1;i++){
@@ -135,15 +135,15 @@ void getHists()
  line->Draw("same");
  canvas->Update();
 
- canvas->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase3/dataVsMC.png");
+ canvas->SaveAs("/home/hep/wrtabb/DY-Analysis/plots/unfolding/phase3/dataVsMC.png");
  TFile*outputFile = new TFile("outputDataUnfold.root","recreate");
  hMC->Write();
  hData->Write();
  hTrue->Write();
  hBack->Write();
  hMatrix->Write();
- hCovM->Write();
- hCovMinv->Write();
+ //hCovM->Write();
+ //hCovMinv->Write();
  outputFile->Write();
  outputFile->Close();
 

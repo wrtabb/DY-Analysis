@@ -1,5 +1,5 @@
-#include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
-#include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
+#include "/home/hep/wrtabb/DY-Analysis/headers/header1.h"
+#include "/home/hep/wrtabb/DY-Analysis/headers/drawOptions.h"
 const TString fileName = "/home/hep/wrtabb/git/DY-Analysis/unfolding/phase3/outputDataUnfold.root";
 
 const int binLow = 15;
@@ -21,8 +21,8 @@ void doUnfold()
   ///////////////////////////////////////
   
   //gROOT->SetBatch(kTRUE);
-  int regType = NO_REG;
-  //int regType = VAR_REG;
+  //int regType = NO_REG;
+  int regType = VAR_REG;
   //int regType = CONST_REG;
   
   //Set closure test
