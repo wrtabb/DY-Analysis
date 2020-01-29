@@ -1,7 +1,3 @@
-#include "/home/hep/wrtabb/DY-Analysis/headers/header1.h"
-#include "/home/hep/wrtabb/DY-Analysis/headers/ntupleSkimLocation.h"
-#include "/home/hep/wrtabb/DY-Analysis/headers/DrellYanCuts.h"
-#include "/home/hep/wrtabb/DY-Analysis/headers/Functions.h"
 
 void unfoldingMatrix()
 {

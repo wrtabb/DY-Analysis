@@ -2,14 +2,10 @@
 #include "VariableList.h"
 
 Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType lepType);
-//Want to set the ntuple version being used
 //And which lepton is being analyzed
 //And which samples to load
 //For samples, choose one of these:
-// EE		: electrons
-// EE_RECO	: electrons, reco only
-// MUMU		: muons (!!!!!not included yet!!!!!!)
-// TAUTAU	: taus (used for background)
+// LL		: Leptons
 // EW		: electroweak (background)
 // TT		: tops (background)
 // DATA		: data
@@ -25,17 +21,17 @@ void tempLoadNtuples(SampleType sampleType,LepType lepType)
  if(sampleType==LL){
   if(lepType==ELE){
    for(int i=0;i<dirSize;i++){
-    dirNames.at(i)+= "EE/";
+    dirNames.at(i)+= "/EE";
    }
   }
   else if(lepType==MUON){
    for(int i=0;i<dirSize;i++){
-    dirNames.at(i)+= "MuMu/";
+    dirNames.at(i)+= "/MuMu";
    }
   }
   else if(lepType==TAU){
    for(int i=0;i<dirSize;i++){
-    dirNames.at(i)+= "TauTau/";
+    dirNames.at(i)+= "/TauTau";
    }
   }
  }//end if sampletype
@@ -66,25 +62,25 @@ Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType le
  for(int iChain=0;iChain<numChains;iChain++){
   subFiles[iChain] = new vector<TString>;
   if(sampleType==LL && iChain==M10to50){
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"/ext1v1/");
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"/v1/");
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"/v2/");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/ext1v1");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/v1");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/v2");
   }
   else if(sampleType==LL && iChain==M50to100){
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"/base/");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/base");
   }
   else if(sampleType==EW && iChain==W_PLUS_JETS) {
    subFiles[iChain]->push_back(dirNames.at(iChain));
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext/");
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext2v5/");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext2v5");
   }
   else if(sampleType==DATA && iChain==RUN_H) {
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"ver2/");
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"ver3/");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"ver2");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"ver3");
   }
   else if(sampleType==TT && iChain==TT0to700) {
    subFiles[iChain]->push_back(dirNames.at(iChain));
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"Backup/");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"Backup");
   }
   else subFiles[iChain]->push_back(dirNames.at(iChain));
 
