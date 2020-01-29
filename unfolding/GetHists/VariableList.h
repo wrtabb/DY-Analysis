@@ -20,15 +20,12 @@ std::vector<TString> dirNamesEW = {
  WZ_dir,
  ZZ_dir,
  WJets,
- WJets_ext, 
- WJets_ext2v5
 };
 
 std::vector<TString> dirNamesTT = {
  ST_tW,
  ST_tbarW,
  ttbar,
- ttbarBackup,
  ttbarBackup_M0to700,
  ttbar_M0to700,
  ttbar_M700to1000,
@@ -42,8 +39,7 @@ std::vector<TString> dirNamesData = {
  DoubleEG_RunE,
  DoubleEG_RunF,
  DoubleEG_RunG,
- DoubleEG_RunHver2,
- DoubleEG_RunHver3
+ DoubleEG_RunH,
 };
 
 std::vector<TString> dirNamesSM = {
@@ -53,8 +49,7 @@ std::vector<TString> dirNamesSM = {
  SM_2016E,
  SM_2016F,
  SM_2016G,
- SM_2016Hver2,
- SM_2016Hver3
+ SM_2016H,
 };
 
 std::vector<TString> dirNamesZtoEE = {

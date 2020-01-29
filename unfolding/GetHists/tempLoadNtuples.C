@@ -22,22 +22,23 @@ void tempLoadNtuples(SampleType sampleType,LepType lepType)
  else if(sampleType==DATA) dirNames = dirNamesData;
 
  int dirSize = dirNames.size();
- if(lepType==ELE){
-  for(int i=0;i<dirSize;i++){
-   dirNames.at(i)+= "EE/";
+ if(sampleType==LL){
+  if(lepType==ELE){
+   for(int i=0;i<dirSize;i++){
+    dirNames.at(i)+= "EE/";
+   }
   }
- }
- else if(lepType==MUON){
-  for(int i=0;i<dirSize;i++){
-   dirNames.at(i)+= "MuMu/";
+  else if(lepType==MUON){
+   for(int i=0;i<dirSize;i++){
+    dirNames.at(i)+= "MuMu/";
+   }
   }
- }
- else if(lepType==TAU){
-  for(int i=0;i<dirSize;i++){
-   dirNames.at(i)+= "TauTau/";
+  else if(lepType==TAU){
+   for(int i=0;i<dirSize;i++){
+    dirNames.at(i)+= "TauTau/";
+   }
   }
- }
- 
+ }//end if sampletype
  LoadTrees(dirNames,sampleType,lepType);
 }
  
@@ -60,17 +61,17 @@ Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType le
  Long64_t totalentries = -1;
 
  TString fileNames;
- fileNames = "skims_0002/*.root";
+ fileNames = "/skims_0002/*.root";
  vector <TString> *subFiles[numChains];
  for(int iChain=0;iChain<numChains;iChain++){
   subFiles[iChain] = new vector<TString>;
   if(sampleType==LL && iChain==M10to50){
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"ext1v1/");
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"v1/");
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"v2/");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/ext1v1/");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/v1/");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/v2/");
   }
   else if(sampleType==LL && iChain==M50to100){
-   subFiles[iChain]->push_back(dirNames.at(iChain)+"base/");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/base/");
   }
   else if(sampleType==EW && iChain==W_PLUS_JETS) {
    subFiles[iChain]->push_back(dirNames.at(iChain));
