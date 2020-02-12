@@ -1,4 +1,65 @@
 #include "NtuplesV2P6Location.h"
+#include <TMath.h>
+
+const int MPSIZE = 2000;
+int GENnPair;
+int Nelectrons;
+int HLT_ntrig;
+int nPileUp;
+double GENEvt_weight;
+double GENLepton_phi[MPSIZE];
+double GENLepton_eta[MPSIZE];
+double GENLepton_pT[MPSIZE];
+double GENLepton_Px[MPSIZE];
+double GENLepton_Py[MPSIZE];
+double GENLepton_Pz[MPSIZE];
+double GENLepton_E[MPSIZE];
+int GENLepton_ID[MPSIZE];
+int GENLepton_isHardProcess[MPSIZE];
+int GENLepton_fromHardProcessFinalState[MPSIZE];
+
+double Electron_pT[MPSIZE]; 
+double Electron_eta[MPSIZE];
+double Electron_phi[MPSIZE];
+double Electron_Energy[MPSIZE];
+double Electron_Px[MPSIZE];
+double Electron_Py[MPSIZE];
+double Electron_Pz[MPSIZE];
+double Electron_charge[MPSIZE];
+bool Electron_passMediumID[MPSIZE];
+
+int HLT_trigType[MPSIZE];
+int HLT_trigFired[MPSIZE];
+std::vector<std::string> HLT_trigName;
+std::vector<std::string>*pHLT_trigName = &HLT_trigName;
+
+const double pi=TMath::Pi();
+
+const float eMass = 0.000511;
+double muMass = 0.105658;
+const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
+const int ptBinHigh = 499;
+const int ptBinLow = 26;
+int nVertices;
+
+TBranch*b_GENnPair;
+TBranch*b_GENLepton_eta;
+TBranch*b_GENLepton_phi;
+TBranch*b_GENLepton_pT;
+TBranch*b_GENLepton_ID;
+TBranch*b_GENLepton_isHardProcess;
+TBranch*b_GENLepton_fromHardProcessFinalState;
+TBranch*b_GENEvt_weight;
+TBranch*b_Nelectrons;
+TBranch*b_Electron_pT;
+TBranch*b_Electron_eta;
+TBranch*b_Electron_phi;
+TBranch*b_Electron_passMediumID;
+TBranch*b_HLT_ntrig;
+TBranch*b_HLT_trigType;
+TBranch*b_HLT_trigFired;
+TBranch*b_nPileUp;
+TBranch*b_nVertices;
 
 const TString treeName = "recoTree/DYTree";
 std::vector<TString> dirNamesLL = {

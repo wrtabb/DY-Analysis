@@ -2,6 +2,7 @@
 #include "VariableList.h"
 
 Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType lepType);
+void InitializeBranches(TChain*chain,bool isMC,LepType lepType);
 //And which lepton is being analyzed
 //And which samples to load
 //For samples, choose one of these:
@@ -9,7 +10,7 @@ Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType le
 // EW		: electroweak (background)
 // TT		: tops (background)
 // DATA		: data
-void tempLoadNtuples(SampleType sampleType,LepType lepType)
+void GetHists(SampleType sampleType,LepType lepType)
 {
  std::vector<TString> dirNames;
  if(sampleType==LL) dirNames = dirNamesLL;
@@ -108,6 +109,7 @@ Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType le
    }
   }//end loop over files
  totalentries=totalentries+chains[iChain]->GetEntries();
+ InitializeBranches(chains[iChain],isMC,lepType);
  }
 
  cout << "Total Events Loaded: " << totalentries << endl;
@@ -125,6 +127,51 @@ Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType le
  cout << "[End Time(local time): " << ts_end.AsString("l") << "]" << endl;
  cout << "**************************************************************************" << endl;
  cout << endl;
+
+ 
  
  return totalentries;
 }
+
+
+void InitializeBranches(TChain*chain,bool isMC,LepType lepType)
+{
+ //-----HLT Branches-----//
+ chain->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
+ chain->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
+ chain->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
+ chain->SetBranchAddress("HLT_trigName",&pHLT_trigName);
+
+ //-----Reco-level branches-----//
+ chain->SetBranchAddress("nVertices", &nVertices, &b_nVertices);
+ chain->SetBranchAddress("nPileUp", &nPileUp, &b_nPileUp);
+ if(lepType==ELE){
+  chain->SetBranchAddress("Nelectrons", &Nelectrons, &b_Nelectrons);
+  chain->SetBranchAddress("Electron_pT", &Electron_pT, &b_Electron_pT);
+  chain->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
+  chain->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
+  chain->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,
+                                    &b_Electron_passMediumID);
+ }
+ else if(lepType==MUON){
+  cout << "The muon branches for reco-muons do not exist in current ntuples" << endl;
+  cout << "This will be fixed as soon as possible." << endl;
+  return ;
+ }
+
+ //-----Gen-level branches-----//
+ if(isMC){
+  chain->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
+  chain->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
+  chain->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
+  chain->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
+  chain->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
+  chain->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
+  chain->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess,
+                                   &b_GENLepton_isHardProcess);
+  chain->SetBranchAddress("GENLepton_fromHardProcessFinalState",
+                                   &GENLepton_fromHardProcessFinalState,
+                                   &b_GENLepton_fromHardProcessFinalState);
+ }//end isMC
+ return;
+}//end Initialize Branches
