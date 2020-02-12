@@ -1,8 +1,19 @@
-#include "NtuplesV2P6Location.h"
 #include "VariableList.h"
 
 Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType lepType);
 void InitializeBranches(TChain*chain,bool isMC,LepType lepType);
+void LoadExternalFiles();
+void EventLoop(TChain*chain,SampleType sampleType,LepType lepType);
+int GetGenLeptons(LepType lepType,int &idxHardLep1,int &idxHardLep2,int &idxFSRLep1,
+                  int &idxFSRLep2);
+int GetRecoLeptons();
+bool PassAcceptance(double pt1,double pt2,double eta1,double eta2);
+bool GenToRecoMatch(int genIndex,int &recoIndex);
+bool PassMediumID(bool passID1,bool passID2);
+bool HLTCut();
+TH1D*DefineMassHist(BinType type,TString histName,int nBins);
+TH2D*DefineMatrixHist(BinType type,TString histName,int nBins);
+
 //And which lepton is being analyzed
 //And which samples to load
 //For samples, choose one of these:
@@ -37,6 +48,7 @@ void GetHists(SampleType sampleType,LepType lepType)
   }
  }//end if sampletype
  LoadTrees(dirNames,sampleType,lepType);
+ LoadExternalFiles();
 }
  
 Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType lepType)
@@ -110,6 +122,7 @@ Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType le
   }//end loop over files
  totalentries=totalentries+chains[iChain]->GetEntries();
  InitializeBranches(chains[iChain],isMC,lepType);
+ EventLoop(chains[iChain],sampleType,lepType);
  }
 
  cout << "Total Events Loaded: " << totalentries << endl;
@@ -154,7 +167,7 @@ void InitializeBranches(TChain*chain,bool isMC,LepType lepType)
                                     &b_Electron_passMediumID);
  }
  else if(lepType==MUON){
-  cout << "The muon branches for reco-muons do not exist in current ntuples" << endl;
+  cout << "The muon branches for reco-muons do not exist in current ntuple skims" << endl;
   cout << "This will be fixed as soon as possible." << endl;
   return ;
  }
@@ -175,3 +188,174 @@ void InitializeBranches(TChain*chain,bool isMC,LepType lepType)
  }//end isMC
  return;
 }//end Initialize Branches
+
+void LoadExternalFiles()
+{
+ TFile*pileupRatioFile  = new TFile(pileupRatioName);
+ TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
+ TFile*fileLeg2SF  = new TFile(leg2SFName);
+ TFile*fileMedIDSF = new TFile(medIDSFName);
+ TFile*fileRecoSF  = new TFile(recoSFName);
+ TH2F*hLeg2SF  = (TH2F*) fileLeg2SF->Get("EGamma_SF2D");
+ TH2F*hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
+ TH2F*hRecoSF  = (TH2F*) fileRecoSF->Get("EGamma_SF2D");
+}
+
+void EventLoop(TChain*chain,SampleType sampleType,LepType lepType)
+{
+ Long64_t nEntries = chain->GetEntries();
+ 
+ for(Long64_t i=0;i<nEntries;i++){
+  Long64_t event = chain->GetEntry(i);
+  double massHard = -1;
+  double massFSR = -1;
+  double massReco = -1;
+  int iHard1 = -1;
+  int iHard2 = -1;
+  int iFSR1 = -1;
+  int iFSR2 = -1;
+  int leadEle = -1;
+  int subEle = -1;
+  int closestTrack1 = -1;
+  int closestTrack2 = -1;
+  int nGenDileptons;
+  int nRecoDileptons;
+ 
+  //Select leptons in each event
+  nGenDileptons = GetGenLeptons(lepType,iHard1,iHard2,iFSR1,iFSR2);
+  //nRecoDileptons = GetRecoLeptons(lepType,leadEle,subEle);
+  
+  //Determine which leptons pass cuts
+  bool passAcceptance = PassAcceptance(GENLepton_pT[iHard1],GENLepton_pT[iHard2],
+                                       GENLepton_eta[iHard1],GENLepton_eta[iHard2]);
+  bool passRecoMatch1 = GenToRecoMatch(iFSR1,closestTrack1);
+  bool passRecoMatch2 = GenToRecoMatch(iFSR2,closestTrack2);
+  bool passRecoMatch = passRecoMatch1 && passRecoMatch2;
+  bool passMediumID = PassMediumID(Electron_passMediumID[closestTrack1],
+                                  Electron_passMediumID[closestTrack2]);
+  bool passHLT = HLTCut();
+
+ }//end event loop
+}//end EventLoop()
+
+int GetGenLeptons(LepType lepType,int &idxHardLep1,int &idxHardLep2,int &idxFSRLep1,
+                  int &idxFSRLep2)
+{
+ int lepID;
+ if      (lepType==ELE)  lepID = 11;
+ else if (lepType==MUON) lepID = 13;
+ else if (lepType==TAU)  lepID = 15;
+ else {
+  cout << "ERROR: Appropriate lepton not selected" << endl;
+  return 0;
+ }
+ int nDileptons = 0;
+
+ for(int iLep=0;iLep<GENnPair;iLep++){
+  for(int jLep=iLep+1;jLep<GENnPair;jLep++){
+   if(!(abs(GENLepton_ID[iLep])==lepID && abs(GENLepton_ID[jLep])==lepID)) continue;
+   if(GENLepton_ID[iLep]*GENLepton_ID[jLep]>0 && lepID==11) continue;
+   if(GENLepton_isHardProcess[iLep]==1 & GENLepton_isHardProcess[jLep]==1){
+    idxHardLep1 = iLep;
+    idxHardLep2 = jLep;
+    nDileptons++;
+   }//end if hard process
+   if(GENLepton_fromHardProcessFinalState[iLep]==1 &&
+    GENLepton_fromHardProcessFinalState[jLep]==1){
+    idxFSRLep1 = iLep;
+    idxFSRLep2 = jLep;
+   }//end if FSR
+  }//end jLep loop
+ }//end iLep loop
+ return nDileptons;
+}
+
+bool PassAcceptance(double pt1,double pt2,double eta1,double eta2)
+{
+ if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return false;
+ if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return false;
+ if(abs(eta1)>etaHigh||abs(eta2)>etaHigh) return false;
+ if(!((pt1>ptLow && pt2>ptHigh)||(pt1>ptHigh && pt2>ptLow))) return false;
+ return true;
+} 
+
+bool GenToRecoMatch(int genIndex,int &recoIndex)
+{
+ double dR,deta,dphi;
+ float dRMin = 100000;
+ recoIndex=-1;
+ for(int iEle=0;iEle<Nelectrons;iEle++){
+  deta=Electron_eta[iEle]-GENLepton_eta[genIndex];
+  dphi=abs(Electron_phi[iEle]-GENLepton_phi[genIndex]);
+  if(dphi>pi) dphi=2*pi-dphi;
+  dR=sqrt(deta*deta+dphi*dphi);
+  if(dR<dRMin){
+   recoIndex=iEle;
+   dRMin=dR;
+  }
+ }//end for loop
+
+ bool matchFound = true;
+ if(dRMin>=dRMinCut){
+  recoIndex=-1;
+  matchFound=false;
+ }
+
+ return matchFound;
+}
+
+bool PassMediumID(bool passID1,bool passID2)
+{
+ if(passID1 && passID2) return true;
+ else return false;
+}
+
+bool HLTCut()
+{
+ int trigNameSize = pHLT_trigName->size();
+ bool passHLT = false;
+ for(int iHLT=0;iHLT<trigNameSize;iHLT++) {
+  trigName = pHLT_trigName->at(iHLT);
+  if(trigName.CompareTo(triggerUsed)==0 && HLT_trigFired[iHLT]==1){
+   passHLT = true;
+   break;
+  }
+ }
+ return passHLT;
+}
+
+TH1D*DefineMassHist(BinType type,TString histName,int nBins = 598)
+{
+ float lowBin = 10;
+ float highBin = 3000;
+ TH1D*hist;
+ if(type==LOG){
+  hist = new TH1D(histName,"",nLogBins,massbins);
+ }
+ else if(type==LINEAR){
+  hist = new TH1D(histName,"",nBins,lowBin,highBin);
+ }
+ else{
+  hist = new TH1D("INVALID","",0,0,0);
+  cout << "ERROR: Histogram binning not defined!!!!!!!!!!!" << endl;
+ }
+ return hist;
+}
+
+TH2D*DefineMatrixHist(BinType type,TString histName,int nBins = 598)
+{
+ float lowBin = 10;
+ float highBin = 3000;
+ TH2D*hist;
+ if(type==LOG){
+  hist = new TH2D(histName,"",nLogBins,massbins,nLogBins2,massbins2);
+ }
+ else if(type==LINEAR){
+  hist = new TH2D(histName,"",nBins,lowBin,highBin,nBins,lowBin,highBin);
+ }
+ else{
+  hist = new TH2D("INVALID","",0,0,0,0,0,0);
+  cout << "ERROR: Histogram binning not defined!!!!!!!!!!!" << endl;
+ }
+ return hist;
+}
