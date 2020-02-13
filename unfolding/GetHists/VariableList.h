@@ -1,4 +1,8 @@
+#ifndef VariableList_H
+#define VariableList_H
+
 #include "NtuplesV2P6Location.h"
+#include <TLorentzVector.h>
 #include <TMath.h>
 #include <TFile.h>
 #include <TH1.h>
@@ -57,8 +61,9 @@ std::vector<std::string>*pHLT_trigName = &HLT_trigName;
 
 const double pi=TMath::Pi();
 
-const float eMass = 0.000511;
-double muMass = 0.105658;
+const double eMass = 0.000511;
+const double muMass = 0.105658;
+const double tauMass = 1.7769;
 const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Updated at 2017.07.30
 const int ptBinHigh = 499;
 const int ptBinLow = 26;
@@ -75,6 +80,35 @@ const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,4
  185,192.5,200,210,220,231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,700,
  765,830,915,1000,1250,1500,2250,3000};
 
+std::vector<double> xSec;
+std::vector<double> xSecLL = {
+ //https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
+ 18810.0,//10to50 (NLO), NNLO value currently has huge uncertainty under investigation
+ 3*1923.26,//50to100 (NNLO)
+ 3*78.1258,//100to200 (NNLO)
+ 3*2.73309,//200to400 (NNLO)
+ 3*0.142945,//400to500 (NNLO)
+ 3*0.0809755,//500to700 (NNLO)
+ 3*0.0125589,//700to800 (NNLO)
+ 3*0.0105845,//800to1000 (NNLO)
+ 3*0.00556507,//1000to1500 (NNLO)
+ 3*0.000730495,//1500to2000 (NNLO)
+ 3*0.00016844//2000to3000 ((NNLO)
+};
+
+std::vector<double> xSecTT = {
+};
+
+std::vector<double> xSecEW = {
+};
+
+std::vector<double> xSecData = {
+ 1,1,1,1,1,1,1,1
+};
+
+std::vector<double> xSecFakes = {
+ 61526.7//WJetsToLNu (NNLO)
+};
 
 TBranch*b_GENnPair;
 TBranch*b_GENLepton_eta;
@@ -112,8 +146,11 @@ std::vector<TString> dirNamesLL = {
 std::vector<TString> dirNamesEW = {
  WW_dir,
  WZ_dir,
- ZZ_dir,
- WJets,
+ ZZ_dir
+};
+
+std::vector<TString> dirNamesFakes = {
+ WJets
 };
 
 std::vector<TString> dirNamesTT = {
@@ -163,6 +200,7 @@ enum SampleType{
  LL,
  EW,
  TT,
+ FAKES,
  DATA
 };
 
@@ -189,7 +227,9 @@ enum ChainLL{
 enum ChainEW{
  WW,
  WZ,
- ZZ,
+ ZZ
+};
+enum ChainFakes{
  W_PLUS_JETS
 };
 
@@ -215,3 +255,5 @@ enum BinType{
  LOG,
  LINEAR
 };
+
+#endif
