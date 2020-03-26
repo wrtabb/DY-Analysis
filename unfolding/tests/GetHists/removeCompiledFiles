@@ -1,0 +1,5 @@
+#!/bin/bash
+
+rm *.so
+rm *.pcm
+rm *.d

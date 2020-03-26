@@ -1,5 +1,5 @@
-#include "/home/hep/wrtabb/git/DY-Analysis/headers/header1.h"
-#include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
+#include "/home/hep/wrtabb/DY-Analysis/headers/header1.h"
+#include "/home/hep/wrtabb/DY-Analysis/headers/drawOptions.h"
 
 const TString file1Name= "/home/hep/wrtabb/git/DY-Analysis/data/dataVsMC.root";
 const TString file2Name= "outputDataUnfold.root";

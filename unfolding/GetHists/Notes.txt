@@ -1,4 +1,0 @@
-
-*Get cross sections for all processes for cross section weights
-*Put together event selection function(s)
-*Make plots of true, reco, Data, backgrounds for unfolding

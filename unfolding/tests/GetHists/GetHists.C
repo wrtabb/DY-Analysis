@@ -1,14 +1,16 @@
 #include "VariableList.h"
 
+void counter(Long64_t i, Long64_t N,TString outText);
 Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType lepType);
 void InitializeBranches(TChain*chain,bool isMC,LepType lepType);
-void EventLoop(TChain*chain,SampleType sampleType,LepType lepType,double genWeightSum,
-               double xSecWeight);
+void EventLoop(int iChain,TChain*chain,SampleType sampleType,LepType lepType,Long64_t totalentries);
 int GetGenLeptons(LepType lepType,int &idxHardLep1,int &idxHardLep2,int &idxFSRLep1,
                   int &idxFSRLep2);
-int GetRecoLeptons();
+int GetRecoLeptons(int &leadEle,int &subEle);
 double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
                    double phi2,double m2);
+double CalcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
+                    double phi2,double m2);
 bool PassAcceptance(double pt1,double pt2,double eta1,double eta2);
 bool GenToRecoMatch(int genIndex,int &recoIndex);
 bool PassMediumID(bool passID1,bool passID2);
@@ -95,7 +97,7 @@ Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType le
  //Temporarily stop loading skims and instead load full trees
  //The skims are missing important GEN-level branches and need to be fixed
  //fileNames = "/skims_0002/*.root";
- fileNames = "/*.root";
+ fileNames = "/skims_0002/*.root";
  vector <TString> *subFiles[numChains];
  for(int iChain=0;iChain<numChains;iChain++){
   subFiles[iChain] = new vector<TString>;
@@ -147,14 +149,14 @@ Long64_t LoadTrees(std::vector<TString>dirNames,SampleType sampleType,LepType le
   }//end loop over files
  totalentries=totalentries+chains[iChain]->GetEntries();
  InitializeBranches(chains[iChain],isMC,lepType);
- double genWeightSum = GetGenWeightSum(chains[iChain]);
- bool useGenWeights = true;
- double xSecWeight = GetXsecWeight(iChain,useGenWeights); 
- EventLoop(chains[iChain],sampleType,lepType,genWeightSum,xSecWeight);
  }
 
  cout << "Total Events Loaded: " << totalentries << endl;
  cout << endl;
+ 
+ for(int iChain=0;iChain<numChains;iChain++){
+  EventLoop(iChain,chains[iChain],sampleType,lepType,totalentries);
+ }
 
  totaltime.Stop();
  Double_t TotalCPURunTime = totaltime.CpuTime();
@@ -222,8 +224,7 @@ void InitializeBranches(TChain*chain,bool isMC,LepType lepType)
  return;
 }//end Initialize Branches
 
-void EventLoop(TChain*chain,SampleType sampleType,LepType lepType,double genWeightSum,
-               double xSecWeight)
+void EventLoop(int iChain,TChain*chain,SampleType sampleType,LepType lepType,Long64_t totalentries)
 {
  Long64_t nEntries = chain->GetEntries();
  double lepMass;
@@ -236,24 +237,40 @@ void EventLoop(TChain*chain,SampleType sampleType,LepType lepType,double genWeig
   cout << "Must be 'ELE', 'MUON', or 'TAU'" << endl;
   return;
  }
+ bool isMC = true;
+ if(sampleType==DATA) isMC = false;
+ double genWeightSum = 1;
+ if(isMC) genWeightSum = GetGenWeightSum(chain);
+ bool useGenWeights = true;
+ //double xSecWeight = dataLuminosity*(xSec.at(iChain)/1.0);
+ double xSecWeight = dataLuminosity*(xSec.at(iChain)/chain->GetEntries());
 
  int nHists = 5;
  TH1D*hMass[nHists];
+ TH1D*hMassData = DefineMassHist(LOG,"hData",0);
  TH2D*hMatrix[nHists-1];
  for(int i=0;i<nHists;i++){
   TString histNameMass = "hMass";
   TString histNameMatrix = "hMatrix";
-  histNameMass += i;
-  histNameMatrix += i;
+  TString fileAppendName = "_";
+  fileAppendName += iChain;
+  fileAppendName += "_";
+  fileAppendName += i;
+  histNameMass += fileAppendName;
+  histNameMatrix += fileAppendName;
   hMass[i] = DefineMassHist(LOG,histNameMass,0);
   if(i<nHists-1) hMatrix[i] = DefineMatrixHist(LOG,histNameMatrix,0);
  }
 
  for(Long64_t i=0;i<nEntries;i++){
+  counter(i,totalentries,"Event Progress");
   Long64_t event = chain->GetEntry(i);
   double massHard = -1;
   double massFSR = -1;
   double massReco = -1;
+  double rapidityHard = -100000;
+  double rapidityFSR = -100000;
+  double rapidityReco = -10000;
   int iHard1 = -1;
   int iHard2 = -1;
   int iFSR1 = -1;
@@ -267,13 +284,13 @@ void EventLoop(TChain*chain,SampleType sampleType,LepType lepType,double genWeig
  
   //Select leptons in each event
   nGenDileptons = GetGenLeptons(lepType,iHard1,iHard2,iFSR1,iFSR2);
-  //nRecoDileptons = GetRecoLeptons(lepType,leadLep,subLep);
+  nRecoDileptons = GetRecoLeptons(leadLep,subLep);
  
   //weights
   double weightReco = 1.0;
   double weightHard = 1.0;
-  double genWeight = (GENEvt_weight/fabs(GENEvt_weight))/genWeightSum;
-  double xSecWeight = 1.0;
+  double genWeight = 1;
+  if(isMC) genWeight = (GENEvt_weight/fabs(GENEvt_weight))/genWeightSum;
   double pt1 = Electron_pT[leadLep];
   double pt2 = Electron_pT[subLep];
   double eta1 = Electron_eta[leadLep];
@@ -307,28 +324,50 @@ void EventLoop(TChain*chain,SampleType sampleType,LepType lepType,double genWeig
                           Electron_eta[subLep],Electron_phi[subLep],lepMass);
   }
   
-  hMass[0]->Fill(massHard,weightHard);
-  if(!passAcceptance) massReco = 0;
-  hMass[1]->Fill(massReco,weightReco);
-  hMatrix[0]->Fill(massReco,massHard);
-  if(!passRecoMatch) massReco = 0;
-  hMass[2]->Fill(massReco,weightReco);
-  hMatrix[1]->Fill(massReco,massHard);
-  if(!passMediumID) massReco = 0;
-  hMass[3]->Fill(massReco,weightReco);
-  hMatrix[2]->Fill(massReco,massHard);
-  if(!passHLT) massReco = 0;
-  hMass[4]->Fill(massReco,weightReco);
-  hMatrix[3]->Fill(massReco,massHard);
+  if(sampleType==LL){
+   hMass[0]->Fill(massHard,weightHard);
+   if(!passAcceptance) massReco = 0;
+   hMass[1]->Fill(massReco,weightReco);
+   hMatrix[0]->Fill(massReco,massHard);
+   if(!passRecoMatch) massReco = 0;
+   hMass[2]->Fill(massReco,weightReco);
+   hMatrix[1]->Fill(massReco,massHard);
+   if(!passMediumID) massReco = 0;
+   hMass[3]->Fill(massReco,weightReco);
+   hMatrix[2]->Fill(massReco,massHard);
+   if(!passHLT) massReco = 0;
+   hMass[4]->Fill(massReco,weightReco);
+   hMatrix[3]->Fill(massReco,massHard);
+  }
+  else if(sampleType==DATA){
+   hMassData->Fill(massReco,weightReco);
+  }
+  else {
+   cout << "Only LL and DATA can be chosen for now" << endl;
+   return;
+  }
+ }//end event loop
 
-  TFile*histSave = new TFile("unfoldingHists.root","recreate");
+ if(sampleType==LL){
+  TFile*histSave = new TFile("unfoldingHists.root","update");
   for(int i=0;i<nHists;i++){
    hMass[i]->Write();
    if(i<nHists-1) hMatrix[i]->Write();
   }
   histSave->Write();
   histSave->Close();
- }//end event loop
+ }//end if LL
+ else if(sampleType==DATA){
+  TFile*histSave = new TFile("data.root","update");
+  hMassData->Write();
+  histSave->Write();
+  histSave->Close();
+ }//end if Data
+ else {
+  cout << "Only LL and DATA can be chosen for now" << endl;
+  return;
+ }
+
 }//end EventLoop()
 
 int GetGenLeptons(LepType lepType,int &idxHardLep1,int &idxHardLep2,int &idxFSRLep1,
@@ -363,6 +402,31 @@ int GetGenLeptons(LepType lepType,int &idxHardLep1,int &idxHardLep2,int &idxFSRL
  return nDileptons;
 }
 
+int GetRecoLeptons(int &leadEle,int &subEle)
+{
+ int numDileptons = 0;
+
+ for(int iEle = 0; iEle < Nelectrons; iEle++) {
+  if(!Electron_passMediumID[iEle]) continue;
+  for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
+   if(!Electron_passMediumID[jEle]) continue;
+   if(PassAcceptance(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
+                     Electron_eta[jEle])){
+    numDileptons++;
+    if(Electron_pT[iEle]>Electron_pT[jEle]){
+     leadEle = iEle;
+     subEle = jEle;
+    }
+    else {
+     leadEle = jEle;
+     subEle = iEle;
+    }
+   }
+  }//end jEle loop
+ }//end iEle loop
+ return numDileptons;
+}
+
 double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
                    double phi2,double m2)
 {
@@ -371,6 +435,15 @@ double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,doubl
  v1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
  v2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
  return (v1+v2).M();
+}
+double CalcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,
+                    double phi2,double m2)
+{
+ TLorentzVector v1;
+ TLorentzVector v2;
+ v1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
+ v2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
+ return (v1+v2).Rapidity();
 }
 
 bool PassAcceptance(double pt1,double pt2,double eta1,double eta2)
@@ -496,6 +569,10 @@ double GetTotalWeight(bool isReco,double genWeight,double xSecWeight,
  if(isReco) sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
 
  totalWeight = genWeight*xSecWeight*pileupWeight*sfWeight;
+ pileupRatioFile->Close();
+ fileLeg2SF->Close();
+ fileMedIDSF->Close();
+ fileRecoSF->Close();
  return totalWeight;
 }
 
@@ -540,3 +617,13 @@ TH2D*DefineMatrixHist(BinType type,TString histName,int nBins)
  }
  return hist;
 }
+
+void counter(Long64_t i, Long64_t N, TString outText)
+{
+ int P = 100*(i)/(N);
+ TTimeStamp eventTimeStamp;
+ if(i%(N/100)==0)
+  cout << outText << " "  << "[Time: " << eventTimeStamp.AsString("s") << "] " << P << "%" << endl;
+ return;
+}
+

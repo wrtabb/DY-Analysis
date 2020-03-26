@@ -1,15 +1,10 @@
-#include "TUnfold.h"
-#include "TUnfoldSys.h"
-#include "TUnfoldDensity.h"
-#include "TUnfoldBinning.h"
-#include "TFile.h"
-#include "TCanvas.h"
-#include "TH1.h"
-#include "TH2.h"
-#include "TMath.h"
-#include "/home/hep/wrtabb/git/DY-Analysis/headers/drawOptions.h"
-
-using namespace std;
+#include "/home/hep/wrtabb/DY-Analysis/headers/header1.h"
+#include "/home/hep/wrtabb/DY-Analysis/headers/drawOptions.h"
+const TString fileName = "histograms_for_unfolding.root";
+const TString dataFileName = "data_for_unfolding.root";
+const TString variedFileName = "mc_varied_for_unfolding.root";
+const int binLow = 15;
+const int binHigh = 3000;
 
 enum Reglarization {//Strength of regularization
   NO_REG,           //No regularization
@@ -17,23 +12,7 @@ enum Reglarization {//Strength of regularization
   VAR_REG           //TUnfoldDensity determines best choice of regularization strength
 };
 
-const int nBins = 43;
-const int binLow = 15;
-const int binHigh = 3000;
-const double massbins[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,
-                             110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,
-                             380,440,510,600,700,830,1000,1500,3000};
-const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,47.5,50,52.5,55,
-                            57.5,60,62,64,66,68,70,72,74,76,78.5,81,83.5,86,88.5,91,93.5,96,
-                            98.5,101,103.5,106,108,110,112.5,115,117.5,120,123,126,129.5,133,
-                            137,141,145.5,150,155,160,165.5,171,178,185,192.5,200,210,220,
-                            231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,
-                            700,765,830,915,1000,1250,1500,2250,3000};
-const int nLogBins2 = 86;
-//File Names
-const TString fileName= "toyUnfold.root";       
-const TString file2Name = "./data/inputCorrelations_10000Samples.root";
-void testTUnfold()
+void doUnfold()
 {
   ///////////////////////////////////////
   //  Choose Regularization Type       //
@@ -47,37 +26,37 @@ void testTUnfold()
   int regType = VAR_REG;
   //int regType = CONST_REG;
   
+  //Set closure test
+  bool closureTest = true;
+  //Set input covariance matrix
+  bool inputCov = false;
+
   TH1::SetDefaultSumw2();
   //Load the files
   TFile*file= new TFile(fileName);
-  TFile*file2 = new TFile(file2Name);
+  TFile*dataFile = new TFile(dataFileName);
+  TFile*variedFile = new TFile(variedFileName);
   gStyle->SetPalette(1);
   gStyle->SetOptStat(0);
-  //gROOT->SetBatch(true);
-  //Determine parameters used to create the distributions
-  ifstream parameterFile("parameters.txt");
-  bool exactClosure,effInc,backInc;
-  parameterFile >> exactClosure >> effInc >> backInc;
 
   //Define hisograms
-  TH1D*hReco = (TH1D*)file->Get("hReco");//reconstructed mass
-  TH1D*hGen = (TH1D*)file->Get("hTrue");//true mass
-  TH1D*hBack;
-  if(backInc){
-    if(exactClosure)
-     hBack = (TH1D*)file->Get("hBack1");
-    else
-     hBack = (TH1D*)file->Get("hBack2");
-  }
+  TH1D*hReco;
+//  if(closureTest) hReco = (TH1D*)file->Get("hMC");//reconstructed mass
+//  else hReco = (TH1D*)file->Get("hData");//reconstructed mass
+  hReco = (TH1D*)variedFile->Get("hMC");
+  hReco->SetFillColor(kWhite);
+  TH1D*hTrue = (TH1D*)file->Get("hTrue");//true mass
+//  TH1D*hBack = (TH1D*)file->Get("hBack");//background mass
   TH2D*hMatrix = (TH2D*)file->Get("hMatrix");//migration matrix
-  TH2D*hCovM = (TH2D*)file2->Get("hCovM");
-  TH2D*hCovMinv = (TH2D*)file2->Get("hCovMinv");
+//  TH2D*hCovM = (TH2D*)file->Get("hCovM");
+//  TH2D*hCovMinv = (TH2D*)file->Get("hCovMinv");
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
   hReco->SetLineColor(kBlack);
-  hGen->SetFillColor(kRed+2);
-  hGen->SetLineColor(kRed+2);
-  
+  hTrue->SetFillColor(kRed+2);
+  hTrue->SetLineColor(kRed+2);
+  hTrue->SetTitle("");
+
   ////////////////////////////
   //  Regularization Modes  //
   ////////////////////////////
@@ -111,16 +90,16 @@ void testTUnfold()
   //  Constructor for TUnfoldDensity  //
   //////////////////////////////////////
   TUnfoldDensity unfold(hMatrix,outputMap,regMode,constraintMode,densityFlags);
-  //unfold.SetInput(hReco,0.0,0.0,hCovM,hCovMinv);//the measured distribution
+  //if(inputCov) unfold.SetInput(hReco,0.0,0.0,hCovM,hCovMinv);//the measured distribution
+  //else unfold.SetInput(hReco);//the measured distribution
   unfold.SetInput(hReco);//the measured distribution
 
   //////////////////////////////
   //  Background Subtraction  //
   //////////////////////////////
-  double backScale = 1.0;
-  double backScaleError = 0.0;//scale error for background
-  if(backInc)
-   unfold.SubtractBackground(hBack,"background",backScale,backScaleError);
+  //double backScale = 1.0;
+  //double backScaleError = 0.0;//scale error for background
+  //if(!closureTest) unfold.SubtractBackground(hBack,"background",backScale,backScaleError);
 
   ////////////////////////////
   //  Add Systematic Error  //
@@ -157,42 +136,36 @@ void testTUnfold()
     unfold.DoUnfold(tau,hReco);
   }
   else{//user defined
-    double tau = 1e-2;//larger tau introduces more MC bias
+    double tau = 1e-8;//larger tau introduces more MC bias
     unfold.DoUnfold(tau,hReco);
   }
 
-  double binError;
   //The Unfolded Distribution
   TH1*hUnfolded = unfold.GetOutput("Unfolded");
    hUnfolded->SetMarkerStyle(25);
    hUnfolded->SetMarkerColor(kBlue+2);
    hUnfolded->SetMarkerSize(1);
   TH2*histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
-  TH2*histEmatTotal=unfold.GetEmatrixInput("unfolding total error matrix");
-  TH2*histCorrTotal=unfold.GetRhoIJtotal("unfolding correlations");
-  TH1F*hUnfoldedE = new TH1F("Unfolded with errors",";(gen)",nBins,massbins);
+  TH2*histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
+  TH1F*hUnfoldedE = new TH1F("Unfolded with errors",";(gen)",nLogBins,massbins);
    hUnfoldedE->SetMarkerStyle(25);
    hUnfoldedE->SetMarkerColor(kBlue+2);
    hUnfoldedE->SetMarkerSize(1);
- 
-  for(int i=0;i<nBins;i++){
+  for(int i=0;i<nLogBins;i++){
     double c = hUnfolded->GetBinContent(i+1);
-    binError = TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1));
     hUnfoldedE->SetBinContent(i+1,c);
-    hUnfoldedE->SetBinError(i+1,binError);
+    hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
   }
-
   TH1F*hRecoRebin=(TH1F*)hReco->Clone("hRecoRebin");
    hRecoRebin->Rebin(2);
-  //TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
-  // ratio->Divide(hGen);
+  TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
+   ratio->Divide(hTrue);
 
-  //double x[nBins],res[nBins];
-  //double chi = hUnfoldedE->Chi2Test(hGen,"CHI2/NDF",res);//chi2/ndf to print on plot
-  //double pValues = hUnfoldedE->Chi2Test(hGen,"P",res);//outputs chi2,prob,ndf,igood
-  //TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
-  TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1000);
-/*
+  double x[nLogBins],res[nLogBins];
+  double chi = hUnfoldedE->Chi2Test(hTrue,"CHI2/NDF",res);//chi2/ndf to print on plot
+  double pValues = hUnfoldedE->Chi2Test(hTrue,"P",res);//outputs chi2,prob,ndf,igood
+  TLatex*chiLabel = new TLatex(500.0,150000,Form("#chi^{2}/ndf = %lg", chi));	
+
   const float padmargins = 0.03;
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1000);
   TPad*pad1 = new TPad("","",0,0.3,1.0,1.0);
@@ -207,12 +180,12 @@ void testTUnfold()
   line->SetLineColor(kRed);
   TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
   legend->SetTextSize(0.02);
-  legend->AddEntry(hGen,"True Distribution");
+  legend->AddEntry(hTrue,"True Distribution");
   legend->AddEntry(hReco,"Measured Distribution");
   legend->AddEntry(hUnfolded,"Unfolded Distribution");
-  hGen->SetLabelSize(0);
-  hGen->SetTitleSize(0);
-  hGen->Draw("hist");
+  hTrue->SetLabelSize(0);
+  hTrue->SetTitleSize(0);
+  hTrue->Draw("hist");
   hRecoRebin->Draw("PE,same");
   hUnfoldedE->Draw("PE,same");
   legend->Draw("same");
@@ -230,7 +203,7 @@ void testTUnfold()
   ratio->GetYaxis()->SetLabelSize(0.06);
   ratio->GetYaxis()->SetTitleSize(0.08);
   ratio->GetYaxis()->SetTitleOffset(0.3);
-  ratio->GetYaxis()->SetTitle("Unfolded/Gen");
+  ratio->GetYaxis()->SetTitle("Unfolded/Truth");
   ratio->GetXaxis()->SetTitle("mass [GeV]");
   ratio->GetXaxis()->SetLabelSize(0.1);
   ratio->GetXaxis()->SetTitleSize(0.1);
@@ -241,77 +214,38 @@ void testTUnfold()
   ratio->SetMarkerColor(kBlack);
   ratio->Draw("PE");
   line->Draw("same");
-*/
 
-  ratioPlot(canvas1,hGen,hRecoRebin,hUnfoldedE);
+  canvas1->SaveAs("variedMCUnfolded.png");
+ 
+  double width,nUnfold;
+  TH1D*hCross = new TH1D("hCross","",nLogBins,massbins);
+   hCross->SetMarkerStyle(20);
+   hCross->SetMarkerColor(kBlack);
+   hCross->SetTitle("Cross Section");
+   hCross->GetXaxis()->SetMoreLogLabels();
+   hCross->GetXaxis()->SetNoExponent();
+   hCross->GetXaxis()->SetTitle("mass [GeV]");
+   hCross->GetYaxis()->SetTitle("d#sigma/dm [pb/GeV]");
+  for(int k=1;k<nLogBins+1;k++){
+   width = hUnfoldedE->GetXaxis()->GetBinWidth(k);
+   nUnfold = hUnfoldedE->GetBinContent(k)/(width*dataLuminosity);
+   hCross->SetBinContent(k,nUnfold);
+  }
 
-  TCanvas*canvas3 = new TCanvas("canvas3","",10,10,1000,1000);
-  histCorrTotal->GetYaxis()->SetTitle("mass [GeV]");
-  histCorrTotal->GetXaxis()->SetTitle("mass [GeV]");
-  hist2DPlot(canvas3,histCorrTotal,"colz",true,true,true);
-/*
-  canvas3->SetLogy();
-  canvas3->SetLogx();
-  canvas3->SetLogz();
-  canvas3->SetRightMargin(0.16);
-  canvas3->SetLeftMargin(0.12);
-
-  histCorrTotal->GetYaxis()->SetNoExponent();
-  histCorrTotal->GetYaxis()->SetMoreLogLabels();
-  histCorrTotal->GetXaxis()->SetNoExponent();
-  histCorrTotal->GetXaxis()->SetMoreLogLabels();
-  histCorrTotal->GetYaxis()->SetTitleOffset(1.8);
-  histCorrTotal->Draw("colz");
-*/  
-  canvas3->SaveAs("/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/corrTUnfold.png");
-  //Save Options
-  TString distName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/testUnfoldData";
-  TString lineName = "/home/hep/wrtabb/git/DY-Analysis/plots/unfolding/phase1/testUnfoldDataCurves";
-  if(exactClosure){
-    distName += "_ClosureTest";
-    lineName += "_ClosureTest";
-  }
-  else{
-    distName += "_NoClosure";
-    lineName += "_NoClosure";
-  }
-  if(effInc){
-    distName += "_EffInc";
-    lineName += "_EffInc";
-  }
-  else{
-    distName += "_NoEff";
-    lineName += "_NoEff";
-  } 
-  if(backInc){
-    distName += "_BackInc";
-    lineName += "_BackInc";
-  }
-  else{
-    distName += "_NoBack";
-    lineName += "_NoBack";
-  }
-  if(regType==NO_REG){
-    distName += "_NoReg.png";
-    lineName += "_NoReg.png";
-  }
-  if(regType==CONST_REG){
-    distName += "_ConstReg.png";
-    lineName += "_ConstReg.png";
-  }   
-  if(regType==VAR_REG){
-    distName += "_VarReg_Closure.png";
-    lineName += "_VarReg.png";
-  }  
-
-  canvas1->SaveAs(distName);
-
- histEmatTotal->SetName("covariance");
- histCorrTotal->SetName("correlations");
- TFile*corrSave = new TFile("./data/tunfoldCorr.root","recreate");
- corrSave->cd();
- histEmatTotal->Write(); 
- histCorrTotal->Write();
- corrSave->Write();
- corrSave->Close();
+  //TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1400,1000);
+  //canvas2->SetLogy();
+  //canvas2->SetLogx();
+  //canvas2->SetLogz();
+  //canvas2->SetGrid();
+  //hCross->Draw("PE");
+  //canvas2->SaveAs("xsecdata.png");
+  TFile*fileXsec = new TFile("xsecdata.root","recreate");
+  hCross->Write();
+  canvas1->Write();
+  hUnfoldedE->Write();
+  histEmatTotal->Write();
+  hTrue->Write();
+  hReco->Write();
+  fileXsec->Write();
+  fileXsec->Close();
 }
