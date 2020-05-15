@@ -17,7 +17,7 @@ void getUnfoldingHists()
  gStyle->SetOptStat(0);
 
  getDistributions(DATA,ELE);
- getDistributions(LL,ELE);
+ //getDistributions(LL,ELE);
 
  totaltime.Stop();
  Double_t TotalCPURunTime = totaltime.CpuTime();
@@ -238,6 +238,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
   cout << "lepType must be ELE or MUON" << endl;
   return;
  }
+
  //-----Loop over samples-----//
  for(int iChain=0;iChain<numChains;iChain++) {
   cout << endl;
@@ -265,6 +266,10 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
   //-----Event loop-----//
   for(Long64_t i=0;i<nentries;i++) {      
+   if(count > 0.05*totalentries && hRecoMass->Integral()<1) {
+    cout << "No events in histograms" << endl;
+    return;
+   }
    counter(count,totalentries,counterName);
    count = count+1; 
    chains[iChain]->GetEntry(i);
@@ -307,14 +312,15 @@ void getDistributions(SampleType sampleType,LepType lepType)
      cout << "Gen level produces too many or too few lepton pairs" << endl;
      continue;
     }
-   }
+   }//end isMC
 
-   //-----Make sure all events are within acceptance-----//
+   //-----Make sure all events at gen level are within acceptance-----//
+   bool passAcceptance = true;
    if(!passDileptonKinematics(GENLepton_pT[idxGenEle1],GENLepton_pT[idxGenEle2],
-    GENLepton_eta[idxGenEle1],GENLepton_eta[idxGenEle2])) continue;
+    GENLepton_eta[idxGenEle1],GENLepton_eta[idxGenEle2])) passAcceptance = false;
 
    //-----Calculate gen-level invariant masses-----//
-   if(isMC){
+   if(isMC&&passAcceptance){
     invMassHard = CalcInvMass(GENLepton_pT[idxGenEle1],
                               GENLepton_eta[idxGenEle1],
                               GENLepton_phi[idxGenEle1],mass,
@@ -341,12 +347,11 @@ void getDistributions(SampleType sampleType,LepType lepType)
     }
    }//end loop over triggers 
   
-   int numDielectrons = 0;
+   int nRecoDileptons = 0;
    int subEle = -1;
    int leadEle = -1;
    double invMass = -10000;
    double rapidity = -10000;
-   TLorentzVector recoP4;
 
    //-----Reco Electron loop-----//
    //Find reconstructed electrons within acceptance passing medium ID criteria
@@ -358,7 +363,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
      if(!Electron_passMediumID[jEle]) continue;
      if(passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
       Electron_eta[jEle])){
-      numDielectrons++;
+      nRecoDileptons++;
       if(Electron_pT[iEle]>Electron_pT[jEle]){
        leadEle = iEle; 
        subEle = jEle;
@@ -388,22 +393,21 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
    //-----All cuts-----//
    //place cut events into underflow bins
-   if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
-    invMass=0;
-    rapidity=-10000;
-   }
-   if(!Electron_passMediumID[closestTrackLep1]){        
-    invMass=0;
-    rapidity=-10000;
-   }
-   if(!Electron_passMediumID[closestTrackLep2]) {       
-    invMass=0;
-    rapidity=-10000;
-   }
-   if(numDielectrons!=1){                               
-    invMass=0;
-    rapidity=-10000;
-   }
+   if(isMC){
+    if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
+     invMass=0;
+     rapidity=-10000;
+    }
+    if(!Electron_passMediumID[closestTrackLep1]){        
+     invMass=0;
+     rapidity=-10000;
+    }
+    if(!Electron_passMediumID[closestTrackLep2]) {       
+     invMass=0;
+     rapidity=-10000;
+    }
+   }//end isMC
+
    if(leadEle<0||subEle<0){                             
     invMass=0;
     rapidity=-10000;
