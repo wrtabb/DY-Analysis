@@ -261,18 +261,24 @@ void getDistributions(SampleType sampleType,LepType lepType)
     varGenWeight += GENEvt_weight*GENEvt_weight;//variance of genweights
     sumRawGenWeight += GENEvt_weight; 
    }          
-  }
+  }//end isMC
+
   //-----Event loop-----//
   for(Long64_t i=0;i<nentries;i++) {      
    counter(count,totalentries,counterName);
    count = count+1; 
    chains[iChain]->GetEntry(i);
     
+   //-----Initialize indices for gen level loop-----//
    int idxGenEle1 = -1;
    int idxGenEle2 = -1;
    int idxGenEleFS1 = -1;
    int idxGenEleFS2 = -1;
-   int nGenDielectrons = 0;
+   
+   //-----Start counter for number of gen level dileptons-----//
+   int nGenDileptons = 0;
+ 
+   //-----Initialize quantitiues for later calculation-----//
    double invMassHard = -10000;
    double rapidityHard = -10000;
    if(isMC){ 
@@ -285,7 +291,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
       if(GENLepton_isHardProcess[kLep]==1 && GENLepton_isHardProcess[lLep]==1){
        idxGenEle1 = kLep;
        idxGenEle2 = lLep;
-       nGenDielectrons++;
+       nGenDileptons++;
       }//end if hard process
       if(GENLepton_fromHardProcessFinalState[kLep]==1 && 
        GENLepton_fromHardProcessFinalState[lLep]==1){
@@ -296,20 +302,19 @@ void getDistributions(SampleType sampleType,LepType lepType)
     }//end kLep loop
    
     //-----Make sure there are only two gen-level electrons-----//
-    if(nGenDielectrons!=1){
+    if(nGenDileptons!=1){
      cout << "!!!!!!!!!!WARNING!!!!!!!!!!" << endl;
-     cout << "Gen level produces too many or too few electron pairs" << endl;
+     cout << "Gen level produces too many or too few lepton pairs" << endl;
      continue;
     }
    }
 
    //-----Make sure all events are within acceptance-----//
-   bool passAcceptance = true;
    if(!passDileptonKinematics(GENLepton_pT[idxGenEle1],GENLepton_pT[idxGenEle2],
-    GENLepton_eta[idxGenEle1],GENLepton_eta[idxGenEle2])) passAcceptance = false;
+    GENLepton_eta[idxGenEle1],GENLepton_eta[idxGenEle2])) continue;
 
    //-----Calculate gen-level invariant masses-----//
-   if(passAcceptance&&isMC){
+   if(isMC){
     invMassHard = CalcInvMass(GENLepton_pT[idxGenEle1],
                               GENLepton_eta[idxGenEle1],
                               GENLepton_phi[idxGenEle1],mass,
@@ -322,7 +327,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
                                 GENLepton_pT[idxGenEle2],
                                 GENLepton_eta[idxGenEle2],
                                 GENLepton_phi[idxGenEle2],mass);
-   }//end passAcceptance && isMC
+   }//end isMC
 
    //-----HLT criteria-----//
    trigNameSize = pHLT_trigName->size();
