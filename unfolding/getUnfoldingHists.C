@@ -37,6 +37,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
  std::vector<TString> dirNames;
  TString counterName;
+
  if(sampleType==LL){
   dirNames = dirNamesLL;
   xSec = xSecLL;
@@ -230,7 +231,13 @@ void getDistributions(SampleType sampleType,LepType lepType)
  double lumi = dataLuminosity;//luminosity for xsec weighting
  double sfReco1,sfReco2,sfID1,sfID2,sfHLT;//efficiency scale factors
  double eEta1, eEta2, ePt1, ePt2;//eta and pt of the electrons in each event
-
+ double mass;
+ if(lepType==ELE) mass = eMass;
+ else if(lepType==MUON) mass = muMass;
+ else {
+  cout << "lepType must be ELE or MUON" << endl;
+  return;
+ }
  //-----Loop over samples-----//
  for(int iChain=0;iChain<numChains;iChain++) {
   cout << endl;
@@ -305,16 +312,16 @@ void getDistributions(SampleType sampleType,LepType lepType)
    if(passAcceptance&&isMC){
     invMassHard = CalcInvMass(GENLepton_pT[idxGenEle1],
                               GENLepton_eta[idxGenEle1],
-                              GENLepton_phi[idxGenEle1],eMass,
+                              GENLepton_phi[idxGenEle1],mass,
                               GENLepton_pT[idxGenEle2],
                               GENLepton_eta[idxGenEle2],
-                              GENLepton_phi[idxGenEle2],eMass);
+                              GENLepton_phi[idxGenEle2],mass);
     rapidityHard = CalcRapidity(GENLepton_pT[idxGenEle1],
                                 GENLepton_eta[idxGenEle1],
-                                GENLepton_phi[idxGenEle1],eMass,
+                                GENLepton_phi[idxGenEle1],mass,
                                 GENLepton_pT[idxGenEle2],
                                 GENLepton_eta[idxGenEle2],
-                                GENLepton_phi[idxGenEle2],eMass);
+                                GENLepton_phi[idxGenEle2],mass);
    }//end passAcceptance && isMC
 
    //-----HLT criteria-----//
@@ -359,13 +366,14 @@ void getDistributions(SampleType sampleType,LepType lepType)
     }//end jEle loop
    }//end iEle loop
 
-   //-----Calculate reconstructed invariant mass-----//
+   //-----Calculate reconstructed quantities-----//
    invMass = CalcInvMass(Electron_pT[leadEle],Electron_eta[leadEle],
-                         Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
-                         Electron_phi[subEle],eMass);
+                         Electron_phi[leadEle],mass,Electron_pT[subEle],Electron_eta[subEle],
+                         Electron_phi[subEle],mass);
    rapidity = CalcRapidity(Electron_pT[leadEle],Electron_eta[leadEle],
-                         Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
-                         Electron_phi[subEle],eMass);
+                         Electron_phi[leadEle],mass,Electron_pT[subEle],Electron_eta[subEle],
+                         Electron_phi[subEle],mass);
+
    //-----Gen to reco matching-----//
    int closestTrackLep1, closestTrackLep2;
    closestTrackLep1 = closestTrackLep2 = -1;
@@ -412,12 +420,12 @@ void getDistributions(SampleType sampleType,LepType lepType)
    if(ePt1>ptBinHigh) ePt1 = ptBinHigh;
    if(ePt2>ptBinHigh) ePt2 = ptBinHigh;
 
+   //-----Determining weighting factors-----//
    sfWeight = 1.0;
    genWeight = 1.0;
    xSecWeight = 1.0;
    pileupWeight = 1.0;
    totalWeight = 1.0;
-   //-----Determining weighting factors-----//
    if(isMC){ 
     pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
     sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
@@ -436,7 +444,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
    //-----Fill histograms-----//
    hRecoMass->Fill(invMass,totalWeight*sfWeight);
    hRecoRapidity->Fill(rapidity,totalWeight*sfWeight);
-   if(isMCi&&sampleType==LL){
+   if(isMC&&sampleType==LL){
     hTrueMass      ->Fill(invMassHard,totalWeight);
     hMatrixMass    ->Fill(invMassHard,invMass,totalWeight*sfWeight);
     hMatrixMass    ->Fill(invMassHard,0.0,totalWeight*(1-sfWeight));
