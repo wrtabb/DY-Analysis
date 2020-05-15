@@ -31,8 +31,10 @@ void doUnfold()
  TH1D*hBack = (TH1D*)fileBack->Get("hBack");
  TH2D*hMatrix = (TH2D*)file->Get("hMatrix");
  
- TH1F*hUnfolded;
- hUnfolded = unfold(VAR_REG,false,hData,hBack,hMatrix);
+ TH1F*hUnfoldedData;
+ TH1F*hUnfoldedClosure;
+ hUnfoldedData = unfold(VAR_REG,false,hData,hBack,hMatrix);
+ hUnfoldedClosure = unfold(VAR_REG,true,hData,hBack,hMatrix);
 }
 
 TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)

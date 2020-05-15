@@ -68,9 +68,13 @@ const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Update
 const int ptBinHigh = 499;
 const int ptBinLow = 26;
 int nVertices;
+const int nYBins = 50;
+const int nYBins2 = 2*nYBins;
+const float binLowY = -2.5;
+const float binHighY = 2.5;
 
-const int nLogBins = 43;
-const int nLogBins2 = 2*nLogBins;
+const int nLogBinsMass = 43;
+const int nLogBinsMass2 = 2*nLogBinsMass;
 const double massbins[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,
  106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,
  1500,3000};

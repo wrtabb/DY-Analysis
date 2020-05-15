@@ -1,6 +1,7 @@
 #include "VariableList.h"
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
 double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
+double CalcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
 bool GenToRecoMatch(int genIndex,int &recoIndex);
 void counter(Long64_t i, Long64_t N,TString printName);
 void getDistributions(SampleType sampleType,LepType lepType);
@@ -16,6 +17,7 @@ void getUnfoldingHists()
  gStyle->SetOptStat(0);
 
  getDistributions(DATA,ELE);
+ getDistributions(LL,ELE);
 
  totaltime.Stop();
  Double_t TotalCPURunTime = totaltime.CpuTime();
@@ -198,9 +200,13 @@ void getDistributions(SampleType sampleType,LepType lepType)
  cout << endl;
 
  //-----Initialize histograms for unfolding distributions-----//
- TH1D*hReco = new TH1D("hReco","",nLogBins2,massbins2);
- TH1D*hTrue = new TH1D("hTrue","",nLogBins,massbins);
- TH2D*hMatrix = new TH2D("hMatrix","",nLogBins,massbins,nLogBins2,massbins2);
+ TH1D*hRecoRapidity = new TH1D("hRecoRapidity","",nYBins2,binLowY,binHighY);
+ TH1D*hTrueRapidity = new TH1D("hTrueRapidity","",nYBins,binLowY,binHighY);
+ TH2D*hMatrixRapidity = new TH2D("hMatrixRapidity","",nYBins,binLowY,binHighY,nYBins2,binLowY,binHighY);
+ 
+ TH1D*hRecoMass = new TH1D("hRecoMass","",nLogBinsMass2,massbins2);
+ TH1D*hTrueMass = new TH1D("hTrueMass","",nLogBinsMass,massbins);
+ TH2D*hMatrixMass = new TH2D("hMatrixMass","",nLogBinsMass,massbins,nLogBinsMass2,massbins2);
 
  //-----Get histograms for pileup and SF weights-----//
  TFile*pileupRatioFile  = new TFile(pileupRatioName);
@@ -235,6 +241,8 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
   //-----Find normalized genWeights,sums,variances-----//
   if(isMC){
+   cout << "Calculating GEN weights" << endl;
+   cout << endl;
    sumGenWeight = 0.0;
    sumRawGenWeight = 0.0;
    varGenWeight = 0.0;
@@ -258,7 +266,8 @@ void getDistributions(SampleType sampleType,LepType lepType)
    int idxGenEleFS1 = -1;
    int idxGenEleFS2 = -1;
    int nGenDielectrons = 0;
-   double invMassHard = 0;
+   double invMassHard = -10000;
+   double rapidityHard = -10000;
    if(isMC){ 
     //-----Gen loop-----//
     for(int kLep=0;kLep<GENnPair;kLep++){
@@ -293,12 +302,20 @@ void getDistributions(SampleType sampleType,LepType lepType)
     GENLepton_eta[idxGenEle1],GENLepton_eta[idxGenEle2])) passAcceptance = false;
 
    //-----Calculate gen-level invariant masses-----//
-   if(passAcceptance&&isMC) invMassHard = CalcInvMass(GENLepton_pT[idxGenEle1],
-                                                      GENLepton_eta[idxGenEle1],
-                                                      GENLepton_phi[idxGenEle1],eMass,
-                                                      GENLepton_pT[idxGenEle2],
-                                                      GENLepton_eta[idxGenEle2],
-                                                      GENLepton_phi[idxGenEle2],eMass);
+   if(passAcceptance&&isMC){
+    invMassHard = CalcInvMass(GENLepton_pT[idxGenEle1],
+                              GENLepton_eta[idxGenEle1],
+                              GENLepton_phi[idxGenEle1],eMass,
+                              GENLepton_pT[idxGenEle2],
+                              GENLepton_eta[idxGenEle2],
+                              GENLepton_phi[idxGenEle2],eMass);
+    rapidityHard = CalcRapidity(GENLepton_pT[idxGenEle1],
+                                GENLepton_eta[idxGenEle1],
+                                GENLepton_phi[idxGenEle1],eMass,
+                                GENLepton_pT[idxGenEle2],
+                                GENLepton_eta[idxGenEle2],
+                                GENLepton_phi[idxGenEle2],eMass);
+   }//end passAcceptance && isMC
 
    //-----HLT criteria-----//
    trigNameSize = pHLT_trigName->size();
@@ -315,7 +332,8 @@ void getDistributions(SampleType sampleType,LepType lepType)
    int numDielectrons = 0;
    int subEle = -1;
    int leadEle = -1;
-   double invMass = 0;
+   double invMass = -10000;
+   double rapidity = -10000;
    TLorentzVector recoP4;
 
    //-----Reco Electron loop-----//
@@ -345,7 +363,9 @@ void getDistributions(SampleType sampleType,LepType lepType)
    invMass = CalcInvMass(Electron_pT[leadEle],Electron_eta[leadEle],
                          Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
                          Electron_phi[subEle],eMass);
-
+   rapidity = CalcRapidity(Electron_pT[leadEle],Electron_eta[leadEle],
+                         Electron_phi[leadEle],eMass,Electron_pT[subEle],Electron_eta[subEle],
+                         Electron_phi[subEle],eMass);
    //-----Gen to reco matching-----//
    int closestTrackLep1, closestTrackLep2;
    closestTrackLep1 = closestTrackLep2 = -1;
@@ -355,12 +375,30 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
    //-----All cuts-----//
    //place cut events into underflow bins
-   if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)) invMass=0;
-   if(!Electron_passMediumID[closestTrackLep1])        invMass=0;
-   if(!Electron_passMediumID[closestTrackLep2])        invMass=0;
-   if(numDielectrons!=1)                               invMass=0;
-   if(leadEle<0||subEle<0)                             invMass=0;
-   if(!passHLT)                                        invMass=0;
+   if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
+    invMass=0;
+    rapidity=-10000;
+   }
+   if(!Electron_passMediumID[closestTrackLep1]){        
+    invMass=0;
+    rapidity=-10000;
+   }
+   if(!Electron_passMediumID[closestTrackLep2]) {       
+    invMass=0;
+    rapidity=-10000;
+   }
+   if(numDielectrons!=1){                               
+    invMass=0;
+    rapidity=-10000;
+   }
+   if(leadEle<0||subEle<0){                             
+    invMass=0;
+    rapidity=-10000;
+   }
+   if(!passHLT){                                        
+    invMass=0;
+    rapidity=-10000;
+   }
 
    //-----Defining eta and pt for SF calculation-----//
    eEta1 = Electron_eta[leadEle];
@@ -376,31 +414,35 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
    sfWeight = 1.0;
    genWeight = 1.0;
+   xSecWeight = 1.0;
+   pileupWeight = 1.0;
+   totalWeight = 1.0;
    //-----Determining weighting factors-----//
-   pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
-   sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
-   sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta2,ePt2));
-   sfID1=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta1,ePt1));
-   sfID2=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta2,ePt2));
-   sfHLT=(hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta1,ePt1)))*
-         (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
    if(isMC){ 
+    pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
+    sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
+    sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta2,ePt2));
+    sfID1=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta1,ePt1));
+    sfID2=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta2,ePt2));
+    sfHLT=(hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta1,ePt1)))*
+          (hLeg2SF->GetBinContent(hLeg2SF->FindBin(eEta2,ePt2)));
+
     xSecWeight=lumi*(xSec.at(iChain)/1.0);//xSecWeight when used with genWeight 
     genWeight = (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
     sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
     totalWeight = genWeight*xSecWeight*pileupWeight;
-   }
-   else{
-    xSecWeight=lumi*(xSec.at(iChain)/chains[iChain]->GetEntries());
-    totalWeight = xSecWeight;
-   }
+   }//end isMC
    
    //-----Fill histograms-----//
-   hReco->Fill(invMass,totalWeight*sfWeight);
-   if(isMC){
-    hTrue->Fill(invMassHard,totalWeight);
-    hMatrix->Fill(invMassHard,invMass,totalWeight*sfWeight);
-    hMatrix->Fill(invMassHard,0.0,totalWeight*(1-sfWeight));
+   hRecoMass->Fill(invMass,totalWeight*sfWeight);
+   hRecoRapidity->Fill(rapidity,totalWeight*sfWeight);
+   if(isMCi&&sampleType==LL){
+    hTrueMass      ->Fill(invMassHard,totalWeight);
+    hMatrixMass    ->Fill(invMassHard,invMass,totalWeight*sfWeight);
+    hMatrixMass    ->Fill(invMassHard,0.0,totalWeight*(1-sfWeight));
+    hTrueRapidity  ->Fill(rapidityHard,totalWeight);
+    hMatrixRapidity->Fill(rapidityHard,rapidity,totalWeight*sfWeight);
+    hMatrixRapidity->Fill(rapidityHard,0.0,totalWeight*(1-sfWeight));
    }
    
   }//end event loop
@@ -408,18 +450,27 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
  //-----Save histograms to file-----//
  TString saveName;
- if(isMC) saveName = "data/migrationMatrix.root";
- else saveName = "data/inputData.root";
+ if(sampleType==LL) saveName = "data/migrationMatrix.root";
+ else if(sampleType==DATA) saveName = "data/inputData.root";
+ else if(sampleType==EW) saveName = "data/backgroundEW.root";
+ else if(sampleType==TT) saveName = "data/backgroundTT.root";
+ else saveName = "data/unknown.root";
  TFile *rootFile = new TFile(saveName,"RECREATE");
  rootFile->cd();
- hReco->Write();
+ hRecoMass->Write();
+ hRecoRapidity->Write();
  if(isMC){
-  hTrue->Write();
-  hMatrix->Write();
+  hTrueMass->Write();
+  hMatrixMass->Write();
+  hTrueRapidity->Write();
+  hMatrixRapidity->Write();
  }
  rootFile->Write();
  rootFile->Close();
- 
+
+ cout << endl;
+ cout << "File saved: " << saveName << endl;
+ cout << endl; 
 }
 
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)
@@ -440,6 +491,14 @@ double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,doubl
  return (v1+v2).M();
 }
 
+double CalcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2)
+{
+ TLorentzVector v1;
+ TLorentzVector v2;
+ v1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
+ v2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
+ return (v1+v2).Rapidity();
+}
 
 bool GenToRecoMatch(int genIndex,int &recoIndex)
 {
