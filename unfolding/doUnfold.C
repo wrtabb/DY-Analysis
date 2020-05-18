@@ -1,7 +1,7 @@
 #include "/home/hep/wrtabb/DY-Analysis/headers/header1.h"
 #include "/home/hep/wrtabb/DY-Analysis/headers/drawOptions.h"
 
-const TString fileName = "data/inputMatrix.root";
+const TString fileName = "data/migrationMatrix.root";
 const TString fileDataName = "data/inputData.root";
 const TString fileBackgroundName = "data/inputBackground.root";
 
@@ -21,20 +21,20 @@ void doUnfold()
 {
  gStyle->SetPalette(1);
  gStyle->SetOptStat(0);
- gROOT->SetBatch(kTRUE);
+ //gROOT->SetBatch(kTRUE);
  TH1::SetDefaultSumw2(); 
  //Load the files
  TFile*file= new TFile(fileName);
  TFile*fileData = new TFile(fileDataName);
  TFile*fileBack = new TFile(fileBackgroundName);
- TH1D*hData = (TH1D*)fileData->Get("hReco");
- TH1D*hBack = (TH1D*)fileBack->Get("hBack");
- TH2D*hMatrix = (TH2D*)file->Get("hMatrix");
+ TH1D*hDataMass = (TH1D*)file->Get("hRecoMass");
+ TH1D*hBackMass = (TH1D*)fileBack->Get("hBack");
+ TH2D*hMatrixMass = (TH2D*)file->Get("hMatrixMass");
  
  TH1F*hUnfoldedData;
  TH1F*hUnfoldedClosure;
- hUnfoldedData = unfold(VAR_REG,false,hData,hBack,hMatrix);
- hUnfoldedClosure = unfold(VAR_REG,true,hData,hBack,hMatrix);
+ hUnfoldedData = unfold(VAR_REG,true,hDataMass,hBackMass,hMatrixMass);
+ //hUnfoldedClosure = unfold(VAR_REG,true,hData,hBack,hMatrix);
 }
 
 TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
@@ -88,7 +88,7 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
   //////////////////////////////
   double backScale = 1.0;
   double backScaleError = 0.0;//scale error for background
-  if(!closure)unfold.SubtractBackground(hBack,"background",backScale,backScaleError);
+  //if(!closure)unfold.SubtractBackground(hBack,"background",backScale,backScaleError);
 
   ////////////////////////////
   //  Add Systematic Error  //

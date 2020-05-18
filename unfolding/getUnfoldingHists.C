@@ -17,7 +17,7 @@ void getUnfoldingHists()
  gStyle->SetOptStat(0);
 
  getDistributions(DATA,ELE);
- //getDistributions(LL,ELE);
+ getDistributions(LL,ELE);
 
  totaltime.Stop();
  Double_t TotalCPURunTime = totaltime.CpuTime();
@@ -273,6 +273,8 @@ void getDistributions(SampleType sampleType,LepType lepType)
    counter(count,totalentries,counterName);
    count = count+1; 
    chains[iChain]->GetEntry(i);
+   //for now, requiring at least two reconstructed electrons
+   if(Nelectrons<2) continue;
     
    //-----Initialize indices for gen level loop-----//
    int idxGenEle1 = -1;
@@ -416,6 +418,10 @@ void getDistributions(SampleType sampleType,LepType lepType)
     invMass=0;
     rapidity=-10000;
    }
+   if(nRecoDileptons!=1){
+    invMass=0;
+    rapidity=-10000;
+   } 
 
    //-----Defining eta and pt for SF calculation-----//
    eEta1 = Electron_eta[leadEle];
@@ -451,6 +457,8 @@ void getDistributions(SampleType sampleType,LepType lepType)
    }//end isMC
    
    //-----Fill histograms-----//
+   //Please note: When adding FAKES to the background calculation, be careful with SFs
+   //I'm pretty sure they aren't used and the way I have it here, it is used for all MC
    hRecoMass->Fill(invMass,totalWeight*sfWeight);
    hRecoRapidity->Fill(rapidity,totalWeight*sfWeight);
    if(isMC&&sampleType==LL){
