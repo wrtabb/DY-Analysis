@@ -3,12 +3,12 @@
 void test()
 {
  //initialize DYAnalyzer class
- DYAnalyzer*dy = new DYAnalyzer();
+ DYAnalyzer*dy = new DYAnalyzer(V2P6,ELE,EE);
  //Function for loading trees used for analysis
  //The trees being loaded are specified in src/DYAnalysis.cc
  //May change structure, see notes in src/DYAnalysis.cc
  //Function also returns total number of events for all trees
- Long64_t totalentries = dy->LoadTrees();
+ Long64_t totalentries = dy->LoadTrees(V2P6,dirNames,EE,ELE);
  //nentries will be number of entries in a given sample
  Long64_t nentries;
  //Define histograms

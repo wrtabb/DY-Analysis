@@ -75,6 +75,7 @@ const float binHighY = 2.5;
 
 const int nLogBinsMass = 43;
 const int nLogBinsMass2 = 2*nLogBinsMass;
+const int nLogBinsMass3 = nLogBinsMass+1;
 const double massbins[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,
  106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,
  1500,3000};
@@ -83,21 +84,24 @@ const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,4
  106,108,110,112.5,115,117.5,120,123,126,129.5,133,137,141,145.5,150,155,160,165.5,171,178,
  185,192.5,200,210,220,231.5,243,258,273,296.5,320,350,380,410,440,475,510,555,600,650,700,
  765,830,915,1000,1250,1500,2250,3000};
+const double massbins3[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,
+ 106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,
+ 1500,2000,3000};
 
 std::vector<double> xSec;
 std::vector<double> xSecLL = {
- //https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple
- 18810.0,//10to50 (NLO), NNLO value currently has huge uncertainty under investigation
- 3*1923.26,//50to100 (NNLO)
- 3*78.1258,//100to200 (NNLO)
- 3*2.73309,//200to400 (NNLO)
- 3*0.142945,//400to500 (NNLO)
- 3*0.0809755,//500to700 (NNLO)
- 3*0.0125589,//700to800 (NNLO)
- 3*0.0105845,//800to1000 (NNLO)
- 3*0.00556507,//1000to1500 (NNLO)
- 3*0.000730495,//1500to2000 (NNLO)
- 3*0.00016844//2000to3000 ((NNLO)
+ //https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple (pb)
+ 18610.0/3.0,//10to50 (NLO), NNLO value currently has huge uncertainty under investigation
+ 1923.26,//50to100 (NNLO)
+ 78.1258,//100to200 (NNLO)
+ 2.73309,//200to400 (NNLO)
+ 0.142945,//400to500 (NNLO)
+ 0.0809755,//500to700 (NNLO)
+ 0.0125589,//700to800 (NNLO)
+ 0.0105845,//800to1000 (NNLO)
+ 0.00556507,//1000to1500 (NNLO)
+ 0.000730495,//1500to2000 (NNLO)
+ 0.00016844//2000to3000 ((NNLO)
 };
 
 std::vector<double> xSecTT = {

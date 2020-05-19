@@ -27,13 +27,16 @@ void doUnfold()
  TFile*file= new TFile(fileName);
  TFile*fileData = new TFile(fileDataName);
  TFile*fileBack = new TFile(fileBackgroundName);
- TH1D*hDataMass = (TH1D*)file->Get("hRecoMass");
+
+ //Load input histograms
+ TH1D*hDataMass = (TH1D*)fileData->Get("hRecoMass");
  TH1D*hBackMass = (TH1D*)fileBack->Get("hBack");
  TH2D*hMatrixMass = (TH2D*)file->Get("hMatrixMass");
  
  TH1F*hUnfoldedData;
  TH1F*hUnfoldedClosure;
- hUnfoldedData = unfold(VAR_REG,true,hDataMass,hBackMass,hMatrixMass);
+ hUnfoldedDataMass = unfold(VAR_REG,false,hDataMass,hBackMass,hMatrixMass);
+ //hUnfoldedDataRapidity = unfold(VAR_REG,false,hDataRapidity,hBackRapidity,hMatrixRapidity);
  //hUnfoldedClosure = unfold(VAR_REG,true,hData,hBack,hMatrix);
 }
 
@@ -146,7 +149,7 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
     hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
   }
   TH1F*hRecoRebin=(TH1F*)hReco->Clone("hRecoRebin");
-   hRecoRebin->Rebin(2);
+   //hRecoRebin->Rebin(2);
   TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
    ratio->Divide(hTrue);
 
@@ -198,7 +201,6 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
   ratio->GetXaxis()->SetTitleSize(0.1);
   ratio->GetXaxis()->SetNoExponent();
   ratio->GetXaxis()->SetMoreLogLabels();
-  //ratio->GetYaxis()->SetRang
   ratio->SetMarkerStyle(20);
   ratio->SetMarkerColor(kBlack);
   ratio->Draw("PE");

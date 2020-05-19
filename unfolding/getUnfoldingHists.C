@@ -1,6 +1,6 @@
 #include "VariableList.h"
 bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2);
-double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
+TLorentzVector GetLorentzVector(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
 double CalcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2);
 bool GenToRecoMatch(int genIndex,int &recoIndex);
 void counter(Long64_t i, Long64_t N,TString printName);
@@ -183,6 +183,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
   chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
   chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
   chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);   
+
   if(isMC){
    chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
    chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
@@ -225,8 +226,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
   genWeight,pileupWeight;
  Long64_t nentries;
  Long64_t count = 0;
- TString compareHLT = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*";
- TString trigName;
+ TString compareHLT = triggerUsed;
  int trigNameSize;
  double lumi = dataLuminosity;//luminosity for xsec weighting
  double sfReco1,sfReco2,sfID1,sfID2,sfHLT;//efficiency scale factors
@@ -323,28 +323,24 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
    //-----Calculate gen-level invariant masses-----//
    if(isMC&&passAcceptance){
-    invMassHard = CalcInvMass(GENLepton_pT[idxGenEle1],
-                              GENLepton_eta[idxGenEle1],
-                              GENLepton_phi[idxGenEle1],mass,
-                              GENLepton_pT[idxGenEle2],
-                              GENLepton_eta[idxGenEle2],
-                              GENLepton_phi[idxGenEle2],mass);
-    rapidityHard = CalcRapidity(GENLepton_pT[idxGenEle1],
-                                GENLepton_eta[idxGenEle1],
-                                GENLepton_phi[idxGenEle1],mass,
-                                GENLepton_pT[idxGenEle2],
-                                GENLepton_eta[idxGenEle2],
-                                GENLepton_phi[idxGenEle2],mass);
-   }//end isMC
+    TLorentzVector hardVector = GetLorentzVector(GENLepton_pT[idxGenEle1],
+                                                 GENLepton_eta[idxGenEle1],
+                                                 GENLepton_phi[idxGenEle1],mass,
+                                                 GENLepton_pT[idxGenEle2],
+                                                 GENLepton_eta[idxGenEle2],
+                                                 GENLepton_phi[idxGenEle2],mass);
+     invMassHard = hardVector.M();
+     rapidityHard = hardVector.Rapidity();
+    }//end isMC
 
    //-----HLT criteria-----//
    trigNameSize = pHLT_trigName->size();
-   bool passHLT = kFALSE;	  
+   bool passHLT = false;	  
    for(int iHLT=0;iHLT<trigNameSize;iHLT++) {
     trigName = pHLT_trigName->at(iHLT);	  
     if(trigName.CompareTo(compareHLT)==0) {
-     if(HLT_trigFired[iHLT]==1) passHLT = kTRUE;
-     else passHLT = kFALSE;		     
+     if(HLT_trigFired[iHLT]==1) passHLT = true;
+     else passHLT = false;		     
      break; 
     }
    }//end loop over triggers 
@@ -379,28 +375,31 @@ void getDistributions(SampleType sampleType,LepType lepType)
    }//end iEle loop
 
    //-----Calculate reconstructed quantities-----//
-   invMass = CalcInvMass(Electron_pT[leadEle],Electron_eta[leadEle],
-                         Electron_phi[leadEle],mass,Electron_pT[subEle],Electron_eta[subEle],
-                         Electron_phi[subEle],mass);
-   rapidity = CalcRapidity(Electron_pT[leadEle],Electron_eta[leadEle],
-                         Electron_phi[leadEle],mass,Electron_pT[subEle],Electron_eta[subEle],
-                         Electron_phi[subEle],mass);
+   TLorentzVector recoVector = GetLorentzVector(Electron_pT[leadEle],
+                                                Electron_eta[leadEle],
+                                                Electron_phi[leadEle],mass,
+                                                Electron_pT[subEle],
+                                                Electron_eta[subEle],
+                                                Electron_phi[subEle],mass);
 
+   invMass = recoVector.M();
+   rapidity = recoVector.Rapidity();
+ 
    //-----Gen to reco matching-----//
    int closestTrackLep1, closestTrackLep2;
    closestTrackLep1 = closestTrackLep2 = -1;
    bool genToRecoMatchedLep1 = GenToRecoMatch(idxGenEleFS1,closestTrackLep1);
    bool genToRecoMatchedLep2 = GenToRecoMatch(idxGenEleFS2,closestTrackLep2);
 
-
    //-----All cuts-----//
    //place cut events into underflow bins
+   //These cuts only apply to MC
    if(isMC){
     if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
      invMass=0;
      rapidity=-10000;
     }
-    if(!Electron_passMediumID[closestTrackLep1]){        
+    if(!Electron_passMediumID[closestTrackLep1]){       
      invMass=0;
      rapidity=-10000;
     }
@@ -410,6 +409,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
     }
    }//end isMC
 
+   //These cuts apply to MC and Data
    if(leadEle<0||subEle<0){                             
     invMass=0;
     rapidity=-10000;
@@ -507,22 +507,13 @@ bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)
  return true;
 }
 
-double CalcInvMass(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2)
+TLorentzVector GetLorentzVector(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2)
 {
  TLorentzVector v1;
  TLorentzVector v2;
  v1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
  v2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
- return (v1+v2).M();
-}
-
-double CalcRapidity(double pt1,double eta1,double phi1,double m1,double pt2,double eta2,double phi2,double m2)
-{
- TLorentzVector v1;
- TLorentzVector v2;
- v1.SetPtEtaPhiM(pt1,eta1,phi1,m1);
- v2.SetPtEtaPhiM(pt2,eta2,phi2,m2);
- return (v1+v2).Rapidity();
+ return (v1+v2);
 }
 
 bool GenToRecoMatch(int genIndex,int &recoIndex)
