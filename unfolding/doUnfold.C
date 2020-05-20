@@ -10,38 +10,53 @@ const TString fileBackgroundName = "data/inputBackground.root";
 enum RegType {//Strength of regularization
   NO_REG,           //No regularization
   CONST_REG,        //User defined regularization
-  VAR_REG           //TUnfoldDensity determines best choice of regularization strength
+  VAR_REG_LCURVE,   //TUnfoldDensity determines best choice of regularization strength
+  VAR_REG_SCANSURE, //TUnfoldDensity determines best choice of regularization strength
+  VAR_REG_SCANTAU   //TUnfoldDensity determines best choice of regularization strength
+};
+enum VarType{
+  RAPIDITY,
+  MASS
+};
+enum BinType{
+  DEFAULT,
+  ONE_EXTRA,
+  TWO_EXTRA
 };
 const int binLow = 15;
 const int binHigh = 3000;
 //-----Forward declarations of functions-----//
-TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix);
+TH1F*unfold(VarType var,BinType binType,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix);
 
 void doUnfold()
 {
  gStyle->SetPalette(1);
  gStyle->SetOptStat(0);
- //gROOT->SetBatch(kTRUE);
- TH1::SetDefaultSumw2(); 
+ gROOT->SetBatch(true);
+
  //Load the files
  TFile*file= new TFile(fileName);
  TFile*fileData = new TFile(fileDataName);
  TFile*fileBack = new TFile(fileBackgroundName);
 
  //Load input histograms
- TH1D*hDataMass = (TH1D*)fileData->Get("hRecoMass");
- TH1D*hBackMass = (TH1D*)fileBack->Get("hBack");
- TH2D*hMatrixMass = (TH2D*)file->Get("hMatrixMass");
+ TH1D*hDataM = (TH1D*)fileData->Get("hRecoMass");
+ TH1D*hBackM = (TH1D*)fileBack->Get("hBack");
+ TH2D*hMatrixM = (TH2D*)file->Get("hMatrixMass");
  
- TH1F*hUnfoldedData;
- TH1F*hUnfoldedClosure;
- hUnfoldedDataMass = unfold(VAR_REG,false,hDataMass,hBackMass,hMatrixMass);
- //hUnfoldedDataRapidity = unfold(VAR_REG,false,hDataRapidity,hBackRapidity,hMatrixRapidity);
- //hUnfoldedClosure = unfold(VAR_REG,true,hData,hBack,hMatrix);
+ TH1D*hDataY = (TH1D*)fileData->Get("hRecoRapidity");
+ //TH1D*hBackY = (TH1D*)fileBack->Get("hBackRapidity");
+ TH1D*hBackY;//I don't have this made yet so this is a placeholder
+ TH2D*hMatrixY = (TH2D*)file->Get("hMatrixRapidity");
+
+ //TH1F*hUnfoldedDataM = unfold(MASS,DEFAULT,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM);
+ //TH1F*hUnfoldedDataM = unfold(MASS,ONE_EXTRA,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM);
+ TH1F*hUnfoldedDataY = unfold(RAPIDITY,DEFAULT,VAR_REG_LCURVE,true,hDataY,hBackY,hMatrixY);
 }
 
-TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
+TH1F*unfold(VarType var,BinType binType,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
 {
+  TH1F*hBlank;
   if(closure) hReco = hMatrix->ProjectionY();
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
@@ -91,7 +106,7 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
   //////////////////////////////
   double backScale = 1.0;
   double backScaleError = 0.0;//scale error for background
-  //if(!closure)unfold.SubtractBackground(hBack,"background",backScale,backScaleError);
+  if(!closure && var==MASS)unfold.SubtractBackground(hBack,"background",backScale,backScaleError);//temporarily there is no background for rapidity
 
   ////////////////////////////
   //  Add Systematic Error  //
@@ -110,7 +125,7 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
   TGraph *lCurve;
   TGraph*bestLcurve;
   TGraph*bestLogTauLogChi2;
-  if(regType == VAR_REG){
+  if(regType == VAR_REG_LCURVE){
     Int_t nScan=30;//This number chosen only because it was given in the tutorial
     Double_t tauMin = 0.0;//If tauMin=tauMax, TUnfold automatically chooses a range
     Double_t tauMax = 0.0;//Not certain how they choose the range
@@ -122,6 +137,12 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
     logTauY->GetKnot(iBest,t[0],y[0]);
     bestLcurve=new TGraph(1,x,y);
     bestLogTauLogChi2=new TGraph(1,t,x);
+  }
+  else if(regType == VAR_REG_SCANSURE){
+   
+  }
+  else if(regType == VAR_REG_SCANTAU){
+
   }
   else if(regType == NO_REG){
     double tau = 0;
@@ -149,7 +170,7 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
     hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
   }
   TH1F*hRecoRebin=(TH1F*)hReco->Clone("hRecoRebin");
-   //hRecoRebin->Rebin(2);
+   if(binType==DEFAULT) hRecoRebin->Rebin(2);
   TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
    ratio->Divide(hTrue);
 
@@ -164,7 +185,7 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
   pad1->SetBottomMargin(padmargins);
   pad1->SetGrid();
   pad1->SetLogy();
-  pad1->SetLogx();
+  if(var==MASS) pad1->SetLogx();
   pad1->SetTicks(1,1);
   pad1->Draw();
   pad1->cd();
@@ -185,7 +206,7 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
 
   canvas1->cd();
   TPad*pad2 = new TPad("","",0,0.05,1,0.3);
-  pad2->SetLogx();
+  if(var==MASS) pad2->SetLogx();
   pad2->SetTopMargin(padmargins);
   pad2->SetBottomMargin(0.2);
   pad2->SetGrid();
@@ -206,9 +227,23 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
   ratio->Draw("PE");
   line->Draw("same");
 
-  if(!closure) canvas1->SaveAs("plots/dataUnfolded.png");
-  else canvas1->SaveAs("plots/closureTest.png");
-
+  TString saveName = "plots/unfolded";
+  if(var==MASS) saveName += "Mass";
+  else if(var==RAPIDITY) saveName += "Rapidity";
+  else {
+   cout << "Variable must be MASS or RAPIDITY!" << endl;
+   return hBlank;
+  }
+  if(closure) saveName += "Closure";
+  if(binType==DEFAULT) saveName += ".png";
+  else if(binType==ONE_EXTRA) saveName += "1BinExtra.png";
+  else if(binType==TWO_EXTRA) saveName += "2BinExtra.png";
+  else {
+   cout << "Bin Type must be chosen: DEFAULT, ONE_EXTRA, TWO_EXTRA" << endl;
+   return hBlank;
+  }
+  canvas1->SaveAs(saveName);
+  
   double width,nUnfold;
   TH1D*hCross = new TH1D("hCross","",nLogBins,massbins);
    hCross->SetMarkerStyle(20);
@@ -224,14 +259,23 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
    hCross->SetBinContent(k,nUnfold);
   }
 
-  TCanvas*canvas2 = new TCanvas("canvas2","",10,10,1400,1000);
-  canvas2->SetLogy();
-  canvas2->SetLogx();
-  canvas2->SetLogz();
-  canvas2->SetGrid();
-  hCross->Draw("PE");
-  if(!closure)canvas2->SaveAs("plots/xsec.png");
-  TFile*fileXsec = new TFile("data/unfolded.root","recreate");
+  TString fileSaveName = "data/unfolded";
+  if(var==MASS) fileSaveName += "Mass";
+  else if(var==RAPIDITY) fileSaveName += "Rapidity";
+  else {
+   cout << "Variable must be MASS or RAPIDITY!" << endl;
+   return hBlank;
+  }
+  if(closure) fileSaveName += "Closure";
+  if(binType==DEFAULT) fileSaveName += ".root";
+  else if(binType==ONE_EXTRA) fileSaveName += "1BinExtra.root";
+  else if(binType==TWO_EXTRA) fileSaveName += "2BinExtra.root";
+  else {
+   cout << "Bin Type must be chosen: DEFAULT, ONE_EXTRA, TWO_EXTRA" << endl;
+   return hBlank;
+  }
+
+  TFile*fileXsec = new TFile(fileSaveName,"recreate");
   hCross->Write();
   canvas1->Write();
   hUnfoldedE->SetName("hUnfolded");
@@ -243,5 +287,8 @@ TH1F*unfold(RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
   fileXsec->Write();
   fileXsec->Close();
 
+  delete hReco;
+  delete hTrue;
+  delete hMatrix;
   return hUnfoldedE;
 }

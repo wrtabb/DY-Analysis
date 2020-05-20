@@ -68,10 +68,11 @@ const int dataLuminosity = 35867; //Run2016B to Run2016H JSON. unit: /pb, Update
 const int ptBinHigh = 499;
 const int ptBinLow = 26;
 int nVertices;
+
 const int nYBins = 50;
 const int nYBins2 = 2*nYBins;
-const float binLowY = -2.5;
-const float binHighY = 2.5;
+const float binLowY = -2.4;
+const float binHighY = 2.4;
 
 const int nLogBinsMass = 43;
 const int nLogBinsMass2 = 2*nLogBinsMass;
@@ -86,7 +87,7 @@ const double massbins2[] = {15,17.5,20,22.5,25,27.5,30,32.5,35,37.5,40,42.5,45,4
  765,830,915,1000,1250,1500,2250,3000};
 const double massbins3[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,
  106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,
- 1500,2000,3000};
+ 1500,2250,3000};
 
 std::vector<double> xSec;
 std::vector<double> xSecLL = {
@@ -105,9 +106,19 @@ std::vector<double> xSecLL = {
 };
 
 std::vector<double> xSecTT = {
+ 35.85,35.85,831.76,
 };
+ ST_tW,
+ ST_tbarW,
+ ttbar,
+ ttbarBackup_M0to700,
+ ttbar_M0to700,
+ ttbar_M700to1000,
+ ttbar_M1000toInf
+
 
 std::vector<double> xSecEW = {
+ 118.7,47.13,16.523
 };
 
 std::vector<double> xSecData = {

@@ -16,8 +16,11 @@ void getUnfoldingHists()
  totaltime.Start();
  gStyle->SetOptStat(0);
 
- getDistributions(DATA,ELE);
- getDistributions(LL,ELE);
+// getDistributions(DATA,ELE);
+// getDistributions(LL,ELE);
+// getDistributions(FAKES,ELE);
+ getDistributions(EW,ELE);
+// getDistributions(TT,ELE);
 
  totaltime.Stop();
  Double_t TotalCPURunTime = totaltime.CpuTime();
@@ -117,7 +120,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
  Long64_t totalentries = -1;
 
  TString fileNames;
- if(isMC) fileNames = "/*.root";
+ if(sampleType==LL) fileNames = "/*.root";
  else fileNames = "/skims_0002/*.root";
  vector <TString> *subFiles[numChains];
  for(int iChain=0;iChain<numChains;iChain++){
@@ -130,7 +133,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
   else if(sampleType==LL && iChain==M50to100){
    subFiles[iChain]->push_back(dirNames.at(iChain)+"/base");
   }
-  else if(sampleType==EW && iChain==W_PLUS_JETS) {
+  else if(sampleType==FAKES) {
    subFiles[iChain]->push_back(dirNames.at(iChain));
    subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext");
    subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext2v5");
@@ -186,16 +189,18 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
   if(isMC){
    chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
-   chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
-   chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
-   chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
-   chains[iChain]->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
-   chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
-   chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess,
-    &b_GENLepton_isHardProcess);
-   chains[iChain]->SetBranchAddress
-    ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState,
-    &b_GENLepton_fromHardProcessFinalState);
+   if(sampleType==LL){
+    chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
+    chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
+    chains[iChain]->SetBranchAddress("GENLepton_phi",&GENLepton_phi, &b_GENLepton_phi);
+    chains[iChain]->SetBranchAddress("GENLepton_pT",&GENLepton_pT, &b_GENLepton_pT);
+    chains[iChain]->SetBranchAddress("GENLepton_ID",&GENLepton_ID, &b_GENLepton_ID);
+    chains[iChain]->SetBranchAddress("GENLepton_isHardProcess",&GENLepton_isHardProcess,
+     &b_GENLepton_isHardProcess);
+    chains[iChain]->SetBranchAddress
+     ("GENLepton_fromHardProcessFinalState",&GENLepton_fromHardProcessFinalState,
+     &b_GENLepton_fromHardProcessFinalState);
+   }
   }
  }//end chain loop  
  cout << "Total Events Loaded: " << totalentries << endl;
@@ -288,7 +293,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
    //-----Initialize quantitiues for later calculation-----//
    double invMassHard = -10000;
    double rapidityHard = -10000;
-   if(isMC){ 
+   if(sampleType==LL){ 
     //-----Gen loop-----//
     for(int kLep=0;kLep<GENnPair;kLep++){
      for(int lLep=kLep+1;lLep<GENnPair;lLep++){
@@ -314,24 +319,24 @@ void getDistributions(SampleType sampleType,LepType lepType)
      cout << "Gen level produces too many or too few lepton pairs" << endl;
      continue;
     }
-   }//end isMC
 
    //-----Make sure all events at gen level are within acceptance-----//
-   bool passAcceptance = true;
-   if(!passDileptonKinematics(GENLepton_pT[idxGenEle1],GENLepton_pT[idxGenEle2],
-    GENLepton_eta[idxGenEle1],GENLepton_eta[idxGenEle2])) passAcceptance = false;
+    bool passAcceptance = true;
+    if(!passDileptonKinematics(GENLepton_pT[idxGenEle1],GENLepton_pT[idxGenEle2],
+     GENLepton_eta[idxGenEle1],GENLepton_eta[idxGenEle2])) passAcceptance = false;
 
-   //-----Calculate gen-level invariant masses-----//
-   if(isMC&&passAcceptance){
-    TLorentzVector hardVector = GetLorentzVector(GENLepton_pT[idxGenEle1],
-                                                 GENLepton_eta[idxGenEle1],
-                                                 GENLepton_phi[idxGenEle1],mass,
-                                                 GENLepton_pT[idxGenEle2],
-                                                 GENLepton_eta[idxGenEle2],
-                                                 GENLepton_phi[idxGenEle2],mass);
+    //-----Calculate gen-level invariant masses-----//
+    if(passAcceptance){
+     TLorentzVector hardVector = GetLorentzVector(GENLepton_pT[idxGenEle1],
+                                                  GENLepton_eta[idxGenEle1],
+                                                  GENLepton_phi[idxGenEle1],mass,
+                                                  GENLepton_pT[idxGenEle2],
+                                                  GENLepton_eta[idxGenEle2],
+                                                  GENLepton_phi[idxGenEle2],mass);
      invMassHard = hardVector.M();
      rapidityHard = hardVector.Rapidity();
-    }//end isMC
+    }//end passAcceptance
+   } //end LL
 
    //-----HLT criteria-----//
    trigNameSize = pHLT_trigName->size();
@@ -392,9 +397,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
    bool genToRecoMatchedLep2 = GenToRecoMatch(idxGenEleFS2,closestTrackLep2);
 
    //-----All cuts-----//
-   //place cut events into underflow bins
-   //These cuts only apply to MC
-   if(isMC){
+   if(sampleType==LL){
     if(!(genToRecoMatchedLep1 && genToRecoMatchedLep2)){
      invMass=0;
      rapidity=-10000;
@@ -409,7 +412,6 @@ void getDistributions(SampleType sampleType,LepType lepType)
     }
    }//end isMC
 
-   //These cuts apply to MC and Data
    if(leadEle<0||subEle<0){                             
     invMass=0;
     rapidity=-10000;
@@ -454,6 +456,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
     genWeight = (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
     sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
     totalWeight = genWeight*xSecWeight*pileupWeight;
+    if(sampleType==FAKES) sfWeight = 1.0;
    }//end isMC
    
    //-----Fill histograms-----//
@@ -479,12 +482,13 @@ void getDistributions(SampleType sampleType,LepType lepType)
  else if(sampleType==DATA) saveName = "data/inputData.root";
  else if(sampleType==EW) saveName = "data/backgroundEW.root";
  else if(sampleType==TT) saveName = "data/backgroundTT.root";
+ else if(sampleType==FAKES) saveName = "data/backgroundFAKES.root";
  else saveName = "data/unknown.root";
  TFile *rootFile = new TFile(saveName,"RECREATE");
  rootFile->cd();
  hRecoMass->Write();
  hRecoRapidity->Write();
- if(isMC){
+ if(sampleType==LL){
   hTrueMass->Write();
   hMatrixMass->Write();
   hTrueRapidity->Write();
