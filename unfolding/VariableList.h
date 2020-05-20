@@ -89,9 +89,9 @@ const double massbins3[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,9
  106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,
  1500,2250,3000};
 
+//https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple (pb)
 std::vector<double> xSec;
 std::vector<double> xSecLL = {
- //https://twiki.cern.ch/twiki/bin/viewauth/CMS/SNUCMSYooDYntuple (pb)
  18610.0/3.0,//10to50 (NLO), NNLO value currently has huge uncertainty under investigation
  1923.26,//50to100 (NNLO)
  78.1258,//100to200 (NNLO)
@@ -106,19 +106,24 @@ std::vector<double> xSecLL = {
 };
 
 std::vector<double> xSecTT = {
- 35.85,35.85,831.76,
 };
- ST_tW,
- ST_tbarW,
- ttbar,
- ttbarBackup_M0to700,
- ttbar_M0to700,
- ttbar_M700to1000,
- ttbar_M1000toInf
 
 
 std::vector<double> xSecEW = {
- 118.7,47.13,16.523
+ 118.7,//WW
+ 47.13,//WZ
+ 16.523,//ZZ
+ 18610.0/3.0,//10to50 (NLO), NNLO value currently has huge uncertainty under investigation
+ 1923.26,//50to100 (NNLO)
+ 78.1258,//100to200 (NNLO)
+ 2.73309,//200to400 (NNLO)
+ 0.142945,//400to500 (NNLO)
+ 0.0809755,//500to700 (NNLO)
+ 0.0125589,//700to800 (NNLO)
+ 0.0105845,//800to1000 (NNLO)
+ 0.00556507,//1000to1500 (NNLO)
+ 0.000730495,//1500to2000 (NNLO)
+ 0.00016844//2000to3000 ((NNLO)
 };
 
 std::vector<double> xSecData = {
@@ -165,7 +170,18 @@ std::vector<TString> dirNamesLL = {
 std::vector<TString> dirNamesEW = {
  WW_dir,
  WZ_dir,
- ZZ_dir
+ ZZ_dir,
+ DYLL_M10to50,   
+ DYLL_M50to100,
+ DYLL_M100to200,
+ DYLL_M200to400,
+ DYLL_M400to500,
+ DYLL_M500to700,
+ DYLL_M700to800,
+ DYLL_M800to1000, 
+ DYLL_M1000to1500,
+ DYLL_M1500to2000,
+ DYLL_M2000to3000
 };
 
 std::vector<TString> dirNamesFakes = {
@@ -230,23 +246,34 @@ enum LepType{
 };
 
 enum ChainLL{
- M10to50,   
- M50to100,
- M100to200,
- M200to400,
- M400to500,
- M500to700,
- M700to800,
- M800to1000, 
- M1000to1500,
- M1500to2000,
- M2000to3000
+ EE10to50,   
+ EE50to100,
+ EE100to200,
+ EE200to400,
+ EE400to500,
+ EE500to700,
+ EE700to800,
+ EE800to1000, 
+ EE1000to1500,
+ EE1500to2000,
+ EE2000to3000
 };
 
 enum ChainEW{
  WW,
  WZ,
- ZZ
+ ZZ,
+ TAUTAU10to50,   
+ TAUTAU50to100,
+ TAUTAU100to200,
+ TAUTAU200to400,
+ TAUTAU400to500,
+ TAUTAU500to700,
+ TAUTAU700to800,
+ TAUTAU800to1000, 
+ TAUTAU1000to1500,
+ TAUTAU1500to2000,
+ TAUTAU2000to3000
 };
 enum ChainFakes{
  W_PLUS_JETS
@@ -255,7 +282,6 @@ enum ChainFakes{
 enum ChainTT{
  TW,
  T_BAR_W,
- TTbar,
  TT0to700,
  TT700to1000,
  TT1000toInf

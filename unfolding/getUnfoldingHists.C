@@ -48,8 +48,13 @@ void getDistributions(SampleType sampleType,LepType lepType)
  }
  else if(sampleType==EW){
   dirNames = dirNamesEW;
+  int nDir = dirNames.size();
   xSec = xSecEW;
   counterName = "Getting EW events";
+   //this extra bit for EW is because it includes Z to tau tau events
+   for(int i=0;i<nDir;i++){
+    if(i>2) dirNames.at(i)+= "/TauTau";
+   }
  }
  else if(sampleType==TT){
   dirNames = dirNamesTT;
@@ -125,15 +130,23 @@ void getDistributions(SampleType sampleType,LepType lepType)
  vector <TString> *subFiles[numChains];
  for(int iChain=0;iChain<numChains;iChain++){
   subFiles[iChain] = new vector<TString>;
-  if(sampleType==LL && iChain==M10to50){
+  if(sampleType==LL && iChain==EE10to50){
    subFiles[iChain]->push_back(dirNames.at(iChain)+"/ext1v1");
    subFiles[iChain]->push_back(dirNames.at(iChain)+"/v1");
    subFiles[iChain]->push_back(dirNames.at(iChain)+"/v2");
   }
-  else if(sampleType==LL && iChain==M50to100){
+  else if(sampleType==EW && iChain==TAUTAU10to50){
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/ext1v1");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/v1");
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/v2");
+  }
+  else if(sampleType==LL && iChain==EE50to100){
    subFiles[iChain]->push_back(dirNames.at(iChain)+"/base");
   }
-  else if(sampleType==FAKES) {
+  else if(sampleType==EW && iChain==TAUTAU50to100){
+   subFiles[iChain]->push_back(dirNames.at(iChain)+"/base");
+  }
+  else if(sampleType==FAKES){
    subFiles[iChain]->push_back(dirNames.at(iChain));
    subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext");
    subFiles[iChain]->push_back(dirNames.at(iChain)+"_ext2v5");

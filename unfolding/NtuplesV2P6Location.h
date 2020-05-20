@@ -22,7 +22,7 @@ const TString DYLL_M1000to1500 = base + "DYLL_M1000to1500/DYLL_M1000to1500";
 const TString DYLL_M1500to2000 = base + "DYLL_M1500to2000/DYLL_M1500to2000";
 const TString DYLL_M2000to3000 = base + "DYLL_M2000to3000/DYLL_M2000to3000";
 
-//-----Bosons-----//
+//-----EW-----//
 const TString WW_dir =       base + "WW";
 const TString WZ_dir =       base + "WZ";
 const TString ZZ_dir =       base + "ZZ";
