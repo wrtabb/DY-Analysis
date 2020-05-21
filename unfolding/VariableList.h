@@ -106,6 +106,11 @@ std::vector<double> xSecLL = {
 };
 
 std::vector<double> xSecTT = {
+ 35.85,//ST_tW
+ 35.85,//ST_tbarW
+ 728.74,//ttbar_M0to700
+ 76.605,//ttbar_M700to1000
+ 20.578//ttbar_M1000toInf
 };
 
 
@@ -191,8 +196,6 @@ std::vector<TString> dirNamesFakes = {
 std::vector<TString> dirNamesTT = {
  ST_tW,
  ST_tbarW,
- ttbar,
- ttbarBackup_M0to700,
  ttbar_M0to700,
  ttbar_M700to1000,
  ttbar_M1000toInf
@@ -232,10 +235,10 @@ std::vector<TString> dirNamesZtoEE = {
 };
 
 enum SampleType{
- LL,
+ FAKES,
  EW,
  TT,
- FAKES,
+ LL,
  DATA
 };
 

@@ -16,11 +16,11 @@ void getUnfoldingHists()
  totaltime.Start();
  gStyle->SetOptStat(0);
 
-// getDistributions(DATA,ELE);
-// getDistributions(LL,ELE);
-// getDistributions(FAKES,ELE);
+ getDistributions(DATA,ELE);
+ getDistributions(LL,ELE);
+ getDistributions(FAKES,ELE);
  getDistributions(EW,ELE);
-// getDistributions(TT,ELE);
+ getDistributions(TT,ELE);
 
  totaltime.Stop();
  Double_t TotalCPURunTime = totaltime.CpuTime();
