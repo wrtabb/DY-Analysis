@@ -228,6 +228,9 @@ void getDistributions(SampleType sampleType,LepType lepType)
  TH1D*hTrueMass = new TH1D("hTrueMass","",nLogBinsMass,massbins);
  TH2D*hMatrixMass = new TH2D("hMatrixMass","",nLogBinsMass,massbins,nLogBinsMass2,massbins2);
 
+ TH1D*hRecoDiPT = new TH1D("hRecoDiPT","",100,0,500);
+ TH1D*hRecoMassZoom = new TH1D("hRecoMassZoom","",60,60,120);
+
  //-----Get histograms for pileup and SF weights-----//
  TFile*pileupRatioFile  = new TFile(pileupRatioName);
  TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
@@ -292,7 +295,6 @@ void getDistributions(SampleType sampleType,LepType lepType)
    count = count+1; 
    chains[iChain]->GetEntry(i);
    //for now, requiring at least two reconstructed electrons
-   if(Nelectrons<2) continue;
     
    //-----Initialize indices for gen level loop-----//
    int idxGenEle1 = -1;
@@ -368,7 +370,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
    int leadEle = -1;
    double invMass = -10000;
    double rapidity = -10000;
-
+   double diPT = -10000;
    //-----Reco Electron loop-----//
    //Find reconstructed electrons within acceptance passing medium ID criteria
    //Determine which is leading and which is subleading
@@ -402,7 +404,8 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
    invMass = recoVector.M();
    rapidity = recoVector.Rapidity();
- 
+   diPT = recoVector.Pt();
+
    //-----Gen to reco matching-----//
    int closestTrackLep1, closestTrackLep2;
    closestTrackLep1 = closestTrackLep2 = -1;
@@ -423,16 +426,14 @@ void getDistributions(SampleType sampleType,LepType lepType)
      invMass=0;
      rapidity=-10000;
     }
-   }//end isMC
+   }//end LL
 
-   if(leadEle<0||subEle<0){                             
-    invMass=0;
-    rapidity=-10000;
-   }
+   //pass trigger
    if(!passHLT){                                        
     invMass=0;
     rapidity=-10000;
    }
+   //Exactly two reco electrons
    if(nRecoDileptons!=1){
     invMass=0;
     rapidity=-10000;
@@ -477,6 +478,8 @@ void getDistributions(SampleType sampleType,LepType lepType)
    //I'm pretty sure they aren't used and the way I have it here, it is used for all MC
    hRecoMass->Fill(invMass,totalWeight*sfWeight);
    hRecoRapidity->Fill(rapidity,totalWeight*sfWeight);
+   hRecoDiPT->Fill(diPT,totalWeight*sfWeight);
+   if(invMass>=60 && invMass<=120) hRecoMassZoom->Fill(invMass,totalWeight*sfWeight);
    if(isMC&&sampleType==LL){
     hTrueMass      ->Fill(invMassHard,totalWeight);
     hMatrixMass    ->Fill(invMassHard,invMass,totalWeight*sfWeight);
@@ -501,6 +504,8 @@ void getDistributions(SampleType sampleType,LepType lepType)
  rootFile->cd();
  hRecoMass->Write();
  hRecoRapidity->Write();
+ hRecoDiPT->Write();
+ hRecoMassZoom->Write();
  if(sampleType==LL){
   hTrueMass->Write();
   hMatrixMass->Write();
@@ -519,8 +524,8 @@ bool passDileptonKinematics(double pt1,double pt2,double eta1,double eta2)
 {
  if(abs(eta1)>etaGapLow && abs(eta1)<etaGapHigh) return false;
  if(abs(eta2)>etaGapLow && abs(eta2)<etaGapHigh) return false;
- if(abs(eta1)>etaHigh||abs(eta2)>etaHigh) return false;
- if(!((pt1>ptLow && pt2>ptHigh)||(pt1>ptHigh && pt2>ptLow))) return false;
+ if(abs(eta1)>etaHigh || abs(eta2)>etaHigh) return false;
+ if(!((pt1>ptLow && pt2>ptHigh) || (pt1>ptHigh && pt2>ptLow))) return false;
  return true;
 }
 
