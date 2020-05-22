@@ -41,6 +41,9 @@ double GENLepton_E[MPSIZE];
 int GENLepton_ID[MPSIZE];
 int GENLepton_isHardProcess[MPSIZE];
 int GENLepton_fromHardProcessFinalState[MPSIZE];
+double _prefiringweight;
+double _prefiringweightup;
+double _prefiringweightdown;
 
 double Electron_pT[MPSIZE]; 
 double Electron_eta[MPSIZE];

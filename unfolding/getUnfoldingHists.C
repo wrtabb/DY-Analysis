@@ -110,6 +110,9 @@ void getDistributions(SampleType sampleType,LepType lepType)
  TBranch*b_GENLepton_ID;
  TBranch*b_GENLepton_isHardProcess;
  TBranch*b_GENLepton_fromHardProcessFinalState;
+ TBranch*b__prefiringweight;
+ TBranch*b__prefiringweightup;
+ TBranch*b__prefiringweightdown;
 
  cout << "Loading ntuples" << endl;
  cout << "Begin loading trees:" << endl;
@@ -194,7 +197,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
   chains[iChain]->SetBranchAddress("Electron_eta",&Electron_eta, &b_Electron_eta);
   chains[iChain]->SetBranchAddress("Electron_phi",&Electron_phi, &b_Electron_phi);
   chains[iChain]->SetBranchAddress("Electron_passMediumID",&Electron_passMediumID,
-    &b_Electron_passMediumID);
+                                   &b_Electron_passMediumID);
   chains[iChain]->SetBranchAddress("HLT_ntrig",&HLT_ntrig,&b_HLT_ntrig);
   chains[iChain]->SetBranchAddress("HLT_trigType",&HLT_trigType,&b_HLT_trigType);
   chains[iChain]->SetBranchAddress("HLT_trigFired",&HLT_trigFired,&b_HLT_trigFired);
@@ -202,6 +205,9 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
   if(isMC){
    chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
+   chains[iChain]->SetBranchAddress("_prefiringweight", &_prefiringweight,&b__prefiringweight);
+   chains[iChain]->SetBranchAddress("_prefiringweightup", &_prefiringweightup,&b__prefiringweightup);
+   chains[iChain]->SetBranchAddress("_prefiringweightdown", &_prefiringweightdown,&b__prefiringweightdown);
    if(sampleType==LL){
     chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
     chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
@@ -244,7 +250,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
  cout << "Starting Event Loop" << endl;
  //-----Initialize important variables-----//
  double varGenWeight,localEntry,sumGenWeight,sumRawGenWeight,totalWeight,sfWeight,xSecWeight,
-  genWeight,pileupWeight;
+  genWeight,pileupWeight,prefireWeight;
  Long64_t nentries;
  Long64_t count = 0;
  TString compareHLT = triggerUsed;
@@ -457,6 +463,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
    xSecWeight = 1.0;
    pileupWeight = 1.0;
    totalWeight = 1.0;
+   prefireWeight = 1.0;
    if(isMC){ 
     pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
     sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
@@ -469,7 +476,8 @@ void getDistributions(SampleType sampleType,LepType lepType)
     xSecWeight=lumi*(xSec.at(iChain)/1.0);//xSecWeight when used with genWeight 
     genWeight = (GENEvt_weight/fabs(GENEvt_weight))/sumGenWeight;
     sfWeight = sfReco1*sfReco2*sfID1*sfID2*sfHLT;
-    totalWeight = genWeight*xSecWeight*pileupWeight;
+    prefireWeight = _prefiringweight;
+    totalWeight = genWeight*xSecWeight*pileupWeight*prefireWeight;
     if(sampleType==FAKES) sfWeight = 1.0;
    }//end isMC
    
@@ -494,11 +502,11 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
  //-----Save histograms to file-----//
  TString saveName;
- if(sampleType==LL) saveName = "data/migrationMatrix1.root";
- else if(sampleType==DATA) saveName = "data/inputData1.root";
- else if(sampleType==EW) saveName = "data/backgroundEW1.root";
- else if(sampleType==TT) saveName = "data/backgroundTT1.root";
- else if(sampleType==FAKES) saveName = "data/backgroundFAKES1.root";
+ if(sampleType==LL) saveName = "data/migrationMatrix.root";
+ else if(sampleType==DATA) saveName = "data/inputData.root";
+ else if(sampleType==EW) saveName = "data/backgroundEW.root";
+ else if(sampleType==TT) saveName = "data/backgroundTT.root";
+ else if(sampleType==FAKES) saveName = "data/backgroundFAKES.root";
  else saveName = "data/unknown.root";
  TFile *rootFile = new TFile(saveName,"RECREATE");
  rootFile->cd();
