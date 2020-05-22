@@ -491,11 +491,11 @@ void getDistributions(SampleType sampleType,LepType lepType)
 
  //-----Save histograms to file-----//
  TString saveName;
- if(sampleType==LL) saveName = "data/migrationMatrix.root";
- else if(sampleType==DATA) saveName = "data/inputData.root";
- else if(sampleType==EW) saveName = "data/backgroundEW.root";
- else if(sampleType==TT) saveName = "data/backgroundTT.root";
- else if(sampleType==FAKES) saveName = "data/backgroundFAKES.root";
+ if(sampleType==LL) saveName = "data/migrationMatrix1.root";
+ else if(sampleType==DATA) saveName = "data/inputData1.root";
+ else if(sampleType==EW) saveName = "data/backgroundEW1.root";
+ else if(sampleType==TT) saveName = "data/backgroundTT1.root";
+ else if(sampleType==FAKES) saveName = "data/backgroundFAKES1.root";
  else saveName = "data/unknown.root";
  TFile *rootFile = new TFile(saveName,"RECREATE");
  rootFile->cd();
