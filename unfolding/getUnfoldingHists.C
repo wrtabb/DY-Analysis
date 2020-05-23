@@ -380,38 +380,39 @@ void getDistributions(SampleType sampleType,LepType lepType)
    //-----Reco Electron loop-----//
    //Find reconstructed electrons within acceptance passing medium ID criteria
    //Determine which is leading and which is subleading
-   for(int iEle = 0; iEle < Nelectrons; iEle++) {
-   //Does this part need to require opposite charge of dielectrons?
-    if(!Electron_passMediumID[iEle]) continue;
-    for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
-     if(!Electron_passMediumID[jEle]) continue;
-     if(passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
-      Electron_eta[jEle])){
-      nRecoDileptons++;
-      if(Electron_pT[iEle]>Electron_pT[jEle]){
-       leadEle = iEle; 
-       subEle = jEle;
+   if(Nelectrons>1){
+    for(int iEle = 0; iEle < Nelectrons; iEle++) {
+     //Does this part need to require opposite charge of dielectrons?
+     if(!Electron_passMediumID[iEle]) continue;
+     for(int jEle = iEle+1; jEle < Nelectrons; jEle++) {
+      if(!Electron_passMediumID[jEle]) continue;
+      if(passDileptonKinematics(Electron_pT[iEle],Electron_pT[jEle],Electron_eta[iEle],
+       Electron_eta[jEle])){
+       nRecoDileptons++;
+       if(Electron_pT[iEle]>Electron_pT[jEle]){
+        leadEle = iEle; 
+        subEle = jEle;
+       }
+       else {
+        leadEle = jEle; 
+        subEle = iEle;
+       }	  
       }
-      else {
-       leadEle = jEle; 
-       subEle = iEle;
-      }	  
-     }
-    }//end jEle loop
-   }//end iEle loop
+     }//end jEle loop
+    }//end iEle loop
 
-   //-----Calculate reconstructed quantities-----//
-   TLorentzVector recoVector = GetLorentzVector(Electron_pT[leadEle],
-                                                Electron_eta[leadEle],
-                                                Electron_phi[leadEle],mass,
-                                                Electron_pT[subEle],
-                                                Electron_eta[subEle],
-                                                Electron_phi[subEle],mass);
-
-   invMass = recoVector.M();
-   rapidity = recoVector.Rapidity();
-   diPT = recoVector.Pt();
-
+    //-----Calculate reconstructed quantities-----//
+    TLorentzVector recoVector = GetLorentzVector(Electron_pT[leadEle],
+                                                 Electron_eta[leadEle],
+                                                 Electron_phi[leadEle],mass,
+                                                 Electron_pT[subEle],
+                                                 Electron_eta[subEle],
+                                                 Electron_phi[subEle],mass);
+ 
+    invMass = recoVector.M();
+    rapidity = recoVector.Rapidity();
+    diPT = recoVector.Pt();
+   }//end if Nelectrons>1
    //-----Gen to reco matching-----//
    int closestTrackLep1, closestTrackLep2;
    closestTrackLep1 = closestTrackLep2 = -1;
