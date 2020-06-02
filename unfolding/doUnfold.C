@@ -40,7 +40,7 @@ void doUnfold()
 {
  gStyle->SetPalette(1);
  gStyle->SetOptStat(0);
- //gROOT->SetBatch(true);
+ gROOT->SetBatch(true);
 
  //Load the files
  TFile*file = new TFile(fileName);
@@ -58,7 +58,7 @@ void doUnfold()
  //unfold(MASS,ONE_EXTRA,VAR_REG_LCURVE,true,hDataM,hBackM,hMatrixM);
  unfold(MASS,DEFAULT,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM);
  //unfold(RAPIDITY,DEFAULT,VAR_REG_LCURVE,true,hDataY,hBackY,hMatrixY);
- //unfold(RAPIDITY,DEFAULT,VAR_REG_LCURVE,false,hDataY,hBackY,hMatrixY);
+ unfold(RAPIDITY,DEFAULT,VAR_REG_LCURVE,false,hDataY,hBackY,hMatrixY);
 }
 
 TH1F*unfold(VarType var,Bins binType,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)

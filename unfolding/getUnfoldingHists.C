@@ -111,8 +111,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
  TBranch*b_GENLepton_isHardProcess;
  TBranch*b_GENLepton_fromHardProcessFinalState;
  TBranch*b__prefiringweight;
- TBranch*b__prefiringweightup;
- TBranch*b__prefiringweightdown;
+ TBranch*b_PVz;
 
  cout << "Loading ntuples" << endl;
  cout << "Begin loading trees:" << endl;
@@ -204,10 +203,9 @@ void getDistributions(SampleType sampleType,LepType lepType)
   chains[iChain]->SetBranchAddress("HLT_trigName",&pHLT_trigName);   
 
   if(isMC){
+//   chains[iChain]->SetBranchAddress("PVz",&PVz,&b_PVz);
    chains[iChain]->SetBranchAddress("GENEvt_weight",&GENEvt_weight,&b_GENEvt_weight);
    chains[iChain]->SetBranchAddress("_prefiringweight", &_prefiringweight,&b__prefiringweight);
-   chains[iChain]->SetBranchAddress("_prefiringweightup", &_prefiringweightup,&b__prefiringweightup);
-   chains[iChain]->SetBranchAddress("_prefiringweightdown", &_prefiringweightdown,&b__prefiringweightdown);
    if(sampleType==LL){
     chains[iChain]->SetBranchAddress("GENnPair", &GENnPair, &b_GENnPair);
     chains[iChain]->SetBranchAddress("GENLepton_eta", &GENLepton_eta, &b_GENLepton_eta);
@@ -237,7 +235,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
  TH1D*hRecoDiPT = new TH1D("hRecoDiPT","",100,0,500);
  TH1D*hRecoMassZoom = new TH1D("hRecoMassZoom","",60,60,120);
 
- //-----Get histograms for pileup and SF weights-----//
+ //-----Get histograms for weights-----//
  TFile*pileupRatioFile  = new TFile(pileupRatioName);
  TH1F*hPileupRatio = (TH1F*)pileupRatioFile->Get("hPileupRatio");
  TFile*fileLeg2SF = new TFile(leg2SFName);
@@ -246,11 +244,13 @@ void getDistributions(SampleType sampleType,LepType lepType)
  TH2F*hMedIDSF = (TH2F*)fileMedIDSF->Get("EGamma_SF2D");
  TFile*fileRecoSF = new TFile(recoSFName);
  TH2F*hRecoSF = (TH2F*)fileRecoSF->Get("EGamma_SF2D");
+ TFile*filePVz = new TFile(pvzFileName);
+ TH1F*hPVz = (TH1F*)filePVz->Get("PVz_SF");
  
  cout << "Starting Event Loop" << endl;
  //-----Initialize important variables-----//
  double varGenWeight,localEntry,sumGenWeight,sumRawGenWeight,totalWeight,sfWeight,xSecWeight,
-  genWeight,pileupWeight,prefireWeight;
+  genWeight,pileupWeight,prefireWeight,PVzWeight;
  Long64_t nentries;
  Long64_t count = 0;
  TString compareHLT = triggerUsed;
@@ -377,6 +377,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
    double invMass = -10000;
    double rapidity = -10000;
    double diPT = -10000;
+
    //-----Reco Electron loop-----//
    //Find reconstructed electrons within acceptance passing medium ID criteria
    //Determine which is leading and which is subleading
@@ -465,8 +466,10 @@ void getDistributions(SampleType sampleType,LepType lepType)
    pileupWeight = 1.0;
    totalWeight = 1.0;
    prefireWeight = 1.0;
+   PVzWeight = 1.0;
    if(isMC){ 
     pileupWeight = hPileupRatio->GetBinContent(hPileupRatio->FindBin(nPileUp));
+//    PVzWeight= hPVz->GetBinContent(hPVz->FindBin(PVz));
     sfReco1=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta1,ePt1));
     sfReco2=hRecoSF->GetBinContent(hRecoSF->FindBin(eEta2,ePt2));
     sfID1=hMedIDSF->GetBinContent(hMedIDSF->FindBin(eEta1,ePt1));
@@ -493,9 +496,10 @@ void getDistributions(SampleType sampleType,LepType lepType)
     hTrueMass      ->Fill(invMassHard,totalWeight);
     hMatrixMass    ->Fill(invMassHard,invMass,totalWeight*sfWeight);
     hMatrixMass    ->Fill(invMassHard,0.0,totalWeight*(1-sfWeight));
+
     hTrueRapidity  ->Fill(rapidityHard,totalWeight);
     hMatrixRapidity->Fill(rapidityHard,rapidity,totalWeight*sfWeight);
-    hMatrixRapidity->Fill(rapidityHard,0.0,totalWeight*(1-sfWeight));
+    hMatrixRapidity->Fill(rapidityHard,-10000,totalWeight*(1-sfWeight));
    }
    
   }//end event loop

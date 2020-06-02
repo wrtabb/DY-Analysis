@@ -44,6 +44,7 @@ int GENLepton_fromHardProcessFinalState[MPSIZE];
 double _prefiringweight;
 double _prefiringweightup;
 double _prefiringweightdown;
+double PVz;
 
 double Electron_pT[MPSIZE]; 
 double Electron_eta[MPSIZE];
@@ -77,8 +78,11 @@ const int nYBins2 = 2*nYBins;
 const float binLowY = -2.4;
 const float binHighY = 2.4;
 
+const int massUnderflow = 0;
+const int rapidityUnderflow = -10000;
+
 const int nLogBinsMass = 43;
-const int nLogBinsMass2 = 56;
+const int nLogBinsMass2 = 2*nLogBinsMass;
 const double massbins[] = {15,20,25,30,35,40,45,50,55,60,64,68,72,76,81,86,91,96,101,
  106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,
  1500,3000};

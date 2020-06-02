@@ -25,19 +25,22 @@ std::vector<TString> histName = {
 };
 enum VarType{
  MASS,
- RAPIDITY
+ RAPIDITY,
+ DI_PT
 };
 const std::vector<TString> variableName = {
  "Mass",
- "Rapidity"
+ "Rapidity",
+ "DiPT"
 };
 const std::vector<TString> xAxisTitles = {
  "dilepton invariant mass [GeV]",
- "dilepton rapidity"
+ "dilepton rapidity",
+ "dilepton p_{T}"
 };
 const float yAxisLow = 0.1;
 const float yAxisHigh = 1e8;
-const int nVariables = 2;
+const int nVariables = 3;
 const int nSamples = 5;
 const Color_t histFillColors[nSamples] = {
   kViolet+5,//fakes 
@@ -57,7 +60,7 @@ const Color_t histLineColors[nSamples] = {
 void drawStackPlots()
 {
   gStyle->SetOptStat(0);
-  //gROOT->SetBatch(true);
+  gROOT->SetBatch(true);
   TFile*file[nSamples];
   for(int i=0;i<nSamples;i++){
    file[i] = new TFile(fileName.at(i));
@@ -182,9 +185,10 @@ void drawStackPlots()
     hDataMCRatio[i]->Draw("PE");
     line[i]->Draw("same");
     canvas[i]->Update();
-    TString saveName = "./plots/StackedPlots/";
-    saveName+=variableName.at(i);
-    saveName+=".png";
+    TString saveName = "./plots/";
+    saveName += "stacked_";
+    saveName += variableName.at(i);
+    saveName += ".png";
     canvas[i]->SaveAs(saveName);
   }
 
