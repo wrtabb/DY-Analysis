@@ -2,17 +2,7 @@
 //#include "/home/hep/wrtabb/DY-Analysis/headers/drawOptions.h"
 #include "VariableList.h"
 
-const TString fileName = "data/migrationMatrix.root";
-const TString fileDataName = "data/inputData.root";
-const std::vector<TString> backFile = {
- "data/backgroundFAKES.root",
- "data/backgroundEW.root",
- "data/backgroundTT.root"
-};
-std::vector<TString> variableNames = {
- "Rapidity",
- "Mass"
-};
+const TString fileName = "unfoldingHists.root";
 
 enum RegType {//Strength of regularization
   NO_REG,           //No regularization
@@ -21,59 +11,57 @@ enum RegType {//Strength of regularization
   VAR_REG_SCANSURE, //TUnfoldDensity determines best choice of regularization strength
   VAR_REG_SCANTAU   //TUnfoldDensity determines best choice of regularization strength
 };
-enum VarType{
-  RAPIDITY,
-  MASS
-};
 enum Bins{
   DEFAULT,
   ONE_EXTRA,
   TWO_EXTRA
 };
-const int binLow = 15;
-const int binHigh = 3000;
+const int binLow = 0;
+const int binHigh = 50;
 //-----Forward declarations of functions-----//
-TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix);
-TH1D*GetBackgrounds(VarType var);
+TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hTrue,TH2D*hMatrix,TString recoName);
 
-void doUnfold()
+void diffBinningUnfold()
 {
+ TH1::SetDefaultSumw2();
  gStyle->SetPalette(1);
  gStyle->SetOptStat(0);
-// gROOT->SetBatch(true);
+ gROOT->SetBatch(true);
 
- //Load the files
  TFile*file = new TFile(fileName);
- TFile*fileData = new TFile(fileDataName);
 
- //Load input histograms
- TH1D*hDataM = (TH1D*)fileData->Get("hRecoMass");
- TH1D*hBackM = GetBackgrounds(MASS);
- TH2D*hMatrixM = (TH2D*)file->Get("hMatrixMass");
- 
- TH1D*hDataY = (TH1D*)fileData->Get("hRecoRapidity");
- TH1D*hBackY = GetBackgrounds(RAPIDITY);
- TH2D*hMatrixY = (TH2D*)file->Get("hMatrixRapidity");
+ std::vector<TH1D*> hReco;
+ std::vector<TH1D*> hTrue;
+ std::vector<TH2D*> hMatrix;
+ int nDistributions = 7;
+ for(int i=0;i<nDistributions;i++){
+  TString hRecoTitle = "hReco";
+  hRecoTitle += i;
+  TString hTrueTitle = "hTrue";
+  hTrueTitle += i;
+  TString hMatrixTitle = "hMatrix";
+  hMatrixTitle += i;
+  hReco.push_back( (TH1D*)file->Get(hRecoTitle) );
+  hTrue.push_back( (TH1D*)file->Get(hTrueTitle) );
+  hMatrix.push_back( (TH2D*)file->Get(hMatrixTitle) );
 
- unfold(MASS,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM);
-// unfold(MASS,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM);
- //unfold(RAPIDITY,VAR_REG_LCURVE,true,hDataY,hBackY,hMatrixY);
- //unfold(RAPIDITY,VAR_REG_LCURVE,false,hDataY,hBackY,hMatrixY);
+  unfold(VAR_REG_LCURVE,hReco.at(i),hTrue.at(i),hMatrix.at(i),hRecoTitle);
+ }
+
+ //Do the unfolding
 }
 
-TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
+TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hTrue,TH2D*hMatrix,TString recoName)
 {
   TH1F*hBlank;
-  if(closure) hReco = hMatrix->ProjectionY();
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
   hReco->SetLineColor(kBlack);
-  TH1D*hTrue = hMatrix->ProjectionX();
+
   hTrue->SetFillColor(kRed+2);
   hTrue->SetLineColor(kRed+2);
   hTrue->SetTitle("");
-  int nBins;
-  nBins = hTrue->GetXaxis()->GetNbins();
+  int nBins = nBinsTrue;
   ////////////////////////////
   //  Regularization Modes  //
   ////////////////////////////
@@ -108,13 +96,6 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
   //////////////////////////////////////
   TUnfoldDensity unfold(hMatrix,outputMap,regMode,constraintMode,densityFlags);
   unfold.SetInput(hReco);//the measured distribution
-
-  //////////////////////////////
-  //  Background Subtraction  //
-  //////////////////////////////
-  double backScale = 1.0;
-  double backScaleError = 0.0;//scale error for background
-  if(!closure) unfold.SubtractBackground(hBack,"background",backScale,backScaleError);
 
   ////////////////////////////
   //  Add Systematic Error  //
@@ -168,38 +149,32 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
    hUnfolded->SetMarkerSize(1);
   TH2*histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
   TH2*histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
-  TH1F*hUnfoldedE = (TH1F*)hTrue->Clone("Unfolded with errors");
+  TH1F*hUnfoldedE = (TH1F*)hUnfolded->Clone("Unfolded with errors");
+
    hUnfoldedE->SetMarkerStyle(25);
    hUnfoldedE->SetMarkerColor(kBlue+2);
    hUnfoldedE->SetMarkerSize(1);
-
-  for(int i=0;i<nBins;i++){
+  for(int i=0;i<=nBins;i++){
     double c = hUnfolded->GetBinContent(i+1);
     hUnfoldedE->SetBinContent(i+1,c);
     hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
   }
-
-  TH1D*hRecoRebin = (TH1D*)hReco->Rebin(nBins,"hRecoRebin",massbinsTrue);
+  TH1D*hRecoRebin = (TH1D*)hReco->Rebin(nBinsTrue,"hRecoRebin",binningTrue);
   TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
    ratio->Divide(hTrue);
-  double xChiLabel;
-  if(var==MASS) xChiLabel = 500;
-  else if(var==RAPIDITY) xChiLabel = 0.5;
+  double xChiLabel = 35;
+  double yChiLabel = 4e6;
   double x[nBins],res[nBins];
   double chi = hUnfoldedE->Chi2Test(hTrue,"CHI2/NDF",res);//chi2/ndf to print on plot
   double pValues = hUnfoldedE->Chi2Test(hTrue,"P",res);//outputs chi2,prob,ndf,igood
-  TLatex*chiLabel = new TLatex(xChiLabel,1e6,Form("#chi^{2}/ndf = %lg", chi));	
+  TLatex*chiLabel = new TLatex(xChiLabel,yChiLabel,Form("#chi^{2}/ndf = %lg", chi));	
 
 
   const float padmargins = 0.03;
-  const float yAxisMinimum = 0.1;
-  const float yAxisMaximum= 1e9;
   TCanvas*canvas1 = new TCanvas("canvas1","",10,10,1200,1000);
   TPad*pad1 = new TPad("","",0,0.3,1.0,1.0);
   pad1->SetBottomMargin(padmargins);
   pad1->SetGrid();
-  pad1->SetLogy();
-  if(var==MASS) pad1->SetLogx();
   pad1->SetTicks(1,1);
   pad1->Draw();
   pad1->cd();
@@ -212,8 +187,6 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
   legend->AddEntry(hUnfolded,"Unfolded Distribution");
   hTrue->SetLabelSize(0);
   hTrue->SetTitleSize(0);
-  hTrue->SetMinimum(yAxisMinimum);
-  hTrue->SetMaximum(yAxisMaximum);
   hTrue->Draw("hist");
   hRecoRebin->Draw("PE,same");
   hUnfoldedE->Draw("PE,same");
@@ -222,7 +195,6 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
 
   canvas1->cd();
   TPad*pad2 = new TPad("","",0,0.05,1,0.3);
-  if(var==MASS) pad2->SetLogx();
   pad2->SetTopMargin(padmargins);
   pad2->SetBottomMargin(0.2);
   pad2->SetGrid();
@@ -235,57 +207,20 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
   ratio->GetYaxis()->SetTitleSize(0.08);
   ratio->GetYaxis()->SetTitleOffset(0.3);
   ratio->GetYaxis()->SetTitle("Unfolded/Truth");
-  if(var==MASS) ratio->GetXaxis()->SetTitle("mass [GeV]");
-  else if(var==RAPIDITY) ratio->GetXaxis()->SetTitle("rapidity");
   ratio->GetXaxis()->SetLabelSize(0.1);
   ratio->GetXaxis()->SetTitleSize(0.1);
-  ratio->GetXaxis()->SetNoExponent();
-  ratio->GetXaxis()->SetMoreLogLabels();
   ratio->SetMarkerStyle(20);
   ratio->SetMarkerColor(kBlack);
   ratio->Draw("PE");
   line->Draw("same");
 
-  TString saveName = "plots/unfolded";
-  if(var==MASS) saveName += "Mass";
-  else if(var==RAPIDITY) saveName += "Rapidity";
-  else {
-   cout << "Variable must be MASS or RAPIDITY!" << endl;
-   return hBlank;
-  }
-  if(closure) saveName += "Closure";
+  TString saveName = "./plots/unfolded";
+  saveName += recoName;
   saveName += ".png";
   canvas1->SaveAs(saveName);
   
-  double width,nUnfold;
-  TH1D*hCross = (TH1D*)hTrue->Clone("hCross");
-   hCross->SetMarkerStyle(20);
-   hCross->SetMarkerColor(kBlack);
-   hCross->SetTitle("Cross Section");
-   hCross->GetXaxis()->SetMoreLogLabels();
-   hCross->GetXaxis()->SetNoExponent();
-   hCross->GetXaxis()->SetTitle("mass [GeV]");
-   hCross->GetYaxis()->SetTitle("d#sigma/dm [pb/GeV]");
-  
-  
-  for(int k=1;k<nBins+1;k++){
-   width = hUnfoldedE->GetXaxis()->GetBinWidth(k);
-   nUnfold = hUnfoldedE->GetBinContent(k)/(width*dataLuminosity);
-   hCross->SetBinContent(k,nUnfold);
-  }
-
-  TString fileSaveName = "data/unfolded";
-  if(var==MASS) fileSaveName += "Mass";
-  else if(var==RAPIDITY) fileSaveName += "Rapidity";
-  else {
-   cout << "Variable must be MASS or RAPIDITY!" << endl;
-   return hBlank;
-  }
-  if(closure) fileSaveName += "Closure";
-  fileSaveName += ".root";
-
-  TFile*fileXsec = new TFile(fileSaveName,"recreate");
-  hCross->Write();
+/*
+  TFile*fileXsec = new TFile("unfoldedSaved.root","recreate");
   canvas1->Write();
   hUnfoldedE->SetName("hUnfolded");
   hUnfoldedE->Write();
@@ -295,27 +230,10 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
   hReco->Write();
   fileXsec->Write();
   fileXsec->Close();
-
+*/
   delete hReco;
   delete hTrue;
   delete hMatrix;
   return hUnfoldedE;
 }
  
-TH1D*GetBackgrounds(VarType var)
-{
- int nFiles = backFile.size();
- TFile*file[nFiles];
- TH1D*hBack[nFiles];
- TH1D*hBackSum;
- TString histName = "hReco";
- histName += variableNames.at(var);
- for(int i=0;i<nFiles;i++){
-  file[i] = new TFile(backFile.at(i));
-  hBack[i] = (TH1D*)file[i]->Get(histName);
-  if(i==0) hBackSum = (TH1D*)hBack[0]->Clone("hBackSum");
-  else hBackSum->Add(hBack[i]);
- }
- return hBackSum;
-}
-

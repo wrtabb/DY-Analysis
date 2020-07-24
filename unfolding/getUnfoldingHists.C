@@ -72,18 +72,22 @@ void getDistributions(SampleType sampleType,LepType lepType)
   counterName = "Getting DATA events";
  }
  int dirSize = dirNames.size();
+ int pdg;
  if(sampleType==LL){
   if(lepType==ELE){
+   pdg = 11;
    for(int i=0;i<dirSize;i++){
     dirNames.at(i)+= "/EE";
    }
   }
   else if(lepType==MUON){
+   pdg = 13;
    for(int i=0;i<dirSize;i++){
     dirNames.at(i)+= "/MuMu";
    }
   }
   else if(lepType==TAU){
+   pdg = 15;
    for(int i=0;i<dirSize;i++){
     dirNames.at(i)+= "/TauTau";
    }
@@ -228,9 +232,14 @@ void getDistributions(SampleType sampleType,LepType lepType)
  TH1D*hTrueRapidity = new TH1D("hTrueRapidity","",nYBins,binLowY,binHighY);
  TH2D*hMatrixRapidity = new TH2D("hMatrixRapidity","",nYBins,binLowY,binHighY,nYBins2,binLowY,binHighY);
  
- TH1D*hRecoMass = new TH1D("hRecoMass","",nLogBinsMass2,massbins2);
- TH1D*hTrueMass = new TH1D("hTrueMass","",nLogBinsMass,massbins);
- TH2D*hMatrixMass = new TH2D("hMatrixMass","",nLogBinsMass,massbins,nLogBinsMass2,massbins2);
+ double massBinsReco[nLogBinsMassReco+1];
+ for(int i=0;i<nLogBinsMassReco+1;i++){
+  massBinsReco[i]=massbinsReco.at(i);
+ }
+ TH1D*hRecoMass = new TH1D("hRecoMass","",nLogBinsMassReco,massBinsReco);
+ TH1D*hTrueMass = new TH1D("hTrueMass","",nLogBinsMassTrue,massbinsTrue);
+ TH2D*hMatrixMass = new TH2D("hMatrixMass","",nLogBinsMassTrue,massbinsTrue,nLogBinsMassReco,
+                             massBinsReco);
 
  TH1D*hRecoDiPT = new TH1D("hRecoDiPT","",100,0,500);
  TH1D*hRecoMassZoom = new TH1D("hRecoMassZoom","",60,60,120);
@@ -318,7 +327,7 @@ void getDistributions(SampleType sampleType,LepType lepType)
     //-----Gen loop-----//
     for(int kLep=0;kLep<GENnPair;kLep++){
      for(int lLep=kLep+1;lLep<GENnPair;lLep++){
-      if(!(abs(GENLepton_ID[kLep])==11 && abs(GENLepton_ID[lLep])==11))
+      if(!(abs(GENLepton_ID[kLep])==pdg && abs(GENLepton_ID[lLep])==pdg))
       continue;
       if(GENLepton_ID[kLep]*GENLepton_ID[lLep]>0) continue;
       if(GENLepton_isHardProcess[kLep]==1 && GENLepton_isHardProcess[lLep]==1){

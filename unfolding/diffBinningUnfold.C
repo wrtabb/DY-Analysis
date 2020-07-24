@@ -1,5 +1,3 @@
-//#include "/home/hep/wrtabb/DY-Analysis/headers/header1.h"
-//#include "/home/hep/wrtabb/DY-Analysis/headers/drawOptions.h"
 #include "VariableList.h"
 
 const TString fileName = "data/migrationMatrix.root";
@@ -32,15 +30,39 @@ enum Bins{
 };
 const int binLow = 15;
 const int binHigh = 3000;
-//-----Forward declarations of functions-----//
-TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix);
-TH1D*GetBackgrounds(VarType var);
+std::vector<TString> histNames = {
+ "double bins all",
+ "double bins 115-3000",
+ "double bins 15-115",
+ "double bins 15-60,120-3000",
+ "double bins 60-120",
+ "split highest bin",
+ "split lowest bin"
+};
+std::vector<TString> plotSave = {
+ "unfoldedDoubleBinsAll.png",
+ "unfoldedDoubleBins_115_3000.png",
+ "unfoldedDoubleBins_15_115.png",
+ "unfoldedDoubleBins_15_60_120_3000.png",
+ "unfoldedDoubleBins_60_120.png",
+ "unfoldedSplitHighestBin.png",
+ "unfoldedSplitLowestBin.png"
+};
 
-void doUnfold()
+//-----Forward declarations of functions-----//
+TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix,
+            TString saveName);
+TH1D*GetBackgrounds(VarType var);
+TH2D*Rebin2D(TH2D*hist,TString histName,std::vector<double> binning);
+TH2D*RebinTH2(TH2D*hist,TString histName,TH2D*hBinning);
+TH1D*Rebin1D(TH1D*hist,TString histName,std::vector<double> binning);
+TH1D*Rebin1D(TH1D*hist,TString histName,TH1D*hBinning);
+
+void diffBinningUnfold()
 {
  gStyle->SetPalette(1);
  gStyle->SetOptStat(0);
-// gROOT->SetBatch(true);
+ //gROOT->SetBatch(true);
 
  //Load the files
  TFile*file = new TFile(fileName);
@@ -50,21 +72,61 @@ void doUnfold()
  TH1D*hDataM = (TH1D*)fileData->Get("hRecoMass");
  TH1D*hBackM = GetBackgrounds(MASS);
  TH2D*hMatrixM = (TH2D*)file->Get("hMatrixMass");
- 
- TH1D*hDataY = (TH1D*)fileData->Get("hRecoRapidity");
- TH1D*hBackY = GetBackgrounds(RAPIDITY);
- TH2D*hMatrixY = (TH2D*)file->Get("hMatrixRapidity");
 
- unfold(MASS,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM);
+ std::vector<TH1D*> hReco;
+ hReco.push_back(Rebin1D(hDataM,"1D "+histNames.at(0),massbinsReco));
+ hReco.push_back(Rebin1D(hDataM,"1D "+histNames.at(1),massbinsReco0));
+ hReco.push_back(Rebin1D(hDataM,"1D "+histNames.at(2),massbinsReco1));
+ hReco.push_back(Rebin1D(hDataM,"1D "+histNames.at(3),massbinsReco2));
+ hReco.push_back(Rebin1D(hDataM,"1D "+histNames.at(4),massbinsReco3));
+ hReco.push_back(Rebin1D(hDataM,"1D "+histNames.at(5),massbinsReco4));
+ hReco.push_back(Rebin1D(hDataM,"1D "+histNames.at(6),massbinsReco5));
+
+ std::vector<TH1D*> hBack;
+ hBack.push_back(Rebin1D(hBackM,"Back "+histNames.at(0),massbinsReco));
+ hBack.push_back(Rebin1D(hBackM,"Back "+histNames.at(1),massbinsReco0));
+ hBack.push_back(Rebin1D(hBackM,"Back "+histNames.at(2),massbinsReco1));
+ hBack.push_back(Rebin1D(hBackM,"Back "+histNames.at(3),massbinsReco2));
+ hBack.push_back(Rebin1D(hBackM,"Back "+histNames.at(4),massbinsReco3));
+ hBack.push_back(Rebin1D(hBackM,"Back "+histNames.at(5),massbinsReco4));
+ hBack.push_back(Rebin1D(hBackM,"Back "+histNames.at(6),massbinsReco5));
+  
+ std::vector<TH2D*> hMatrix;
+ hMatrix.push_back(Rebin2D(hMatrixM,"2D "+histNames.at(0),massbinsReco));
+ hMatrix.push_back(Rebin2D(hMatrixM,"2D "+histNames.at(1),massbinsReco0));
+ hMatrix.push_back(Rebin2D(hMatrixM,"2D "+histNames.at(2),massbinsReco1));
+ hMatrix.push_back(Rebin2D(hMatrixM,"2D "+histNames.at(3),massbinsReco2));
+ hMatrix.push_back(Rebin2D(hMatrixM,"2D "+histNames.at(4),massbinsReco3));
+ hMatrix.push_back(Rebin2D(hMatrixM,"2D "+histNames.at(5),massbinsReco4));
+ hMatrix.push_back(Rebin2D(hMatrixM,"2D "+histNames.at(6),massbinsReco5));
+
+ TCanvas*canvas = new TCanvas("canvas","",0,0,1000,1000);
+ canvas->SetGrid();
+ canvas->SetLogx();
+ canvas->SetLogy();
+ hReco.at(0)->SetMarkerStyle(20);
+ //hDataM->Draw("hist");
+ //hReco.at(0)->Draw("pe,same");
+ hMatrix.at(0)->Draw("colz");
+ cout << "hMatrixM entries: " << hMatrixM->Integral() << endl;
+ cout << "hMatrix.at(0) entries: " << hMatrix.at(0)->Integral() << endl;
+ //unfold(MASS,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM,"test.png");
+ //unfold(MASS,VAR_REG_LCURVE,false,hReco.at(0),hBack.at(0),hMatrix.at(0),"test.png");
+ for(int i=0;i<hReco.size();i++)
+ {
+  //unfold(MASS,VAR_REG_LCURVE,false,hReco.at(i),hBack.at(i),hMatrix.at(i),plotSave.at(i));
+ }
+  //unfold(MASS,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM,plotSave.at(0));
+ //unfold(MASS,VAR_REG_LCURVE,true,hDataM,hBackM,hMatrixM);
 // unfold(MASS,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM);
  //unfold(RAPIDITY,VAR_REG_LCURVE,true,hDataY,hBackY,hMatrixY);
  //unfold(RAPIDITY,VAR_REG_LCURVE,false,hDataY,hBackY,hMatrixY);
 }
 
-TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
+TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix,
+            TString saveName)
 {
   TH1F*hBlank;
-  if(closure) hReco = hMatrix->ProjectionY();
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
   hReco->SetLineColor(kBlack);
@@ -147,10 +209,12 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
     bestLogTauLogChi2=new TGraph(1,t,x);
   }
   else if(regType == VAR_REG_SCANSURE){
-   
+   //this is an alternative way to find tau for regularization
+   //Not yet implemented 
   }
   else if(regType == VAR_REG_SCANTAU){
-
+   //this is an alternative way to find tau for regularization
+   //Not yet implemented 
   }
   else if(regType == NO_REG){
     double tau = 0;
@@ -179,7 +243,10 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
     hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
   }
 
-  TH1D*hRecoRebin = (TH1D*)hReco->Rebin(nBins,"hRecoRebin",massbinsTrue);
+  //TH1D*hRecoRebin = (TH1D*)hReco->Rebin(nBins,"hRecoRebin",massbinsTrue);
+  TH1D*hRecoRebin = Rebin1D(hReco,"hRecoRebin",hTrue);
+  hRecoRebin->SetMarkerStyle(20);
+  hRecoRebin->SetMarkerColor(kBlack);
   TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
    ratio->Divide(hTrue);
   double xChiLabel;
@@ -246,59 +313,15 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
   ratio->Draw("PE");
   line->Draw("same");
 
-  TString saveName = "plots/unfolded";
-  if(var==MASS) saveName += "Mass";
-  else if(var==RAPIDITY) saveName += "Rapidity";
-  else {
-   cout << "Variable must be MASS or RAPIDITY!" << endl;
-   return hBlank;
-  }
-  if(closure) saveName += "Closure";
-  saveName += ".png";
-  canvas1->SaveAs(saveName);
-  
-  double width,nUnfold;
-  TH1D*hCross = (TH1D*)hTrue->Clone("hCross");
-   hCross->SetMarkerStyle(20);
-   hCross->SetMarkerColor(kBlack);
-   hCross->SetTitle("Cross Section");
-   hCross->GetXaxis()->SetMoreLogLabels();
-   hCross->GetXaxis()->SetNoExponent();
-   hCross->GetXaxis()->SetTitle("mass [GeV]");
-   hCross->GetYaxis()->SetTitle("d#sigma/dm [pb/GeV]");
-  
-  
-  for(int k=1;k<nBins+1;k++){
-   width = hUnfoldedE->GetXaxis()->GetBinWidth(k);
-   nUnfold = hUnfoldedE->GetBinContent(k)/(width*dataLuminosity);
-   hCross->SetBinContent(k,nUnfold);
-  }
-
-  TString fileSaveName = "data/unfolded";
-  if(var==MASS) fileSaveName += "Mass";
-  else if(var==RAPIDITY) fileSaveName += "Rapidity";
-  else {
-   cout << "Variable must be MASS or RAPIDITY!" << endl;
-   return hBlank;
-  }
-  if(closure) fileSaveName += "Closure";
-  fileSaveName += ".root";
-
-  TFile*fileXsec = new TFile(fileSaveName,"recreate");
-  hCross->Write();
-  canvas1->Write();
-  hUnfoldedE->SetName("hUnfolded");
-  hUnfoldedE->Write();
-  histEmatTotal->SetName("hCovMatrix");
-  histEmatTotal->Write();
-  hTrue->Write();
-  hReco->Write();
-  fileXsec->Write();
-  fileXsec->Close();
+  TString saveNameFinal = "./plots/binningTest/";
+  saveNameFinal += saveName;
+  canvas1->SaveAs(saveNameFinal);
 
   delete hReco;
   delete hTrue;
   delete hMatrix;
+  delete hUnfolded;
+  delete canvas1;
   return hUnfoldedE;
 }
  
@@ -319,3 +342,109 @@ TH1D*GetBackgrounds(VarType var)
  return hBackSum;
 }
 
+TH2D*Rebin2D(TH2D*hist,TString histName,std::vector<double> binning)
+{
+ //This function takes a 2D histogram as input and gives a new 2D histogram
+ //As output with new Y-axis binning defined by input std::vector<double> binning
+ 
+ int nBinsHist = hist->GetNbinsY();//number of reco bins in the input histogram
+ int nBinsReco = binning.size()-1;//number of reco bins for the output rebinned histogram
+
+ double newbinning[nBinsReco];//binning placed in array for defining TH2
+ for(int i=0;i<=nBinsReco;i++){
+  newbinning[i] = binning.at(i);
+ }
+
+ //Initialize the output histogram
+ TH2D*hRebin = new TH2D(histName,"",nLogBinsMassTrue,massbinsTrue,nBinsReco,newbinning);
+
+ //Loop over each bin in the histogram
+ //For each bin, define the position x and y from the bin center
+ //Then do histogram fill for each of the entries in that bin
+ double y,x;
+ for(int i=1;i<=nLogBinsMassTrue;i++){
+  for(int j=1;j<=nBinsHist;j++){
+   x = hist->GetXaxis()->GetBinCenter(i);
+   y = hist->GetYaxis()->GetBinCenter(j);
+   int nEntries = hist->GetBinContent(i,j);
+   for(int k=0;k<nEntries;k++){
+    hRebin->Fill(x,y);
+   }//end filling hRebin
+  }//end y bin loop
+ }//end x bin loop
+ return hRebin;
+}
+
+TH2D*RebinTH2(TH2D*hist,TString histName,TH2D*hBinning)
+{
+ //Performs the same function as the other RebinTH2, only in this case the output
+ //binning is determined by another histogram
+ int nBinsHist = hist->GetNbinsY();
+ int nBinsReco = hBinning->GetNbinsY();
+ double newbinning[nBinsReco];
+ //use the projection of hBinning to determine binning for output histogram
+ TH1D*hBinningProjection = hBinning->ProjectionY();
+ for(int i=0;i<=nBinsReco;i++){
+  if(i==0) newbinning[i] = hBinningProjection->GetBinLowEdge(i+1);
+  else newbinning[i] = newbinning[i-1]+hBinningProjection->GetBinWidth(i);
+ }
+ TH2D*hRebin = new TH2D(histName,"",nLogBinsMassTrue,massbinsTrue,nBinsReco,newbinning);
+
+ double y,x;
+ for(int i=1;i<=nLogBinsMassTrue;i++){
+  for(int j=1;j<=nBinsHist;j++){
+   x = hist->GetXaxis()->GetBinCenter(i);
+   y = hist->GetYaxis()->GetBinCenter(j);
+   int nEntries = hist->GetBinContent(i,j);
+   for(int k=0;k<nEntries;k++){
+    hRebin->Fill(x,y);
+   }//end filling hRebin
+  }//end y bin loop
+ } //end x bin loop
+ return hRebin;
+}
+
+TH1D*Rebin1D(TH1D*hist,TString histName,std::vector<double> binning)
+{
+ int nBinsHist = hist->GetNbinsX();
+ int nBinsReco = binning.size()-1;
+ double newbinning[nBinsReco];
+ for(int i=0;i<=nBinsReco;i++){
+  newbinning[i] = binning.at(i);
+ }
+ TH1D*hRebin = new TH1D(histName,"",nBinsReco,newbinning);
+
+ int bin;
+ double y,x;
+ for(int j=1;j<=nBinsHist;j++){
+  x = hist->GetXaxis()->GetBinCenter(j);  
+  int nEntries = hist->GetBinContent(j);
+  for(int k=0;k<nEntries;k++){
+   hRebin->Fill(x);
+  }//end filling hRebin
+ } //end x bin loop
+ return hRebin;
+}
+
+TH1D*Rebin1D(TH1D*hist,TString histName,TH1D*hBinning)
+{
+ int nBinsHist = hist->GetNbinsX();
+ int nBinsReco = hBinning->GetNbinsX();
+ double newbinning[nBinsReco];
+ for(int i=0;i<=nBinsReco;i++){
+  if(i==0) newbinning[i] = hBinning->GetBinLowEdge(i+1);
+  else newbinning[i] = newbinning[i-1]+hBinning->GetBinWidth(i);
+ }
+ TH1D*hRebin = new TH1D(histName,"",nBinsReco,newbinning);
+
+ int bin;
+ double y,x;
+ for(int j=1;j<=nBinsHist;j++){
+  x = hist->GetXaxis()->GetBinCenter(j);  
+  int nEntries = hist->GetBinContent(j);
+  for(int k=0;k<nEntries;k++){
+   hRebin->Fill(x);
+  }//end filling hRebin
+ } //end x bin loop
+ return hRebin;
+}
