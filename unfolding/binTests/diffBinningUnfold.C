@@ -19,7 +19,8 @@ enum Bins{
 const int binLow = 0;
 const int binHigh = 50;
 //-----Forward declarations of functions-----//
-TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hTrue,TH2D*hMatrix,TString recoName);
+TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,TString recoName,
+            bool closure);
 
 void diffBinningUnfold()
 {
@@ -31,29 +32,43 @@ void diffBinningUnfold()
  TFile*file = new TFile(fileName);
 
  std::vector<TH1D*> hReco;
+ std::vector<TH1D*> hClosure;
  std::vector<TH1D*> hTrue;
  std::vector<TH2D*> hMatrix;
  int nDistributions = 7;
  for(int i=0;i<nDistributions;i++){
   TString hRecoTitle = "hReco";
   hRecoTitle += i;
+  TString hClosureTitle = "hRecoClosure";
+  hClosureTitle += i;
   TString hTrueTitle = "hTrue";
   hTrueTitle += i;
   TString hMatrixTitle = "hMatrix";
   hMatrixTitle += i;
+
   hReco.push_back( (TH1D*)file->Get(hRecoTitle) );
+  hClosure.push_back( (TH1D*)file->Get(hClosureTitle) );
   hTrue.push_back( (TH1D*)file->Get(hTrueTitle) );
   hMatrix.push_back( (TH2D*)file->Get(hMatrixTitle) );
 
-  unfold(VAR_REG_LCURVE,hReco.at(i),hTrue.at(i),hMatrix.at(i),hRecoTitle);
+  //unfold(NO_REG,hReco.at(i),hClosure.at(i),hTrue.at(i),hMatrix.at(i),hRecoTitle,false);
+  //unfold(NO_REG,hReco.at(i),hClosure.at(i),hTrue.at(i),hMatrix.at(i),hRecoTitle,true);
+  unfold(VAR_REG_LCURVE,hReco.at(i),hClosure.at(i),hTrue.at(i),hMatrix.at(i),hRecoTitle,false);
+  //unfold(VAR_REG_LCURVE,hReco.at(i),hClosure.at(i),hTrue.at(i),hMatrix.at(i),hRecoTitle,true);
  }
 
- //Do the unfolding
 }
 
-TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hTrue,TH2D*hMatrix,TString recoName)
+
+TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,TString recoName,             bool closure)
 {
+ //Do the unfolding
   TH1F*hBlank;
+  if(closure){
+   hReco = (TH1D*)hClosure->Clone();
+   recoName += "Closure";
+  }
+  if(regType==NO_REG) recoName += "NoReg";
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
   hReco->SetLineColor(kBlack);
@@ -163,7 +178,7 @@ TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hTrue,TH2D*hMatrix,TString recoName)
   TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
    ratio->Divide(hTrue);
   double xChiLabel = 35;
-  double yChiLabel = 4e6;
+  double yChiLabel = 5e5;
   double x[nBins],res[nBins];
   double chi = hUnfoldedE->Chi2Test(hTrue,"CHI2/NDF",res);//chi2/ndf to print on plot
   double pValues = hUnfoldedE->Chi2Test(hTrue,"P",res);//outputs chi2,prob,ndf,igood
@@ -218,7 +233,7 @@ TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hTrue,TH2D*hMatrix,TString recoName)
   saveName += recoName;
   saveName += ".png";
   canvas1->SaveAs(saveName);
-  
+  delete canvas1; 
 /*
   TFile*fileXsec = new TFile("unfoldedSaved.root","recreate");
   canvas1->Write();

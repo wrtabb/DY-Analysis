@@ -1,12 +1,12 @@
 
 std::vector<double> chi2Values = {
- 6.87245,
- 22.6519,
- 16.7891,
- 26.9312,
- 12.0057,
- 39.2215,
- 51.7758
+ 1.29,
+ 0.65,
+ 1.09,
+ 1.62,
+ 0.55,
+ 0.61, 
+ 0.65
 };
 std::vector<TString> binLabels = {
  "double bins all",
@@ -33,7 +33,7 @@ void plotChi2()
  for(int i=1;i<=nBins;i++){
   hChi2->SetBinContent(i,chi2Values.at(i-1));
   hChi2->GetXaxis()->SetBinLabel(i,binLabels.at(i-1));
-  hChi2->SetBinError(i,sqrt(chi2Values.at(i-1)));
+  hChi2->SetBinError(i,0.2*sqrt(chi2Values.at(i-1)));
  }
 
  TCanvas*canvas = new TCanvas("canvas","",0,0,1000,1000);

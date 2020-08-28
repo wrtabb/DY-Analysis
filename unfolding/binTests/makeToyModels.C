@@ -9,18 +9,22 @@ void makeToyModels()
  gStyle->SetPalette(1);
 
  TH1D*hReco; 
+ TH1D*hRecoClosure; 
  TH1D*hTrue;
  TH2D*hMatrix;
  
  const double mean = 20;
  const double sigma = 5;
  const double mean_smeared = 0;
- const double sigma_smeared = 0.8;
- const Long64_t nEntries = 1e8;
+ const double sigma_smeared = 1.0;
+ const Long64_t nEntries = 1e7;
 
  TF1*func = new TF1("func","1/(x+1)+gaus(0)",0,50);
  func->SetParameters(1.0,mean,sigma);
- TRandom3 gen;
+ TRandom3 gen1;
+ TRandom3 gen2;
+ gen1.SetSeed(82);
+ gen2.SetSeed(1981);
 
  std::vector< std::vector<double> > recoBinning;
  recoBinning.push_back(binningReco0);
@@ -34,6 +38,7 @@ void makeToyModels()
  int nDistributions = recoBinning.size();
  TFile*saveFile = new TFile("unfoldingHists.root","recreate");
  for(int k=0;k<nDistributions;k++){
+  cout << k+1 << " out of " << nDistributions << endl;
   const int nBinsReco = (recoBinning.at(k)).size()-1;
   double binningReco[nBinsReco+1];
   for(int j=0;j<nBinsReco+1;j++){
@@ -41,35 +46,37 @@ void makeToyModels()
   }
   TString hRecoTitle = "hReco";
   hRecoTitle += k;
+  TString hClosureTitle = "hRecoClosure";
+  hClosureTitle += k;
   TString hTrueTitle = "hTrue";
   hTrueTitle += k;
   TString hMatrixTitle = "hMatrix";
   hMatrixTitle += k;
 
   hReco = new TH1D(hRecoTitle,"",nBinsReco,binningReco);
+  hRecoClosure = new TH1D(hClosureTitle,"",nBinsReco,binningReco);
+
   hTrue = new TH1D(hTrueTitle,"",nBinsTrue,binningTrue);
   hMatrix = new TH2D(hMatrixTitle,"",nBinsTrue,binningTrue,nBinsReco,binningReco);
-  double peak,peak_smeared;
+  double peak,peakReco,peak_smeared,peakReco_smeared;
   double slope,slope_smeared;
   for(int i=0;i<nEntries;i++){
-   peak = func->GetRandom();;
-   peak_smeared = peak+gen.Gaus(mean_smeared,sigma_smeared);
+   peak = func->GetRandom();
+   peakReco = func->GetRandom();
+   peak_smeared = peak+gen1.Gaus(mean_smeared,sigma_smeared);
+   peakReco_smeared = peakReco+gen2.Gaus(mean_smeared,sigma_smeared);
  
-   hReco->Fill(peak_smeared);
+   hRecoClosure->Fill(peak_smeared);
+   hReco->Fill(peakReco_smeared);
    hTrue->Fill(peak);
    hMatrix->Fill(peak,peak_smeared);  
+
   }
-  //---Randomize bins of hReco---//
-  double binContent,vary;
-  for(int i=1;i<=nBinsReco;i++){
-   binContent = hReco->GetBinContent(i);
-   vary = binContent*0.005;
-   hReco->SetBinContent(i,binContent+gen.Gaus(0,vary));
-  }
- saveFile->cd();
- hReco->Write();
- hTrue->Write();
- hMatrix->Write(); 
+  saveFile->cd();
+  hReco->Write();
+  hRecoClosure->Write();
+  hTrue->Write();
+  hMatrix->Write(); 
  }//end loop over distributions
  saveFile->Close();
  //DrawPlots(hTrue,hReco,hMatrix);
@@ -110,4 +117,5 @@ void DrawPlots(TH1D*hTrue,TH1D*hReco,TH2D*hMatrix)
  hMatrix->Write();
  file->Close();
 }
+
 

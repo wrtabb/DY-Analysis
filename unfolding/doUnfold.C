@@ -33,14 +33,18 @@ enum Bins{
 const int binLow = 15;
 const int binHigh = 3000;
 //-----Forward declarations of functions-----//
-TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix);
+TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix,
+            TString saveName
+           );
 TH1D*GetBackgrounds(VarType var);
+TH1D*Rebin1D(TH1D*hist,TString histName,TH1D*hBinning);
 
 void doUnfold()
 {
+ TH1::SetDefaultSumw2();
  gStyle->SetPalette(1);
  gStyle->SetOptStat(0);
-// gROOT->SetBatch(true);
+ gROOT->SetBatch(true);
 
  //Load the files
  TFile*file = new TFile(fileName);
@@ -55,13 +59,15 @@ void doUnfold()
  TH1D*hBackY = GetBackgrounds(RAPIDITY);
  TH2D*hMatrixY = (TH2D*)file->Get("hMatrixRapidity");
 
- unfold(MASS,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM);
-// unfold(MASS,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM);
- //unfold(RAPIDITY,VAR_REG_LCURVE,true,hDataY,hBackY,hMatrixY);
- //unfold(RAPIDITY,VAR_REG_LCURVE,false,hDataY,hBackY,hMatrixY);
+ //unfold(MASS,NO_REG,false,hDataM,hBackM,hMatrixM,"dataNoRegUnfoldedMass");
+ //unfold(MASS,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM,"dataLCurveUnfoldedMass");
+ unfold(RAPIDITY,NO_REG,false,hDataY,hBackY,hMatrixY,"dataNoRegUnfoldedRapidity");
+ //unfold(RAPIDITY,VAR_REG_LCURVE,false,hDataY,hBackY,hMatrixY,"dataLCurveUnfoldedRapidity");
 }
 
-TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix)
+TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix,
+            TString saveName
+           )
 {
   TH1F*hBlank;
   if(closure) hReco = hMatrix->ProjectionY();
@@ -179,7 +185,10 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
     hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
   }
 
-  TH1D*hRecoRebin = (TH1D*)hReco->Rebin(nBins,"hRecoRebin",massbinsTrue);
+  TH1D*hRecoRebin = Rebin1D(hReco,"hRecoRebin",hTrue);
+  hRecoRebin->SetMarkerStyle(20);
+  hRecoRebin->SetMarkerColor(kBlack);
+  hRecoRebin->SetLineColor(kBlack);
   TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
    ratio->Divide(hTrue);
   double xChiLabel;
@@ -246,16 +255,10 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
   ratio->Draw("PE");
   line->Draw("same");
 
-  TString saveName = "plots/unfolded";
-  if(var==MASS) saveName += "Mass";
-  else if(var==RAPIDITY) saveName += "Rapidity";
-  else {
-   cout << "Variable must be MASS or RAPIDITY!" << endl;
-   return hBlank;
-  }
-  if(closure) saveName += "Closure";
-  saveName += ".png";
-  canvas1->SaveAs(saveName);
+  TString savePlot = "plots/";
+  savePlot += saveName;
+  savePlot += ".png";
+  canvas1->SaveAs(savePlot);
   
   double width,nUnfold;
   TH1D*hCross = (TH1D*)hTrue->Clone("hCross");
@@ -317,5 +320,61 @@ TH1D*GetBackgrounds(VarType var)
   else hBackSum->Add(hBack[i]);
  }
  return hBackSum;
+}
+
+TH1D*Rebin1D(TH1D*hist,TString histName,TH1D*hBinning)
+{
+ int nBinsOld = hist->GetNbinsX();
+ int nBinsNew = hBinning->GetNbinsX();
+ TH1D*hBlank;
+ if(nBinsNew > nBinsOld){
+  cout << "*********************************************************" << endl;
+  cout << "ERROR: new binning must have fewer bins than old binning!" << endl;
+  cout << "*********************************************************" << endl;
+  return hBlank;
+ }
+ double newbinning[nBinsNew];
+ for(int i=0;i<=nBinsNew;i++){
+  if(i==0) newbinning[i] = hBinning->GetBinLowEdge(i+1);
+  else newbinning[i] = newbinning[i-1]+hBinning->GetBinWidth(i);
+ }
+ TH1D*hRebin = new TH1D(histName,"",nBinsNew,newbinning);
+ double y,x;
+ double nEntries;
+ double histErrors[nBinsOld+2];
+ for(int j=1;j<=nBinsOld;j++){
+  histErrors[j] = hist->GetBinError(j);
+  x = hist->GetXaxis()->GetBinCenter(j);
+  nEntries = hist->GetBinContent(j);
+  hRebin->Fill(x,nEntries);
+  hRebin->GetBin(x);
+ } //end x bin loop
+ 
+ //This part combines the errors from the bins of the old histogram that go into each
+ //bin of the new histogram
+ double histBinWidth;
+ double newBinWidth;
+ double nBinsOldInNew[nBinsNew];
+ double newBinUpperEdge,oldBinUpperEdge;
+ int k = 1;
+ //Loop over bins in new histogram
+ for(int i=1;i<=nBinsNew;i++){
+  //find the upper edge of the current bin
+  newBinUpperEdge = hRebin->GetBinLowEdge(i)+hRebin->GetBinWidth(i);
+  double newError2 = 0;
+  //There must be more bins in the old histogram than the new
+  //Loop over bins in the old histogram stopping when the upper edge of the new histogram
+  //reaches the upper edge of the old histogram
+  //For each bin from the old histogram that goes into the new one,
+  //the error is found and the squares of the errors of each bin are added
+  for(int j=k;j<=nBinsOld;j++){
+   oldBinUpperEdge = hist->GetBinLowEdge(j)+hist->GetBinWidth(j);
+   if(oldBinUpperEdge > newBinUpperEdge) continue;
+   k = j;
+   newError2 += hist->GetBinError(j)*hist->GetBinError(j);
+  } 	
+  hRebin->SetBinError(i,sqrt(newError2));
+ }
+ return hRebin;
 }
 

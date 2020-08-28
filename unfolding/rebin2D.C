@@ -9,9 +9,9 @@ void CheckBinByBin(TH2D*h1,TH2D*h2);
 
 TString fileName = "data/migrationMatrix.root";
 
-double binning0[] = {0,1,2,3,4,5,10,15,20,25,30,35,40,45,50};
+double binning0[] = {0,1,2,3,4,5,7.5,10,12.5,15,20,25,30,35,40,45,50};
 double binning1[] = {0,10,20,30,40,50};
-std::vector<double> binningVec0 = {0,1,2,3,4,5,10,15,20,25,30,35,40,45,50};
+std::vector<double> binningVec0 = {0,1,2,3,4,5,7.5,10,12.5,15,20,25,30,35,40,45,50};
 std::vector<double> binningVec1 = {0,10,20,30,40,50};
 int nBins0 = binningVec0.size()-1;
 int nBins1 = binningVec1.size()-1;
@@ -50,8 +50,8 @@ void rebin2D()
  }
 
  //Create rebinned version of h2 that matches h1
- TH2D*h2Rebin = Rebin2D(h2,"h2Rebin",binningVec1);
- h2Rebin->SetTitle("h2Rebin");
+ //TH2D*h2Rebin = Rebin2D(h2,"h2Rebin",binningVec1);
+ //h2Rebin->SetTitle("h2Rebin");
 
  //-----Drell-Yan Distributions-----//
  //File for opening Drell-Yan distributions
@@ -67,18 +67,14 @@ void rebin2D()
  hMatrixRebin->SetTitle("Rebinned histogram");
 
  //Drawing the matrices on separate histograms for visual comparison
- /*
- TCanvas*c1 = MakeCanvas("c1",false);
- h1->Draw("colz");
- TCanvas*c2 = MakeCanvas("c2",false);
- h2Rebin->Draw("colz");
- TCanvas*c3 = MakeCanvas("c3",false);
- h2->Draw("colz");
- */
+ bool logPlot = true;
+ TCanvas*c1 = MakeCanvas("c1",logPlot);
+ hMatrixM->Draw("colz");
+ TCanvas*c2 = MakeCanvas("c2",logPlot);
+ hMatrixRebin->Draw("colz");
  //Output of the number of entries in each histogram as a numerical comparison
  //OutputEntries(h1,h2Rebin);
  CheckBinByBin(hMatrixM,hMatrixRebin);
- CheckBinByBin(h1,h2Rebin);
 }
 
 void CheckBinByBin(TH2D*h1,TH2D*h2)
@@ -103,7 +99,6 @@ void CheckBinByBin(TH2D*h1,TH2D*h2)
    if(h1->GetBinContent(i,j) - h2->GetBinContent(i,j) != 0){
     //If the bin contents of any bin do not match
     //Output to screen which bin it is
-    cout << "Bin " << i << ", " << j << " does not match!" << endl;
     notMatchingCount++;
    }//end if
   }//end loop over Y
@@ -153,11 +148,16 @@ TH2D*Rebin2D(TH2D*hist,TString histName,std::vector<double> binning)
  int nBinsReco = binning.size()-1;//number of reco bins for the output rebinned histogram
 
  TH1D*histX = hist->ProjectionX();
- for(int i=0;i<=nBinsHistX+1;i++){
+ for(int i=0;i<=nBinsHistX;i++){
   if(i==0) binningX[i] = histX->GetBinLowEdge(i+1);
   else binningX[i] = binningX[i-1]+histX->GetBinWidth(i);
  }
- 
+
+ int arraySize = sizeof(binningX)/sizeof(binningX[0]);
+ for(int i=0;i<arraySize;i++){
+  cout << binningX[i] << endl;
+ }
+
  double newbinning[nBinsReco];//binning placed in array for defining TH2
  for(int i=0;i<=nBinsReco;i++){
   newbinning[i] = binning.at(i);

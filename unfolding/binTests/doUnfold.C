@@ -19,41 +19,35 @@ enum Bins{
 const int binLow = 0;
 const int binHigh = 50;
 //-----Forward declarations of functions-----//
-TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hTrue,TH2D*hMatrix,TString recoName);
+TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,TString saveName,
+            bool closure);
 
 void doUnfold()
 {
  TH1::SetDefaultSumw2();
  gStyle->SetPalette(1);
  gStyle->SetOptStat(0);
- gROOT->SetBatch(true);
+ //gROOT->SetBatch(true);
 
  TFile*file = new TFile(fileName);
 
- std::vector<TH1D*> hReco;
- std::vector<TH1D*> hTrue;
- std::vector<TH2D*> hMatrix;
- int nDistributions = 7;
- for(int i=0;i<nDistributions;i++){
-  TString hRecoTitle = "hReco";
-  hRecoTitle += i;
-  TString hTrueTitle = "hTrue";
-  hTrueTitle += i;
-  TString hMatrixTitle = "hMatrix";
-  hMatrixTitle += i;
-  hReco.push_back( (TH1D*)file->Get(hRecoTitle) );
-  hTrue.push_back( (TH1D*)file->Get(hTrueTitle) );
-  hMatrix.push_back( (TH2D*)file->Get(hMatrixTitle) );
+ TH1D*hRecoM =   (TH1D*)file->Get("hReco0");
+ TH1D*hClosureM = (TH1D*)file->Get("hRecoClosure0");
+ TH1D*hTrueM =   (TH1D*)file->Get("hTrue0");
+ TH2D*hMatrixM = (TH2D*)file->Get("hMatrix0");
 
-  unfold(VAR_REG_LCURVE,hReco.at(i),hTrue.at(i),hMatrix.at(i),hRecoTitle);
+ int nBinnings = 7; //number of different reco binnings in VariableList.h
+ for(int i=0;i<nBinnings;i++){
+  unfold(NO_REG,hRecoM,hClosureM,hTrueM,hMatrixM,"hRecoNoRegClosure",false);
  }
-
  //Do the unfolding
 }
 
-TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hTrue,TH2D*hMatrix,TString recoName)
+TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,TString saveName,
+            bool closure)
 {
   TH1F*hBlank;
+  if(closure) hReco = (TH1D*)hClosure->Clone();
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
   hReco->SetLineColor(kBlack);
@@ -214,10 +208,10 @@ TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hTrue,TH2D*hMatrix,TString recoName)
   ratio->Draw("PE");
   line->Draw("same");
 
-  TString saveName = "./plots/unfolded";
-  saveName += recoName;
-  saveName += ".png";
-  canvas1->SaveAs(saveName);
+  TString save = "./plots/unfolded";
+  save += saveName;
+  save += ".png";
+  canvas1->SaveAs(save);
   
 /*
   TFile*fileXsec = new TFile("unfoldedSaved.root","recreate");
