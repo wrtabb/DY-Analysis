@@ -30,11 +30,9 @@ enum Bins{
   ONE_EXTRA,
   TWO_EXTRA
 };
-const int binLow = 15;
-const int binHigh = 3000;
 //-----Forward declarations of functions-----//
 TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix,
-            TString saveName
+            bool savePlots, TString saveName
            );
 TH1D*GetBackgrounds(VarType var);
 TH1D*Rebin1D(TH1D*hist,TString histName,TH1D*hBinning);
@@ -44,7 +42,7 @@ void doUnfold()
  TH1::SetDefaultSumw2();
  gStyle->SetPalette(1);
  gStyle->SetOptStat(0);
- gROOT->SetBatch(true);
+ //gROOT->SetBatch(true);
 
  //Load the files
  TFile*file = new TFile(fileName);
@@ -59,17 +57,27 @@ void doUnfold()
  TH1D*hBackY = GetBackgrounds(RAPIDITY);
  TH2D*hMatrixY = (TH2D*)file->Get("hMatrixRapidity");
 
- //unfold(MASS,NO_REG,false,hDataM,hBackM,hMatrixM,"dataNoRegUnfoldedMass");
+ unfold(MASS,NO_REG,false,hDataM,hBackM,hMatrixM,false,"dataNoRegUnfoldedMass");
  //unfold(MASS,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM,"dataLCurveUnfoldedMass");
- unfold(RAPIDITY,NO_REG,false,hDataY,hBackY,hMatrixY,"dataNoRegUnfoldedRapidity");
+ //unfold(RAPIDITY,NO_REG,false,hDataY,hBackY,hMatrixY,"dataNoRegUnfoldedRapidity");
  //unfold(RAPIDITY,VAR_REG_LCURVE,false,hDataY,hBackY,hMatrixY,"dataLCurveUnfoldedRapidity");
 }
 
 TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*hMatrix,
-            TString saveName
+            bool savePlots,TString saveName
            )
 {
   TH1F*hBlank;
+  float binLow;
+  float binHigh;
+  if(var==MASS){
+   binLow = 15;
+   binHigh = 3000;
+  }
+  else if(var==RAPIDITY){
+   binLow = -2.4;
+   binHigh = 2.4;
+  }
   if(closure) hReco = hMatrix->ProjectionY();
   hReco->SetMarkerStyle(20);
   hReco->SetMarkerColor(kBlack);
@@ -252,13 +260,14 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
   ratio->GetXaxis()->SetMoreLogLabels();
   ratio->SetMarkerStyle(20);
   ratio->SetMarkerColor(kBlack);
+  ratio->SetLineColor(kBlack);
   ratio->Draw("PE");
   line->Draw("same");
 
   TString savePlot = "plots/";
   savePlot += saveName;
   savePlot += ".png";
-  canvas1->SaveAs(savePlot);
+  if(savePlots) canvas1->SaveAs(savePlot);
   
   double width,nUnfold;
   TH1D*hCross = (TH1D*)hTrue->Clone("hCross");

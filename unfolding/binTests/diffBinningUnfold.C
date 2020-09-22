@@ -27,7 +27,7 @@ void diffBinningUnfold()
  TH1::SetDefaultSumw2();
  gStyle->SetPalette(1);
  gStyle->SetOptStat(0);
- gROOT->SetBatch(true);
+ //gROOT->SetBatch(true);
 
  TFile*file = new TFile(fileName);
 
@@ -130,7 +130,7 @@ TH1F*unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,TSt
   TGraph*bestLcurve;
   TGraph*bestLogTauLogChi2;
   if(regType == VAR_REG_LCURVE){
-    Int_t nScan=30;//This number chosen only because it was given in the tutorial
+    Int_t nScan=5;//This number chosen only because it was given in the tutorial
     Double_t tauMin = 0.0;//If tauMin=tauMax, TUnfold automatically chooses a range
     Double_t tauMax = 0.0;//Not certain how they choose the range
     iBest=unfold.ScanLcurve(nScan,tauMin,tauMax,&lCurve,&logTauX,&logTauY);

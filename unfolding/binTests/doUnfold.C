@@ -37,8 +37,9 @@ void doUnfold()
  TH2D*hMatrixM = (TH2D*)file->Get("hMatrix0");
 
  int nBinnings = 7; //number of different reco binnings in VariableList.h
- for(int i=0;i<nBinnings;i++){
-  unfold(NO_REG,hRecoM,hClosureM,hTrueM,hMatrixM,"hRecoNoRegClosure",false);
+ //for(int i=0;i<nBinnings;i++)
+ {
+  unfold(VAR_REG_LCURVE,hRecoM,hClosureM,hTrueM,hMatrixM,"hRecoNoRegClosure",false);
  }
  //Do the unfolding
 }
