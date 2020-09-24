@@ -26,21 +26,24 @@ void test()
  TH1::SetDefaultSumw2();
  gStyle->SetPalette(1);
  gStyle->SetOptStat(0);
+ gROOT->SetBatch(true);
 
  const TString fileName = "unfoldingHists.root";
  TFile*file = new TFile(fileName);
 
  //Function to make the toy models
+ //Saves to a root file
  makeToyModels();
 
- //Define histograms for unfolding
+ //Get toy models saved to root file to perform unfolding on
  TH1D*hReco =    (TH1D*)file->Get("hReco");
  TH1D*hClosure = (TH1D*)file->Get("hClosure");
  TH1D*hTrue =    (TH1D*)file->Get("hTrue");
  TH2D*hMatrix =  (TH2D*)file->Get("hMatrix");
 
  //Perform the unfolding
- unfold(VAR_REG_LCURVE,hReco,hClosure,hTrue,hMatrix,false);
+ //Using regularization to show oscillations present even when using regularization
+ unfold(NO_REG,hReco,hClosure,hTrue,hMatrix,false);
 }
 
 void unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,bool closure)
@@ -106,10 +109,12 @@ void unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,boo
    bestLogTauLogChi2=new TGraph(1,t,x);
  }
  else if(regType == VAR_REG_SCANSURE){
-
+  cout << "Option VAR_REG_SCANSURE not yet implemented" << endl;
+  return;
  }
  else if(regType == VAR_REG_SCANTAU){
-
+  cout << "Option VAR_REG_SCANTAU not yet implemented" << endl;
+  return;
  }
  else if(regType == NO_REG){
    double tau = 0;
@@ -135,6 +140,7 @@ void unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,boo
  hUnfoldedE->SetMarkerStyle(25);
  hUnfoldedE->SetMarkerColor(kBlue+2);
  hUnfoldedE->SetMarkerSize(1);
+
  //loop over unfolded histogram bins and assign errors to each one
  for(int i=0;i<=nBinsTrue;i++){
   double c = hUnfolded->GetBinContent(i+1);
@@ -147,7 +153,8 @@ void unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,boo
 void plotUnfolded(TH1D*hReco,TH1D*hTrue,TH1F*hUnfoldedE)
 {
  //Rebin the reco distribution to plot against the true distribution for easier comparison
- TH1D*hRecoRebin = (TH1D*)hReco->Rebin(nBinsTrue,"hRecoRebin",binningTrue);
+ TH1D*hRecoRebin = (TH1D*)hReco->Clone();
+ hRecoRebin->Rebin(2);
  //Ratio of unfolded histogram over true histogram
  TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
  ratio->Divide(hTrue);
@@ -214,6 +221,9 @@ void plotUnfolded(TH1D*hReco,TH1D*hTrue,TH1F*hUnfoldedE)
  ratio->SetMarkerColor(kBlack);
  ratio->Draw("PE");
  line->Draw("same");
+ 
+ canvas1->SaveAs("testPlots3/unfolded_NoRegularization_Mean20_RecoBins100.png");
+
 }
 
 void makeToyModels()
@@ -222,13 +232,21 @@ void makeToyModels()
  gStyle->SetOptStat(0);
  gStyle->SetPalette(1);
 
+/*
  TH1D*hReco =        new TH1D("hReco","",nBinsReco,binningReco);//measured distribution
  TH1D*hRecoClosure = new TH1D("hClosure","",nBinsReco,binningReco);//mesured distribution using same seed as migration matrix
  TH1D*hTrue =        new TH1D("hTrue","",nBinsTrue,binningTrue);//true distribution
  TH2D*hMatrix =      new TH2D("hMatrix","",nBinsTrue,binningTrue,nBinsReco,binningReco);//2D matrix of true versus reco distributions
-
+*/
+ int nBinsR = 100;
+ int nBinsT = nBinsR/2;
+ 
+ TH1D*hReco =        new TH1D("hReco","",nBinsR,0,50);//measured distribution
+ TH1D*hRecoClosure = new TH1D("hClosure","",nBinsR,0,50);//mesured distribution using same seed as migration matrix
+ TH1D*hTrue =        new TH1D("hTrue","",nBinsT,0,50);//true distribution
+ TH2D*hMatrix =      new TH2D("hMatrix","",nBinsT,0,50,nBinsR,0,50);//2D matrix of true versus reco distributions
  //-----Parameters for toy model-----//
- const double mean = 25;//Mean of gaussian part of distribution
+ const double mean = 20;//Mean of gaussian part of distribution
  const double sigma = 5;//Sigma of gaussian part of distribution
  const double mean_smeared = 0;//mean of smearing used to make reco
  const double sigma_smeared = 1.0;//sigma of smearing used to make reco
@@ -258,18 +276,17 @@ void makeToyModels()
   hReco->Fill(peakReco_smeared);
   hTrue->Fill(peak);
   hMatrix->Fill(peak,peak_smeared);
- }
+ }//end loop over entries
 
  //Draw the migration matrix
  TCanvas*canvas = new TCanvas("canvas","",0,0,1000,1000);
  canvas->SetGrid();
  hMatrix->Draw("colz");
-
+ canvas->SaveAs("testPlots3/migrationMatrix_Mean20_RecoBins100.png");
  saveFile->cd();
  hReco->Write();
  hRecoClosure->Write();
  hTrue->Write();
  hMatrix->Write();
  saveFile->Close();
- 
 }
