@@ -108,7 +108,7 @@ void DoPlots(Variable var,TH2D*hMatrix,TString histName,TString plotTitle)
   hMatrix->GetXaxis()->SetTitle("true Y");
   hMatrix->GetYaxis()->SetTitle("reco Y");
  }
- //canvas->SetLogz();
+ canvas->SetLogz();
  canvas->SetRightMargin(0.13);
  canvas->SetLeftMargin(0.13);
  hMatrix->SetTitle(plotTitle);
