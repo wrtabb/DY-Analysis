@@ -1,4 +1,4 @@
-
+#include "VariableList.h"
 
 enum Variable{
  INV_MASS,
@@ -32,7 +32,7 @@ void makeMigrationPlots()
  DoPlots(RAPIDITY,hResponseRapidity,"responseMatrixRapidity","Rapidity Response Matrix");
  DoPlots(INV_MASS,hMatrixMass,"migrationMatrixMass","Mass Migration Matrix");
  DoPlots(RAPIDITY,hMatrixRapidity,"migrationMatrixRapidity","Rapidity Migration Matrix");
- 
+
  GetConditionNumber(hResponseMass);
  GetConditionNumber(hResponseRapidity);
 
@@ -74,9 +74,15 @@ void GetConditionNumber(TH2D*hResponse)
 
 TH2D*MakeResponse(TH2D*hMatrix,TString histName)
 {
- TH2D*hResponse = (TH2D*)hMatrix->Clone(histName);
  int nBinsX = hMatrix->GetNbinsX();
  int nBinsY = hMatrix->GetNbinsY();
+ for(int i=1;i<nBinsX+1;i++){
+  for(int j=1;j<nBinsY+1;j++){
+   if(hMatrix->GetBinContent(i,j)<0) hMatrix->SetBinContent(i,j,0.0);
+  }
+ }
+ TH2D*hResponse = (TH2D*)hMatrix->Clone(histName);
+ //TH2D*hResponse = new TH2D(histName,"",nBinsX,massbinsTrue,nBinsY,massbinsTrue);
  double sumY;
  for(int i=1;i<nBinsX+1;i++){
   sumY = 0;
@@ -85,6 +91,7 @@ TH2D*MakeResponse(TH2D*hMatrix,TString histName)
   }
   for(int j=1;j<nBinsY+1;j++){
    hResponse->SetBinContent(i,j,hMatrix->GetBinContent(i,j)/sumY);
+   if(hMatrix->GetBinContent(i,j) < 0) cout << "(" << i << ", " << j << "): " << hMatrix->GetBinContent(i,j) << endl;
   }
  }
  return hResponse;
@@ -115,7 +122,8 @@ void DoPlots(Variable var,TH2D*hMatrix,TString histName,TString plotTitle)
  hMatrix->Draw("colz");
 
  TString saveNameMatrix = "plots/";
- saveNameMatrix += histName+"TEST";
+ saveNameMatrix += histName;
+ saveNameMatrix += "NoNegativeBins";
  saveNameMatrix += ".png";
 
  canvas->SaveAs(saveNameMatrix);

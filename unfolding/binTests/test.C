@@ -5,7 +5,10 @@ enum RegType {      //Strength of regularization
   VAR_REG_SCANSURE, //TUnfoldDensity determines best choice of regularization strength
   VAR_REG_SCANTAU   //TUnfoldDensity determines best choice of regularization strength
 };
-
+enum UnfoldType {
+  TUNFOLD,
+  INVERSION
+};
 //true binning
 double binningTrue[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50};
 //reco binning, each true bin split in half
@@ -17,9 +20,17 @@ const int nBinsReco = size(binningReco)-1;
 
 //Forward declarations of functions
 void makeToyModels();
-void plotUnfolded(TH1D*hReco,TH1D*hTrue,TH1F*hUnfoldedE);
-void unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,bool closure);
+void plotUnfolded(TH1D*hReco,TH1D*hTrue,TH1F*hUnfoldedE,UnfoldType unfoldType,bool closure);
+void unfoldTUnfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,bool closure);
+void unfoldInversion(TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hResponse,bool closure);
+double GetConditionNumber(TH2D*hResponse);
+TMatrixD makeMatrixFromHist(TH2D*hist);
+TVectorD makeVectorFromHist(TH1D*hist);
+TH2D*makeResponseMatrix(TH2D*hist);
+TH1F*makeHistFromVector(TVectorD vec,TH1D*hist);
 
+double mean = 35;
+int nBinsR = 100;
 //Main Function
 void test()
 {
@@ -36,17 +47,20 @@ void test()
  makeToyModels();
 
  //Get toy models saved to root file to perform unfolding on
- TH1D*hReco =    (TH1D*)file->Get("hReco");
- TH1D*hClosure = (TH1D*)file->Get("hClosure");
- TH1D*hTrue =    (TH1D*)file->Get("hTrue");
- TH2D*hMatrix =  (TH2D*)file->Get("hMatrix");
+ TH1D*hReco =     (TH1D*)file->Get("hReco");
+ TH1D*hClosure =  (TH1D*)file->Get("hClosure");
+ TH1D*hTrue =     (TH1D*)file->Get("hTrue");
+ TH2D*hMatrix =   (TH2D*)file->Get("hMatrix");
+ TH2D*hResponse = (TH2D*)file->Get("hResponse");
 
- //Perform the unfolding
- //Using regularization to show oscillations present even when using regularization
- unfold(NO_REG,hReco,hClosure,hTrue,hMatrix,false);
+ //Perform the unfolding in two ways:
+ // 1. TUnfold
+ unfoldTUnfold(NO_REG,hReco,hClosure,hTrue,hMatrix,false);
+ // 2. Matrix inversion
+ unfoldInversion(hReco,hClosure,hTrue,hResponse,false);
 }
 
-void unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,bool closure)
+void unfoldTUnfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,bool closure)
 {
  if(closure){
   hReco = (TH1D*)hClosure->Clone();
@@ -127,19 +141,13 @@ void unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,boo
 
  //Create unfolded histogram
  TH1*hUnfolded = unfold.GetOutput("Unfolded");
- hUnfolded->SetMarkerStyle(25);
- hUnfolded->SetMarkerColor(kBlue+2);
- hUnfolded->SetMarkerSize(1);
-
+ 
  //Create error matrices
  TH2*histEmatStat=unfold.GetEmatrixInput("unfolding stat error matrix");
  TH2*histEmatTotal=unfold.GetEmatrixTotal("unfolding total error matrix");
 
  //Create unfolding histogram with errors
  TH1F*hUnfoldedE = (TH1F*)hUnfolded->Clone("Unfolded with errors");
- hUnfoldedE->SetMarkerStyle(25);
- hUnfoldedE->SetMarkerColor(kBlue+2);
- hUnfoldedE->SetMarkerSize(1);
 
  //loop over unfolded histogram bins and assign errors to each one
  for(int i=0;i<=nBinsTrue;i++){
@@ -147,27 +155,32 @@ void unfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,boo
   hUnfoldedE->SetBinContent(i+1,c);
   hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
  }
- plotUnfolded(hReco,hTrue,hUnfoldedE);
+ plotUnfolded(hReco,hTrue,hUnfoldedE,TUNFOLD,closure);
 }
 
-void plotUnfolded(TH1D*hReco,TH1D*hTrue,TH1F*hUnfoldedE)
+void plotUnfolded(TH1D*hReco,TH1D*hTrue,TH1F*hUnfoldedE,UnfoldType unfoldType,bool closure)
 {
  //Rebin the reco distribution to plot against the true distribution for easier comparison
  TH1D*hRecoRebin = (TH1D*)hReco->Clone();
- hRecoRebin->Rebin(2);
- //Ratio of unfolded histogram over true histogram
- TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
- ratio->Divide(hTrue);
+ if(unfoldType==TUNFOLD) hRecoRebin->Rebin(2);
 
+ hUnfoldedE->SetMarkerStyle(25);
+ hUnfoldedE->SetMarkerColor(kBlue+2);
+ hUnfoldedE->SetMarkerSize(1);
+ hUnfoldedE->SetFillColor(kWhite);
  hRecoRebin->SetMarkerStyle(20);
  hRecoRebin->SetMarkerColor(kBlack);
  hRecoRebin->SetLineColor(kBlack);
-
+ hRecoRebin->SetFillColor(kWhite);
  hTrue->SetFillColor(kRed+2);
  hTrue->SetLineColor(kRed+2);
  hTrue->SetTitle("");
  hTrue->SetLabelSize(0);
  hTrue->SetTitleSize(0);
+ 
+ //Ratio of unfolded histogram over true histogram
+ TH1F*ratio = (TH1F*)hUnfoldedE->Clone("ratio");
+ ratio->Divide(hTrue);
 
  //postion of chi2 label to place on plots
  double xChiLabel = 35;
@@ -193,13 +206,13 @@ void plotUnfolded(TH1D*hReco,TH1D*hTrue,TH1F*hUnfoldedE)
  TLegend*legend = new TLegend(0.65,0.9,0.9,0.75);
  legend->SetTextSize(0.02);
  legend->AddEntry(hTrue,"True Distribution");
- legend->AddEntry(hReco,"Measured Distribution");
+ legend->AddEntry(hRecoRebin,"Measured Distribution");
  legend->AddEntry(hUnfoldedE,"Unfolded Distribution");
  hTrue->Draw("hist");
  hRecoRebin->Draw("PE,same");
  hUnfoldedE->Draw("PE,same");
  legend->Draw("same");
- chiLabel->Draw("same");
+ //chiLabel->Draw("same");
 
  canvas1->cd();
  TPad*pad2 = new TPad("","",0,0.05,1,0.3);
@@ -222,7 +235,16 @@ void plotUnfolded(TH1D*hReco,TH1D*hTrue,TH1F*hUnfoldedE)
  ratio->Draw("PE");
  line->Draw("same");
  
- canvas1->SaveAs("testPlots3/unfolded_NoRegularization_Mean20_RecoBins100.png");
+ TString saveName = "testPlots/unfolded";
+ if(unfoldType==TUNFOLD) saveName += "TUnfold";
+ else if(unfoldType==INVERSION) saveName += "Inversion";
+ if(closure) saveName += "ClosureTest";
+ saveName += "_NoRegularization_Mean";
+ saveName += mean;
+ saveName += "_RecoBins";
+ saveName += nBinsR;
+ saveName += ".png";
+ canvas1->SaveAs(saveName);
 
 }
 
@@ -232,21 +254,13 @@ void makeToyModels()
  gStyle->SetOptStat(0);
  gStyle->SetPalette(1);
 
-/*
- TH1D*hReco =        new TH1D("hReco","",nBinsReco,binningReco);//measured distribution
- TH1D*hRecoClosure = new TH1D("hClosure","",nBinsReco,binningReco);//mesured distribution using same seed as migration matrix
- TH1D*hTrue =        new TH1D("hTrue","",nBinsTrue,binningTrue);//true distribution
- TH2D*hMatrix =      new TH2D("hMatrix","",nBinsTrue,binningTrue,nBinsReco,binningReco);//2D matrix of true versus reco distributions
-*/
- int nBinsR = 100;
  int nBinsT = nBinsR/2;
  
  TH1D*hReco =        new TH1D("hReco","",nBinsR,0,50);//measured distribution
- TH1D*hRecoClosure = new TH1D("hClosure","",nBinsR,0,50);//mesured distribution using same seed as migration matrix
+ TH1D*hRecoClosure = new TH1D("hClosure","",nBinsR,0,50);//measured distribution using same seed as migration matrix
  TH1D*hTrue =        new TH1D("hTrue","",nBinsT,0,50);//true distribution
  TH2D*hMatrix =      new TH2D("hMatrix","",nBinsT,0,50,nBinsR,0,50);//2D matrix of true versus reco distributions
  //-----Parameters for toy model-----//
- const double mean = 20;//Mean of gaussian part of distribution
  const double sigma = 5;//Sigma of gaussian part of distribution
  const double mean_smeared = 0;//mean of smearing used to make reco
  const double sigma_smeared = 1.0;//sigma of smearing used to make reco
@@ -277,16 +291,147 @@ void makeToyModels()
   hTrue->Fill(peak);
   hMatrix->Fill(peak,peak_smeared);
  }//end loop over entries
-
+ TH2D*hMatrixRebin = (TH2D*)hMatrix->Clone("hMatrixRebin");
+ TH2D*hResponse = makeResponseMatrix(hMatrixRebin);
+ double conditionNumber = GetConditionNumber(hResponse);
+ double xPosition = 15;
+ double yPosition = 5;
+ TLatex*conditionLabel = new TLatex(xPosition,yPosition,
+                                    Form("condition number = %lg", conditionNumber));
+ //Draw the response matrix
+ TCanvas*canvas2 = new TCanvas("canvas2","",0,0,1000,1000);
+ canvas2->SetGrid();
+ hResponse->Draw("colz");
+ conditionLabel->Draw("same");
+ TString responseSaveName = "testPlots/responseMatrix_Mean";
+ responseSaveName += mean;
+ responseSaveName += "_RecoBins";
+ responseSaveName += nBinsR;
+ responseSaveName += ".png";
+ canvas2->SaveAs(responseSaveName);
+ 
  //Draw the migration matrix
  TCanvas*canvas = new TCanvas("canvas","",0,0,1000,1000);
  canvas->SetGrid();
  hMatrix->Draw("colz");
- canvas->SaveAs("testPlots3/migrationMatrix_Mean20_RecoBins100.png");
+ TString plotSaveName = "testPlots/migrationMatrix_Mean";
+ plotSaveName += mean;
+ plotSaveName += "_RecoBins";
+ plotSaveName += nBinsR;
+ plotSaveName += ".png";
+ canvas->SaveAs(plotSaveName);
+
  saveFile->cd();
  hReco->Write();
  hRecoClosure->Write();
  hTrue->Write();
  hMatrix->Write();
+ hResponse->Write();
  saveFile->Close();
 }
+
+double GetConditionNumber(TH2D*hResponse)
+{
+ TString histName = hResponse->GetName();
+ int nBinsX = hResponse->GetNbinsX();
+ int nBinsY = hResponse->GetNbinsY();
+ TMatrixD matrix(nBinsY,nBinsX);
+ for(int i=0;i<nBinsX;i++){
+  for(int j=0;j<nBinsY;j++){
+   matrix(j,i) = hResponse->GetBinContent(i+1,j+1);
+  }
+ }
+ TDecompSVD decomp(matrix);
+ double condition = decomp.Condition();
+ cout << "The condition number for " << histName << ": " << condition << endl;
+
+ double determinant;
+ TMatrixD mInverse = matrix.Invert(&determinant);
+ cout << "The determinant of " << histName << " is " << determinant << endl;
+ return condition;
+}
+
+TH2D*makeResponseMatrix(TH2D*hist)
+{
+ hist->RebinY(2);
+ TH2D*hResponse = (TH2D*)hist->Clone("hResponse");
+ int nBinsX = hist->GetNbinsX();
+ int nBinsY = hist->GetNbinsY();
+ for(int i=1;i<=nBinsX;i++){
+  double nEntriesX = 0;
+  for(int j=1;j<=nBinsY;j++){
+   nEntriesX += hist->GetBinContent(i,j);
+  }
+  double sum = 0;
+  for(int j=1;j<=nBinsY;j++){
+   double scaledContent = hist->GetBinContent(i,j)/nEntriesX;
+   hResponse->SetBinContent(i,j,scaledContent);
+   sum += scaledContent;
+  }
+ }
+ return hResponse;
+}
+TMatrixD makeMatrixFromHist(TH2D*hist)
+{
+ int nBinsX = hist->GetNbinsX();
+ int nBinsY = hist->GetNbinsY();
+ TMatrixD matrix(nBinsY,nBinsX);
+ for(int i=1;i<=nBinsX;i++){
+  for(int j=1;j<=nBinsY;j++){
+   matrix(i-1,j-1) = hist->GetBinContent(i,j);
+  }
+ } 
+ return matrix;
+}
+
+TVectorD makeVectorFromHist(TH1D*hist)
+{
+ int nBins = hist->GetNbinsX();
+ TVectorD vec(nBins);
+ for(int i=1;i<=nBins;i++){
+  vec(i-1) = hist->GetBinContent(i);
+ } 
+ return vec;
+}
+
+TH1F*makeHistFromVector(TVectorD vec,TH1D*hist)
+{
+ TH1F*hReturn = (TH1F*)hist->Clone("hUnfolded");
+ int nBins = vec.GetNrows();
+ for(int i=0;i<nBins;i++){
+  hReturn->SetBinContent(i+1,vec(i));
+ }
+ return hReturn;
+}
+
+void unfoldInversion(TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hResponse,bool closure)
+{
+ TString unfoldType = "Inversion";
+ if(closure){
+  hReco = (TH1D*)hClosure->Clone("hReco");
+  unfoldType += "Closure";
+ }
+ //Make response matrix histogram from input histogram matrix
+ //Meaning we normalize each column (true bins) 
+ hReco->Rebin(2);
+
+ //Turn histograms into matrices and vectors
+ TMatrixD responseM = makeMatrixFromHist(hResponse); 
+ TVectorD trueV = makeVectorFromHist(hTrue);
+ TVectorD recoV = makeVectorFromHist(hReco);
+ TVectorD closureV = makeVectorFromHist(hClosure);
+
+ //Invert
+ TMatrixD invertedM = responseM.Invert();
+ TVectorD unfoldedV = invertedM*recoV;
+
+ TH1F*hUnfolded = makeHistFromVector(unfoldedV,hTrue);
+ 
+ plotUnfolded(hReco,hTrue,hUnfolded,INVERSION,closure);
+ 
+ TCanvas*c = new TCanvas("c","",0,0,1000,1000);
+ c->SetGrid();
+ closureV.Draw("colz");
+ c->SaveAs("temp.png");
+}
+

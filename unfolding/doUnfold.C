@@ -57,6 +57,7 @@ void doUnfold()
  TH1D*hBackY = GetBackgrounds(RAPIDITY);
  TH2D*hMatrixY = (TH2D*)file->Get("hMatrixRapidity");
 
+
  unfold(MASS,NO_REG,false,hDataM,hBackM,hMatrixM,false,"dataNoRegUnfoldedMass");
  //unfold(MASS,VAR_REG_LCURVE,false,hDataM,hBackM,hMatrixM,"dataLCurveUnfoldedMass");
  //unfold(RAPIDITY,NO_REG,false,hDataY,hBackY,hMatrixY,"dataNoRegUnfoldedRapidity");
@@ -88,6 +89,13 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
   hTrue->SetTitle("");
   int nBins;
   nBins = hTrue->GetXaxis()->GetNbins();
+  int nBinsX = hMatrix->GetNbinsX();
+  int nBinsY = hMatrix->GetNbinsY();
+  for(int i=1;i<nBinsX+1;i++){
+   for(int j=1;j<nBinsY+1;j++){
+    if(hMatrix->GetBinContent(i,j)<0) hMatrix->SetBinContent(i,j,0.0);
+   }
+  }
   ////////////////////////////
   //  Regularization Modes  //
   ////////////////////////////
@@ -308,9 +316,9 @@ TH1F*unfold(VarType var,RegType regType,bool closure,TH1D*hReco,TH1D*hBack,TH2D*
   fileXsec->Write();
   fileXsec->Close();
 
-  delete hReco;
-  delete hTrue;
-  delete hMatrix;
+ // delete hReco;
+ // delete hTrue;
+ // delete hMatrix;
   return hUnfoldedE;
 }
  
