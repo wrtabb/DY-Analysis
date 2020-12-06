@@ -29,8 +29,10 @@ TVectorD makeVectorFromHist(TH1D*hist);
 TH2D*makeResponseMatrix(TH2D*hist);
 TH1F*makeHistFromVector(TVectorD vec,TH1D*hist);
 
-double mean = 35;
+double mean = 50;
 int nBinsR = 100;
+int nBinsT = nBinsR/2;
+
 //Main Function
 void test()
 {
@@ -62,6 +64,12 @@ void test()
 
 void unfoldTUnfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMatrix,bool closure)
 {
+ cout << endl;
+ cout << "*****************************************" << endl;
+ cout << "Beginning unfolding process using TUnfold" << endl;
+ cout << "*****************************************" << endl;
+ cout << endl;
+
  if(closure){
   hReco = (TH1D*)hClosure->Clone();
  }
@@ -150,7 +158,7 @@ void unfoldTUnfold(RegType regType,TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hMat
  TH1F*hUnfoldedE = (TH1F*)hUnfolded->Clone("Unfolded with errors");
 
  //loop over unfolded histogram bins and assign errors to each one
- for(int i=0;i<=nBinsTrue;i++){
+ for(int i=0;i<=nBinsT;i++){
   double c = hUnfolded->GetBinContent(i+1);
   hUnfoldedE->SetBinContent(i+1,c);
   hUnfoldedE->SetBinError(i+1,TMath::Sqrt(histEmatTotal->GetBinContent(i+1,i+1)));
@@ -185,7 +193,7 @@ void plotUnfolded(TH1D*hReco,TH1D*hTrue,TH1F*hUnfoldedE,UnfoldType unfoldType,bo
  //postion of chi2 label to place on plots
  double xChiLabel = 35;
  double yChiLabel = 5e5;
- double x[nBinsTrue],res[nBinsTrue];
+ double x[nBinsT],res[nBinsT];
  //create chi2 label
  double chi = hUnfoldedE->Chi2Test(hTrue,"CHI2/NDF",res);//chi2/ndf to print on plot
  TLatex*chiLabel = new TLatex(xChiLabel,yChiLabel,Form("#chi^{2}/ndf = %lg", chi));
@@ -250,6 +258,13 @@ void plotUnfolded(TH1D*hReco,TH1D*hTrue,TH1F*hUnfoldedE,UnfoldType unfoldType,bo
 
 void makeToyModels()
 {//Make toy models to perform unfolding on
+
+ cout << endl;
+ cout << "*************************************" << endl;
+ cout << "Creating toy models to test unfolding" << endl;
+ cout << "*************************************" << endl;
+ cout << endl;
+
  TH1::SetDefaultSumw2();
  gStyle->SetOptStat(0);
  gStyle->SetPalette(1);
@@ -335,12 +350,8 @@ double GetConditionNumber(TH2D*hResponse)
  TString histName = hResponse->GetName();
  int nBinsX = hResponse->GetNbinsX();
  int nBinsY = hResponse->GetNbinsY();
- TMatrixD matrix(nBinsY,nBinsX);
- for(int i=0;i<nBinsX;i++){
-  for(int j=0;j<nBinsY;j++){
-   matrix(j,i) = hResponse->GetBinContent(i+1,j+1);
-  }
- }
+ TMatrixD matrix = makeMatrixFromHist(hResponse);
+
  TDecompSVD decomp(matrix);
  double condition = decomp.Condition();
  cout << "The condition number for " << histName << ": " << condition << endl;
@@ -376,9 +387,13 @@ TMatrixD makeMatrixFromHist(TH2D*hist)
  int nBinsX = hist->GetNbinsX();
  int nBinsY = hist->GetNbinsY();
  TMatrixD matrix(nBinsY,nBinsX);
+ if(nBinsX != nBinsT || nBinsY != nBinsT){
+  cout << "makeMatrixFromHist: Matrix bins don't match histogram bins" << endl;
+  return matrix;
+ }
  for(int i=1;i<=nBinsX;i++){
   for(int j=1;j<=nBinsY;j++){
-   matrix(i-1,j-1) = hist->GetBinContent(i,j);
+   matrix(j-1,i-1) = hist->GetBinContent(i,j);
   }
  } 
  return matrix;
@@ -406,6 +421,12 @@ TH1F*makeHistFromVector(TVectorD vec,TH1D*hist)
 
 void unfoldInversion(TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hResponse,bool closure)
 {
+ cout << endl;
+ cout << "**************************************************" << endl;
+ cout << "Beginning unfolding process using Matrix inversion" << endl;
+ cout << "**************************************************" << endl;
+ cout << endl;
+
  TString unfoldType = "Inversion";
  if(closure){
   hReco = (TH1D*)hClosure->Clone("hReco");
@@ -413,25 +434,40 @@ void unfoldInversion(TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hResponse,bool clo
  }
  //Make response matrix histogram from input histogram matrix
  //Meaning we normalize each column (true bins) 
+ //Here I am assuming the reco has twice as many bins as tru
+ //This is because this is what I'm using for this specific task
+ //This would have to be treated differently if this wasn't the case
  hReco->Rebin(2);
 
  //Turn histograms into matrices and vectors
  TMatrixD responseM = makeMatrixFromHist(hResponse); 
  TVectorD trueV = makeVectorFromHist(hTrue);
  TVectorD recoV = makeVectorFromHist(hReco);
- TVectorD closureV = makeVectorFromHist(hClosure);
 
  //Invert
  TMatrixD invertedM = responseM.Invert();
  TVectorD unfoldedV = invertedM*recoV;
 
+ //Get covariance (assuming Vy = identity)
+ TMatrixD invertedMT = invertedM.T();
+ TMatrixD Vx = invertedM*invertedMT;
+
  TH1F*hUnfolded = makeHistFromVector(unfoldedV,hTrue);
+ TH1F*hUnfoldedE = (TH1F*)hUnfolded->Clone("unfolded with errors");
+ cout << "Number of bins = " << nBinsT << endl;
  
- plotUnfolded(hReco,hTrue,hUnfolded,INVERSION,closure);
+ //Get error bars from diagonal of covariance matrix for unfolded histogram
+ for(int i=0;i<nBinsT;i++){
+  hUnfoldedE->SetBinError(i+1,TMath::Sqrt(Vx(i,i)));
+ }
+
+ 
+ plotUnfolded(hReco,hTrue,hUnfoldedE,INVERSION,closure);
  
  TCanvas*c = new TCanvas("c","",0,0,1000,1000);
  c->SetGrid();
- closureV.Draw("colz");
+ hUnfoldedE->Draw("hist");
+ hUnfolded->Draw("pe,same");
  c->SaveAs("temp.png");
 }
 
