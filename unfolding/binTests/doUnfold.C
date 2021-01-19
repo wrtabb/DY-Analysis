@@ -2,7 +2,8 @@
 //#include "/home/hep/wrtabb/DY-Analysis/headers/drawOptions.h"
 #include "VariableList.h"
 
-const TString fileName = "unfoldingHists.root";
+//const TString fileName = "unfoldingHists.root";
+const TString fileName = "unfoldingHistsIntegrationMethod.root";
 
 enum RegType {//Strength of regularization
   NO_REG,           //No regularization
@@ -30,11 +31,20 @@ void doUnfold()
  //gROOT->SetBatch(true);
 
  TFile*file = new TFile(fileName);
-
+/*
  TH1D*hRecoM =   (TH1D*)file->Get("hReco0");
  TH1D*hClosureM = (TH1D*)file->Get("hRecoClosure0");
  TH1D*hTrueM =   (TH1D*)file->Get("hTrue0");
  TH2D*hMatrixM = (TH2D*)file->Get("hMatrix0");
+*/
+
+ TH1D*hRecoM =   (TH1D*)file->Get("histObs");
+ TH1D*hClosureM;
+ TH1D*hTrueM =   (TH1D*)file->Get("histTrue");
+ TH2D*hMatrixM = (TH2D*)file->Get("migrationHist");
+ 
+ hTrueM->Rebin(2);
+ hMatrixM->RebinX(2);
 
  int nBinnings = 7; //number of different reco binnings in VariableList.h
  //for(int i=0;i<nBinnings;i++)

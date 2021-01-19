@@ -9,15 +9,6 @@ enum UnfoldType {
   TUNFOLD,
   INVERSION
 };
-//true binning
-double binningTrue[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50};
-//reco binning, each true bin split in half
-//I'm in the process of testing different potential binning schemes
-//But they all exhibit the same oscillatory behavior
-double binningReco[] = {0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12,12.5,13,13.5,14,14.5,15,15.5,16,16.5,17,17.5,18,18.5,19,19.5,20,20.5,21,21.5,22,22.5,23,23.5,24,24.5,25,25.5,26,26.5,27,27.5,28,28.5,29,29.5,30,30.5,31,31.5,32,32.5,33,33.5,34,34.5,35,35.5,36,36.5,37,37.5,38,38.5,39,39.5,40,40.5,41,41.5,42,42.5,43,43.5,44,44.5,45,45.5,46,46.5,47,47.5,48,48.5,49,49.5,50};
-const int nBinsTrue = size(binningTrue)-1;
-const int nBinsReco = size(binningReco)-1;
-
 //Forward declarations of functions
 void makeToyModels();
 void plotUnfolded(TH1D*hReco,TH1D*hTrue,TH1F*hUnfoldedE,UnfoldType unfoldType,bool closure);
@@ -28,9 +19,10 @@ TMatrixD makeMatrixFromHist(TH2D*hist);
 TVectorD makeVectorFromHist(TH1D*hist);
 TH2D*makeResponseMatrix(TH2D*hist);
 TH1F*makeHistFromVector(TVectorD vec,TH1D*hist);
+TH2D* makeResponseMatrixFromIntegral(TH1D*hTrue,TH1D*hReco);
 
-double mean = 50;
-int nBinsR = 100;
+double mean = 25;
+int nBinsR = 50;
 int nBinsT = nBinsR/2;
 
 //Main Function
@@ -57,7 +49,7 @@ void test()
 
  //Perform the unfolding in two ways:
  // 1. TUnfold
- unfoldTUnfold(NO_REG,hReco,hClosure,hTrue,hMatrix,false);
+ //unfoldTUnfold(NO_REG,hReco,hClosure,hTrue,hMatrix,false);
  // 2. Matrix inversion
  unfoldInversion(hReco,hClosure,hTrue,hResponse,false);
 }
@@ -285,6 +277,9 @@ void makeToyModels()
  TF1*func = new TF1("func","1/(x+1)+gaus(0)",0,50);
  func->SetParameters(1.0,mean,sigma);
 
+ TF1*funcSmear = new TF1("funcSmear","gaus(0)",-10*sigma_smeared,10*sigma_smeared);
+ funcSmear->SetParameters(1.0,mean_smeared,sigma_smeared);
+
  TRandom3 gen1;
  TRandom3 gen2;
  gen1.SetSeed(82);
@@ -308,6 +303,7 @@ void makeToyModels()
  }//end loop over entries
  TH2D*hMatrixRebin = (TH2D*)hMatrix->Clone("hMatrixRebin");
  TH2D*hResponse = makeResponseMatrix(hMatrixRebin);
+ //TH2D*hResponse = makeResponseMatrixFromIntegral(hTrue,hReco);
  double conditionNumber = GetConditionNumber(hResponse);
  double xPosition = 15;
  double yPosition = 5;
@@ -316,6 +312,8 @@ void makeToyModels()
  //Draw the response matrix
  TCanvas*canvas2 = new TCanvas("canvas2","",0,0,1000,1000);
  canvas2->SetGrid();
+ hResponse->GetXaxis()->SetTitle("true");
+ hResponse->GetYaxis()->SetTitle("reco");
  hResponse->Draw("colz");
  conditionLabel->Draw("same");
  TString responseSaveName = "testPlots/responseMatrix_Mean";
@@ -328,6 +326,8 @@ void makeToyModels()
  //Draw the migration matrix
  TCanvas*canvas = new TCanvas("canvas","",0,0,1000,1000);
  canvas->SetGrid();
+ hMatrix->GetXaxis()->SetTitle("true");
+ hMatrix->GetYaxis()->SetTitle("reco");
  hMatrix->Draw("colz");
  TString plotSaveName = "testPlots/migrationMatrix_Mean";
  plotSaveName += mean;
@@ -350,7 +350,11 @@ double GetConditionNumber(TH2D*hResponse)
  TString histName = hResponse->GetName();
  int nBinsX = hResponse->GetNbinsX();
  int nBinsY = hResponse->GetNbinsY();
- TMatrixD matrix = makeMatrixFromHist(hResponse);
+ TH2D*hist = (TH2D*)hResponse->Clone(histName);
+ if(nBinsX!=nBinsY){
+  hist->RebinY(2); 
+ }
+ TMatrixD matrix = makeMatrixFromHist(hist);
 
  TDecompSVD decomp(matrix);
  double condition = decomp.Condition();
@@ -368,13 +372,13 @@ TH2D*makeResponseMatrix(TH2D*hist)
  TH2D*hResponse = (TH2D*)hist->Clone("hResponse");
  int nBinsX = hist->GetNbinsX();
  int nBinsY = hist->GetNbinsY();
- for(int i=1;i<=nBinsX;i++){
+ for(int i=0;i<=nBinsX+1;i++){
   double nEntriesX = 0;
-  for(int j=1;j<=nBinsY;j++){
+  for(int j=0;j<=nBinsY+1;j++){
    nEntriesX += hist->GetBinContent(i,j);
   }
   double sum = 0;
-  for(int j=1;j<=nBinsY;j++){
+  for(int j=0;j<=nBinsY+1;j++){
    double scaledContent = hist->GetBinContent(i,j)/nEntriesX;
    hResponse->SetBinContent(i,j,scaledContent);
    sum += scaledContent;
@@ -382,6 +386,7 @@ TH2D*makeResponseMatrix(TH2D*hist)
  }
  return hResponse;
 }
+
 TMatrixD makeMatrixFromHist(TH2D*hist)
 {
  int nBinsX = hist->GetNbinsX();
@@ -448,18 +453,13 @@ void unfoldInversion(TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hResponse,bool clo
  TMatrixD invertedM = responseM.Invert();
  TVectorD unfoldedV = invertedM*recoV;
 
- //Get covariance (assuming Vy = identity)
- TMatrixD invertedMT = invertedM.T();
- TMatrixD Vx = invertedM*invertedMT;
-
  TH1F*hUnfolded = makeHistFromVector(unfoldedV,hTrue);
  TH1F*hUnfoldedE = (TH1F*)hUnfolded->Clone("unfolded with errors");
- cout << "Number of bins = " << nBinsT << endl;
  
  //Get error bars from diagonal of covariance matrix for unfolded histogram
- for(int i=0;i<nBinsT;i++){
-  hUnfoldedE->SetBinError(i+1,TMath::Sqrt(Vx(i,i)));
- }
+ //for(int i=0;i<nBinsT;i++){
+ // hUnfoldedE->SetBinError(i+1,TMath::Sqrt(Vx(i,i)));
+// }
 
  
  plotUnfolded(hReco,hTrue,hUnfoldedE,INVERSION,closure);
@@ -471,3 +471,44 @@ void unfoldInversion(TH1D*hReco,TH1D*hClosure,TH1D*hTrue,TH2D*hResponse,bool clo
  c->SaveAs("temp.png");
 }
 
+//A function to produce the response matrix from integrating distribution functions
+TH2D* makeResponseMatrixFromIntegral(TH1D*hTrue,TH1D*hReco)
+{
+ double xLow = 0;
+ double xHigh = 50;
+ double yLow = 0;
+ double yHigh = 50;
+ double sigma = 1.0;
+ double norm = 1.0/(sigma*sqrt(2*TMath::Pi()));
+ double mean;
+ double binContent;
+ double binLow, binHigh;
+
+ TH2D*hist = new TH2D("hResponse","",nBinsT,xLow,xHigh,nBinsR,yLow,yHigh); 
+ TF1*funcSmear;
+ for(int i=0;i<nBinsT+2;i++){
+  mean = hTrue->GetBinCenter(i);
+  
+  funcSmear = new TF1("funcSmear","gaus(0)",-10*sigma,10*sigma);
+  funcSmear->SetParameters(norm,mean,sigma);
+
+  for(int j=0;j<nBinsR+2;j++){
+   binLow = hReco->GetBinLowEdge(j); 
+   binHigh = binLow + hReco->GetBinWidth(j);
+
+   binContent = funcSmear->Integral(binLow,binHigh);
+   hist->SetBinContent(i,j,binContent);      
+  }
+  double sum = 0.0;
+  for(int j=0;j<nBinsR+2;j++){
+   sum += hist->GetBinContent(i,j);
+  }
+  double sum2 = 0.0;
+  for(int j=0;j<nBinsR+2;j++){
+   binContent = hist->GetBinContent(i,j);
+   hist->SetBinContent(i,j,binContent/sum);
+   sum2 += hist->GetBinContent(i,j);
+  }
+ }
+ return hist;
+}
